@@ -38,3 +38,10 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Document ###
+docs/
+
+### Claude ###
+.claude/
+CLAUDE.md

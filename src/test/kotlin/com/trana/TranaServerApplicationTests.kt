@@ -9,5 +9,4 @@ class TranaServerApplicationTests {
     @Test
     fun contextLoads() {
     }
-
 }
