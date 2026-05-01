@@ -23,11 +23,15 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("com.ninja-squad:springmockk:5.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -39,6 +43,7 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    systemProperty("user.timezone", "UTC")
 }
 
 ktlint {

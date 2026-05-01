@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: trana-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+  info:
+    env:
+      enabled: true
