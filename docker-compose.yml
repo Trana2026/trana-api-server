@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: trana-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: trana
+      POSTGRES_PASSWORD: trana1234
+      POSTGRES_DB: trana
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
