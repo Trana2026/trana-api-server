@@ -16,3 +16,11 @@ spring:
     enabled: true
     baseline-on-migrate: false
     locations: classpath:db/migration
+
+trana:
+  jwt:
+    issuer: trana
+    audience: trana-app
+    secret: dev-only-secret-do-not-use-in-prod-32bytes-minimum-length-required
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
