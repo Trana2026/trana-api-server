@@ -26,5 +26,5 @@ enum class ErrorCode(val status: HttpStatus, val code: String, val message: Stri
     // INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_TOKEN", "유효하지 않은 토큰입니다"),
 
     // === 사용자 (USER_*) — W2 도입 시 ===
-    // USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
 }
