@@ -7,6 +7,18 @@ spring:
     default-property-inclusion: non_null
     deserialization:
       fail-on-unknown-properties: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
   info:
     env:
       enabled: true
