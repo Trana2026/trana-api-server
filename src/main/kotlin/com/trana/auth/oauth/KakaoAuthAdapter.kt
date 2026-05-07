@@ -1,6 +1,7 @@
-package com.trana.auth
+package com.trana.auth.oauth
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.trana.auth.AuthException
 import com.trana.user.SocialProvider
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient

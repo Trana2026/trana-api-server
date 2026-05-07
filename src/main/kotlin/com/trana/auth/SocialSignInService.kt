@@ -1,5 +1,7 @@
 package com.trana.auth
 
+import com.trana.auth.jwt.JwtProvider
+import com.trana.auth.oauth.SocialAuthAdapter
 import com.trana.user.SocialProvider
 import com.trana.user.UserService
 import org.springframework.stereotype.Service

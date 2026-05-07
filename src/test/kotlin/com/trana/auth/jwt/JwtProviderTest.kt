@@ -1,9 +1,6 @@
-package com.trana.auth
+package com.trana.auth.jwt
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
@@ -21,20 +18,20 @@ class JwtProviderTest {
     @Test
     fun createAccessTokenReturnsNonEmptyToken() {
         val token = provider.createAccessToken(userId = 123L)
-        assertNotNull(token)
-        assertTrue(token.isNotBlank())
+        Assertions.assertNotNull(token)
+        Assertions.assertTrue(token.isNotBlank())
     }
 
     @Test
     fun extractUserIdFromAccessTokenReturnsOriginalUserId() {
         val token = provider.createAccessToken(userId = 123L)
-        assertEquals(123L, provider.extractUserId(token))
+        Assertions.assertEquals(123L, provider.extractUserId(token))
     }
 
     @Test
     fun extractUserIdFromRefreshTokenReturnsOriginalUserId() {
         val token = provider.createRefreshToken(userId = 456L)
-        assertEquals(456L, provider.extractUserId(token))
+        Assertions.assertEquals(456L, provider.extractUserId(token))
     }
 
     @Test
@@ -45,7 +42,7 @@ class JwtProviderTest {
                 secret = "different-secret-do-not-use-in-prod-32bytes-other-key-required",
             ),
         )
-        assertThrows(Exception::class.java) {
+        Assertions.assertThrows(Exception::class.java) {
             otherProvider.verify(token)
         }
     }

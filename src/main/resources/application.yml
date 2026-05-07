@@ -28,6 +28,5 @@ management:
 springdoc:
   swagger-ui:
     tags-sorter: alpha
-    operations-sorter: alpha
     display-request-duration: true
     filter: true

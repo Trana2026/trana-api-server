@@ -1,4 +1,4 @@
-package com.trana.auth
+package com.trana.auth.oauth
 
 import com.trana.user.SocialProvider
 

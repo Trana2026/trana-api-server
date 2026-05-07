@@ -1,4 +1,4 @@
-package com.trana.auth
+package com.trana.auth.jwt
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration

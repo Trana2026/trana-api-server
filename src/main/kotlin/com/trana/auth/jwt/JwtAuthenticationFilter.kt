@@ -1,4 +1,4 @@
-package com.trana.auth
+package com.trana.auth.jwt
 
 import io.jsonwebtoken.JwtException
 import jakarta.servlet.FilterChain
