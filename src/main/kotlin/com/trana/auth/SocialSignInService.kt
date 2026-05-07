@@ -47,4 +47,20 @@ class SocialSignInService(
             publicCode = user.publicCode,
         )
     }
+
+    fun refresh(request: RefreshRequest): SignInResponse {
+        val userId = try {
+            jwtProvider.extractUserId(request.refreshToken)
+        } catch (ex: io.jsonwebtoken.JwtException) {
+            throw AuthException.InvalidToken("refresh token 검증 실패: ${ex.message}")
+        }
+
+        val user = userService.getById(userId)
+
+        return SignInResponse(
+            accessToken = jwtProvider.createAccessToken(userId),
+            refreshToken = jwtProvider.createRefreshToken(userId),
+            publicCode = user.publicCode,
+        )
+    }
 }

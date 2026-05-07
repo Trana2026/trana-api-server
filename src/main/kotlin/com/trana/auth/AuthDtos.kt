@@ -40,3 +40,12 @@ data class SignInResponse(
     )
     val publicCode: String,
 )
+
+@Schema(description = "토큰 재발급 요청")
+data class RefreshRequest(
+    @Schema(
+        description = "Refresh token (sign-in 시 발급된 것)",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
+    val refreshToken: String,
+)

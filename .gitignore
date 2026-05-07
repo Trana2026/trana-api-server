@@ -45,3 +45,6 @@ docs/
 ### Claude ###
 .claude/
 CLAUDE.md
+
+### HTTP Client ###
+**/http-client.private.env.json

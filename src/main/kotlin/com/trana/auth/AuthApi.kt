@@ -103,4 +103,7 @@ interface AuthApi {
     )
     @PostMapping("/social/sign-in")
     fun socialSignIn(@RequestBody request: SocialSignInRequest): SignInResponse
+
+    @PostMapping("/refresh")
+    fun refresh(@RequestBody request: RefreshRequest): SignInResponse
 }
