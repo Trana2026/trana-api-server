@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.trana.user.SocialProvider
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 
 /**
  * Kakao OAuth 어댑터.
@@ -18,12 +19,15 @@ class KakaoAuthAdapter : SocialAuthAdapter {
     private val restClient = RestClient.create(KAKAO_API_BASE_URL)
 
     override fun fetchUserInfo(accessToken: String): SocialUserInfo {
-        val response = restClient.get()
-            .uri("/v2/user/me")
-            .header("Authorization", "Bearer $accessToken")
-            .retrieve()
-            .body(KakaoUserResponse::class.java)
-            ?: error("Kakao API 응답이 비어있습니다")
+        val response = try {
+            restClient.get()
+                .uri("/v2/user/me")
+                .header("Authorization", "Bearer $accessToken")
+                .retrieve()
+                .body(KakaoUserResponse::class.java)
+        } catch (ex: RestClientException) {
+            throw AuthException.InvalidSocialToken(SocialProvider.KAKAO, cause = ex)
+        } ?: throw AuthException.InvalidSocialToken(SocialProvider.KAKAO)
 
         return SocialUserInfo(
             provider = SocialProvider.KAKAO,

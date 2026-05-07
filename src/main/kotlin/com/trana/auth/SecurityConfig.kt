@@ -8,7 +8,10 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
-class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilter) {
+class SecurityConfig(
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint,
+) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -30,9 +33,7 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
                     .anyRequest().authenticated()
             }
             .exceptionHandling { exc ->
-                exc.authenticationEntryPoint { _, response, _ ->
-                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED)
-                }
+                exc.authenticationEntryPoint(jwtAuthenticationEntryPoint)
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()

@@ -1,8 +1,6 @@
 package com.trana.common
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
-import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.springframework.context.annotation.Configuration
 
@@ -15,9 +13,6 @@ import org.springframework.context.annotation.Configuration
  * - 401 응답이 spec에 자동 등록 → "Undocumented" 사라짐
  */
 @Configuration
-@OpenAPIDefinition(
-    security = [SecurityRequirement(name = "bearerAuth")],
-)
 @SecurityScheme(
     name = "bearerAuth",
     type = SecuritySchemeType.HTTP,

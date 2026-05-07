@@ -28,7 +28,7 @@ class SocialSignInService(
 
     fun signIn(request: SocialSignInRequest): SignInResponse {
         val adapter = adaptersByProvider[request.provider]
-            ?: error("지원하지 않는 소셜 공급자: ${request.provider}")
+            ?: throw AuthException.UnsupportedProvider(request.provider)
 
         val socialUser = adapter.fetchUserInfo(request.accessToken)
 

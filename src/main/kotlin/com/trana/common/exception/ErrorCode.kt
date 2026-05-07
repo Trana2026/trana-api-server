@@ -21,9 +21,10 @@ enum class ErrorCode(val status: HttpStatus, val code: String, val message: Stri
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_405", "허용되지 않은 메서드입니다"),
 
     // === 인증 (AUTH_*) — W2 도입 시 활성화 ===
-    // UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH_401", "인증이 필요합니다"),
-    // FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH_403", "권한이 없습니다"),
-    // INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_TOKEN", "유효하지 않은 토큰입니다"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH_401", "인증이 필요합니다"),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_TOKEN", "유효하지 않은 토큰입니다"),
+    INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_SOCIAL", "소셜 공급자 토큰 검증 실패"),
+    UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_400_PROVIDER", "지원하지 않는 소셜 공급자입니다"),
 
     // === 사용자 (USER_*) — W2 도입 시 ===
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
