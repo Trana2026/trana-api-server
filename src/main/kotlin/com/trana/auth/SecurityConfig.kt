@@ -7,13 +7,6 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
-/**
- * Spring Security 기본 설정.
- *
- * - REST API (Flutter 클라이언트) → form login / CSRF / session 모두 비활성
- * - 무상태(stateless) — 매 요청 JWT로 인증
- * - 현재는 모든 요청 허용 (다음 단계에서 JwtAuthenticationFilter + 경로별 인가 추가)
- */
 @Configuration
 class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilter) {
     @Bean
@@ -25,7 +18,21 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
             .logout { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
-                auth.anyRequest().permitAll()
+                auth
+                    .requestMatchers(
+                        "/api/v1/auth/**",
+                        "/actuator/health",
+                        "/actuator/info",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                    ).permitAll()
+                    .anyRequest().authenticated()
+            }
+            .exceptionHandling { exc ->
+                exc.authenticationEntryPoint { _, response, _ ->
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED)
+                }
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()

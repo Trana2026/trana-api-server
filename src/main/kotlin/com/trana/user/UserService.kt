@@ -62,4 +62,9 @@ class UserService(
     @Transactional(readOnly = true)
     fun getByPublicCode(publicCode: String): User = userRepository.findByPublicCode(publicCode)
         ?: throw UserException.NotFound(publicCode)
+
+    @Transactional(readOnly = true)
+    fun getById(userId: Long): User = userRepository.findById(userId).orElseThrow {
+        UserException.NotFound(userId.toString())
+    }
 }
