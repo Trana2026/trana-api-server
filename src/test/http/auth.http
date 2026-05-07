@@ -8,3 +8,15 @@ grant_type=refresh_token&client_id={{kakaoClientId}}&client_secret={{kakaoClient
 client.global.set("kakaoAccessToken", response.body.access_token);
 client.test("Kakao 토큰 갱신 성공", () => client.assert(response.status === 200));
 %}
+
+
+### Google access_token 갱신 (Google refresh token으로)
+POST https://oauth2.googleapis.com/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&client_id={{googleClientId}}&client_secret={{googleClientSecret}}&refresh_token={{googleRefreshToken}}
+
+> {%
+client.global.set("googleAccessToken", response.body.access_token);
+client.test("Google 토큰 갱신 성공", () => client.assert(response.status === 200));
+%}

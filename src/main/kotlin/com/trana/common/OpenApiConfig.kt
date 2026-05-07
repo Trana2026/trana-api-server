@@ -2,6 +2,12 @@ package com.trana.common
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.SecurityScheme
+import io.swagger.v3.oas.models.media.Content
+import io.swagger.v3.oas.models.media.MediaType
+import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.responses.ApiResponse
+import org.springdoc.core.customizers.OperationCustomizer
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
@@ -19,4 +25,24 @@ import org.springframework.context.annotation.Configuration
     scheme = "bearer",
     bearerFormat = "JWT",
 )
-class OpenApiConfig
+class OpenApiConfig {
+    @Bean
+    fun globalErrorResponseCustomizer(): OperationCustomizer = OperationCustomizer { operation, _ ->
+        if (!operation.responses.containsKey("500")) {
+            operation.responses.addApiResponse(
+                "500",
+                ApiResponse()
+                    .description("서버 오류 (외부 API 장애 또는 처리되지 않은 예외)")
+                    .content(
+                        Content().addMediaType(
+                            "application/problem+json",
+                            MediaType().schema(
+                                Schema<Any>().`$ref`("#/components/schemas/ProblemDetailResponse"),
+                            ),
+                        ),
+                    ),
+            )
+        }
+        operation
+    }
+}

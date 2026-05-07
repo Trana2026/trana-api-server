@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @Tag(name = "Auth", description = "인증 (소셜 로그인 / 토큰)")
 interface AuthApi {
@@ -17,83 +17,43 @@ interface AuthApi {
         summary = "소셜 로그인 (가입 + 로그인 통합)",
         description = """
 클라이언트(Flutter)가 받아온 공급자 access_token으로 우리 서버 인증.
-
 - 신규 사용자: 자동 가입 + JWT 발급
 - 기존 사용자: JWT 재발급
-
-지원 공급자: KAKAO (W2), GOOGLE/APPLE (W2 후반)
-          """,
+- 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
+      """,
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "로그인 성공 — access/refresh JWT 발급",
+                description = "로그인 성공",
                 content = [
                     Content(
                         schema = Schema(implementation = SignInResponse::class),
-                        examples = [
-                            ExampleObject(
-                                name = "success",
-                                summary = "로그인 성공",
-                                value = """
-                                      {
-                                        "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFuYSI...",
-                                        "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFuYSI...",
-                                        "publicCode": "Vh7sK2x9Pq3R"
-                                      }
-                                  """,
-                            ),
-                        ],
+                        examples = [ExampleObject(name = "success", value = AuthExamples.SIGN_IN_SUCCESS)],
                     ),
                 ],
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "잘못된 요청 (지원하지 않는 공급자 등)",
+                description = "잘못된 요청",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
-                        examples = [
-                            ExampleObject(
-                                name = "unsupportedProvider",
-                                summary = "지원하지 않는 공급자",
-                                value = """
-                                      {
-                                        "type": "about:blank",
-                                        "title": "COMMON_400",
-                                        "status": 400,
-                                        "detail": "요청 본문을 파싱할 수 없습니다",
-                                        "instance": "/api/v1/auth/social/sign-in",
-                                        "code": "COMMON_400",
-                                        "timestamp": "2026-05-06T12:34:56Z"
-                                      }
-                                  """,
-                            ),
-                        ],
+                        examples = [ExampleObject(name = "invalidBody", value = AuthExamples.INVALID_BODY)],
                     ),
                 ],
             ),
             ApiResponse(
-                responseCode = "500",
-                description = "공급자 API 호출 실패 또는 서버 오류",
+                responseCode = "401",
+                description = "공급자 토큰 검증 실패",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
                         examples = [
                             ExampleObject(
-                                name = "kakaoApiFailed",
-                                summary = "Kakao API 응답 오류",
-                                value = """
-                                      {
-                                        "type": "about:blank",
-                                        "title": "COMMON_500",
-                                        "status": 500,
-                                        "detail": "서버 오류가 발생했습니다",
-                                        "code": "COMMON_500",
-                                        "timestamp": "2026-05-06T12:34:56Z"
-                                      }
-                                  """,
+                                name = "invalidSocialToken",
+                                value = AuthExamples.INVALID_SOCIAL_TOKEN,
                             ),
                         ],
                     ),
@@ -102,8 +62,68 @@ interface AuthApi {
         ],
     )
     @PostMapping("/social/sign-in")
-    fun socialSignIn(@RequestBody request: SocialSignInRequest): SignInResponse
+    fun socialSignIn(
+        @SwaggerRequestBody(
+            required = true,
+            content = [
+                Content(
+                    schema = Schema(implementation = SocialSignInRequest::class),
+                    examples = [
+                        ExampleObject(name = "kakao", value = AuthExamples.REQUEST_KAKAO),
+                        ExampleObject(name = "google", value = AuthExamples.REQUEST_GOOGLE),
+                    ],
+                ),
+            ],
+        )
+        @org.springframework.web.bind.annotation.RequestBody
+        request: SocialSignInRequest,
+    ): SignInResponse
 
+    @Operation(
+        summary = "토큰 재발급",
+        description = """
+Refresh token으로 새 access / refresh token 발급.
+- access token 만료 (15분) 후 사용
+- refresh token 만료 (30일) 시엔 다시 sign-in 필요
+- 매 호출 시 access + refresh 모두 새로 발급
+      """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "재발급 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = SignInResponse::class),
+                        examples = [ExampleObject(name = "success", value = AuthExamples.SIGN_IN_SUCCESS)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Refresh token 위변조 / 만료",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "invalidToken", value = AuthExamples.INVALID_TOKEN)],
+                    ),
+                ],
+            ),
+        ],
+    )
     @PostMapping("/refresh")
-    fun refresh(@RequestBody request: RefreshRequest): SignInResponse
+    fun refresh(
+        @SwaggerRequestBody(
+            required = true,
+            content = [
+                Content(
+                    schema = Schema(implementation = RefreshRequest::class),
+                    examples = [ExampleObject(name = "default", value = AuthExamples.REQUEST_REFRESH)],
+                ),
+            ],
+        )
+        @org.springframework.web.bind.annotation.RequestBody
+        request: RefreshRequest,
+    ): SignInResponse
 }
