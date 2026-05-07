@@ -28,4 +28,7 @@ enum class ErrorCode(val status: HttpStatus, val code: String, val message: Stri
 
     // === 사용자 (USER_*) — W2 도입 시 ===
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
+
+    // === 약관 (TERMS_*) ===
+    TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_404", "약관을 찾을 수 없습니다"),
 }
