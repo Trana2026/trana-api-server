@@ -1,0 +1,47 @@
+# IDE
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# Build artifacts
+build
+.gradle
+.kotlin
+out
+target
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docs
+docs
+*.md
+HELP.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test artifacts
+src/test/http/http-client.private.env.json
+
+# Environment / Local files
+.env
+.env.local
+*.local
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# CI / Misc
+.github
+config/detekt/baseline.xml

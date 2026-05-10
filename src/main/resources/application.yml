@@ -30,3 +30,8 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     filter: true
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+  shutdown: graceful

@@ -1,1 +1,22 @@
-# 개발 서버 환경 설정
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  trana:
+    jwt:
+      issuer: trana
+      audience: trana-app
+      secret: ${TRANA_JWT_SECRET}
+      access-token-ttl: PT15M
+      refresh-token-ttl: P30D
+
+  logging:
+    level:
+      root: INFO
+      com.trana: DEBUG
+      org.springframework.web: INFO
