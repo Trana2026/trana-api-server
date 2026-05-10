@@ -7,16 +7,16 @@ spring:
     hibernate:
       ddl-auto: validate
 
-  trana:
-    jwt:
-      issuer: trana
-      audience: trana-app
-      secret: ${TRANA_JWT_SECRET}
-      access-token-ttl: PT15M
-      refresh-token-ttl: P30D
+trana:
+  jwt:
+    issuer: trana
+    audience: trana-app
+    secret: ${TRANA_JWT_SECRET}
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
 
-  logging:
-    level:
-      root: INFO
-      com.trana: DEBUG
-      org.springframework.web: INFO
+logging:
+  level:
+    root: INFO
+    com.trana: DEBUG
+    org.springframework.web: INFO
