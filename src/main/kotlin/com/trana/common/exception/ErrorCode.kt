@@ -12,7 +12,11 @@ import org.springframework.http.HttpStatus
  * 명명 규칙: {도메인}_{HTTP상태}[_{서브식별자}]
  * 도메인 enum 값은 도메인 도입 시점에 추가.
  */
-enum class ErrorCode(val status: HttpStatus, val code: String, val message: String) {
+enum class ErrorCode(
+    val status: HttpStatus,
+    val code: String,
+    val message: String,
+) {
     // === 공통 (COMMON_*) ===
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "서버 오류가 발생했습니다"),
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "COMMON_400", "잘못된 입력입니다"),

@@ -22,7 +22,9 @@ import org.springframework.web.filter.OncePerRequestFilter
  * 이 필터는 그저 "토큰이 있으면 해독"하는 역할.
  */
 @Component
-class JwtAuthenticationFilter(private val jwtProvider: JwtProvider) : OncePerRequestFilter() {
+class JwtAuthenticationFilter(
+    private val jwtProvider: JwtProvider,
+) : OncePerRequestFilter() {
     private val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
 
     override fun doFilterInternal(
@@ -34,11 +36,12 @@ class JwtAuthenticationFilter(private val jwtProvider: JwtProvider) : OncePerReq
         if (token != null) {
             try {
                 val userId = jwtProvider.extractUserId(token)
-                val authentication = UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    emptyList(),
-                )
+                val authentication =
+                    UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        emptyList(),
+                    )
                 SecurityContextHolder.getContext().authentication = authentication
             } catch (ex: JwtException) {
                 log.debug("JWT verification failed: {}", ex.message)

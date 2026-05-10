@@ -20,7 +20,9 @@ import javax.crypto.SecretKey
  * - secret은 application yml에서 주입, 운영은 환경변수
  */
 @Component
-class JwtProvider(private val properties: JwtProperties) {
+class JwtProvider(
+    private val properties: JwtProperties,
+) {
     private val key: SecretKey = Keys.hmacShaKeyFor(properties.secret.toByteArray(Charsets.UTF_8))
 
     fun createAccessToken(userId: Long): String = buildToken(userId, properties.accessTokenTtl.seconds)
@@ -32,22 +34,30 @@ class JwtProvider(private val properties: JwtProperties) {
      *
      * @throws io.jsonwebtoken.JwtException 위변조/만료/issuer/audience 불일치
      */
-    fun verify(token: String): Claims = Jwts.parser()
-        .verifyWith(key)
-        .requireIssuer(properties.issuer)
-        .requireAudience(properties.audience)
-        .build()
-        .parseSignedClaims(token)
-        .payload
+    fun verify(token: String): Claims =
+        Jwts
+            .parser()
+            .verifyWith(key)
+            .requireIssuer(properties.issuer)
+            .requireAudience(properties.audience)
+            .build()
+            .parseSignedClaims(token)
+            .payload
 
     fun extractUserId(token: String): Long = verify(token).subject.toLong()
 
-    private fun buildToken(userId: Long, ttlSeconds: Long): String {
+    private fun buildToken(
+        userId: Long,
+        ttlSeconds: Long,
+    ): String {
         val now = Instant.now()
         val expiration = now.plusSeconds(ttlSeconds)
-        return Jwts.builder()
+        return Jwts
+            .builder()
             .issuer(properties.issuer)
-            .audience().add(properties.audience).and()
+            .audience()
+            .add(properties.audience)
+            .and()
             .subject(userId.toString())
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiration))

@@ -18,31 +18,23 @@ import java.util.UUID
 class UserConsent(
     @Column(name = "user_id")
     val userId: Long? = null,
-
     @Column(name = "terms_version_id", nullable = false)
     val termsVersionId: Long,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "context_type", nullable = false, length = 20)
     val contextType: ConsentContextType,
-
     @Column(name = "context_id")
     val contextId: Long? = null,
-
     @Column(name = "signup_session_id", columnDefinition = "uuid")
     val signupSessionId: UUID? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "age_group", nullable = false, length = 10)
     val ageGroup: AgeGroup,
-
     @Column(name = "agreed_at", nullable = false)
     val agreedAt: Instant,
-
     @Column(columnDefinition = "inet", nullable = false)
     @ColumnTransformer(write = "?::inet")
     val ip: String,
-
     @Column(name = "user_agent")
     val userAgent: String? = null,
 ) {

@@ -22,7 +22,7 @@ class PublicCodeGenerator {
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                     "abcdefghijklmnopqrstuvwxyz" +
                     "0123456789"
-                ).toCharArray()
+            ).toCharArray()
         private const val LENGTH = 12
     }
 }

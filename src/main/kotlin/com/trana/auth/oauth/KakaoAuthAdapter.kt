@@ -20,15 +20,17 @@ class KakaoAuthAdapter : SocialAuthAdapter {
     private val restClient = RestClient.create(KAKAO_API_BASE_URL)
 
     override fun fetchUserInfo(accessToken: String): SocialUserInfo {
-        val response = try {
-            restClient.get()
-                .uri("/v2/user/me")
-                .header("Authorization", "Bearer $accessToken")
-                .retrieve()
-                .body(KakaoUserResponse::class.java)
-        } catch (ex: RestClientException) {
-            throw AuthException.InvalidSocialToken(SocialProvider.KAKAO, cause = ex)
-        } ?: throw AuthException.InvalidSocialToken(SocialProvider.KAKAO)
+        val response =
+            try {
+                restClient
+                    .get()
+                    .uri("/v2/user/me")
+                    .header("Authorization", "Bearer $accessToken")
+                    .retrieve()
+                    .body(KakaoUserResponse::class.java)
+            } catch (ex: RestClientException) {
+                throw AuthException.InvalidSocialToken(SocialProvider.KAKAO, cause = ex)
+            } ?: throw AuthException.InvalidSocialToken(SocialProvider.KAKAO)
 
         return SocialUserInfo(
             provider = SocialProvider.KAKAO,
@@ -48,7 +50,12 @@ private data class KakaoUserResponse(
     @JsonProperty("kakao_account")
     val kakaoAccount: KakaoAccount? = null,
 ) {
-    data class KakaoAccount(val email: String? = null, val profile: KakaoProfile? = null) {
-        data class KakaoProfile(val nickname: String? = null)
+    data class KakaoAccount(
+        val email: String? = null,
+        val profile: KakaoProfile? = null,
+    ) {
+        data class KakaoProfile(
+            val nickname: String? = null,
+        )
     }
 }

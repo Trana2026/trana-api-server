@@ -16,5 +16,8 @@ package com.trana.common.exception
  *     )
  * }
  */
-abstract class DomainException(val errorCode: ErrorCode, message: String? = null, cause: Throwable? = null) :
-    RuntimeException(message ?: errorCode.message, cause)
+abstract class DomainException(
+    val errorCode: ErrorCode,
+    message: String? = null,
+    cause: Throwable? = null,
+) : RuntimeException(message ?: errorCode.message, cause)

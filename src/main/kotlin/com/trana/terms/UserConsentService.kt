@@ -23,19 +23,20 @@ class UserConsentService(
         command.termsVersionIds.forEach { termsService.getById(it) }
 
         val now = Instant.now()
-        val consents = command.termsVersionIds.map { termsVersionId ->
-            UserConsent(
-                userId = command.userId,
-                termsVersionId = termsVersionId,
-                contextType = command.contextType,
-                contextId = command.contextId,
-                signupSessionId = command.signupSessionId,
-                ageGroup = command.ageGroup,
-                agreedAt = now,
-                ip = command.ip,
-                userAgent = command.userAgent,
-            )
-        }
+        val consents =
+            command.termsVersionIds.map { termsVersionId ->
+                UserConsent(
+                    userId = command.userId,
+                    termsVersionId = termsVersionId,
+                    contextType = command.contextType,
+                    contextId = command.contextId,
+                    signupSessionId = command.signupSessionId,
+                    ageGroup = command.ageGroup,
+                    agreedAt = now,
+                    ip = command.ip,
+                    userAgent = command.userAgent,
+                )
+            }
 
         return userConsentRepository.saveAll(consents)
     }

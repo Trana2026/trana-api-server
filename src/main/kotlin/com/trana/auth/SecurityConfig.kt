@@ -33,12 +33,11 @@ class SecurityConfig(
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                     ).permitAll()
-                    .anyRequest().authenticated()
-            }
-            .exceptionHandling { exc ->
+                    .anyRequest()
+                    .authenticated()
+            }.exceptionHandling { exc ->
                 exc.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-            }
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            }.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }
 }

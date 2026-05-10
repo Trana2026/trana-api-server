@@ -13,19 +13,22 @@ import java.net.URI
 import java.time.Instant
 
 @Component
-class JwtAuthenticationEntryPoint(private val objectMapper: ObjectMapper) : AuthenticationEntryPoint {
+class JwtAuthenticationEntryPoint(
+    private val objectMapper: ObjectMapper,
+) : AuthenticationEntryPoint {
     override fun commence(
         request: HttpServletRequest,
         response: HttpServletResponse,
         authException: AuthenticationException,
     ) {
         val errorCode = ErrorCode.UNAUTHORIZED
-        val problemDetail = ProblemDetail.forStatusAndDetail(errorCode.status, errorCode.message).apply {
-            title = errorCode.code
-            instance = URI.create(request.requestURI)
-            setProperty("code", errorCode.code)
-            setProperty("timestamp", Instant.now().toString())
-        }
+        val problemDetail =
+            ProblemDetail.forStatusAndDetail(errorCode.status, errorCode.message).apply {
+                title = errorCode.code
+                instance = URI.create(request.requestURI)
+                setProperty("code", errorCode.code)
+                setProperty("timestamp", Instant.now().toString())
+            }
 
         response.status = errorCode.status.value()
         response.contentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE

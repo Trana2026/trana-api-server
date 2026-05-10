@@ -11,7 +11,6 @@ class UserService(
     private val socialAccountRepository: SocialAccountRepository,
     private val publicCodeGenerator: PublicCodeGenerator,
 ) {
-
     /**
      * 소셜 로그인: 기존 매핑이 있으면 기존 사용자 반환, 없으면 신규 생성.
      *
@@ -40,11 +39,12 @@ class UserService(
         }
 
         // 2. 신규 사용자 생성
-        val newUser = User(
-            publicCode = publicCodeGenerator.generate(),
-            email = email,
-            nickname = nickname,
-        )
+        val newUser =
+            User(
+                publicCode = publicCodeGenerator.generate(),
+                email = email,
+                nickname = nickname,
+            )
         userRepository.save(newUser)
 
         // 3. 소셜 매핑 생성
@@ -60,11 +60,13 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
-    fun getByPublicCode(publicCode: String): User = userRepository.findByPublicCode(publicCode)
-        ?: throw UserException.NotFound(publicCode)
+    fun getByPublicCode(publicCode: String): User =
+        userRepository.findByPublicCode(publicCode)
+            ?: throw UserException.NotFound(publicCode)
 
     @Transactional(readOnly = true)
-    fun getById(userId: Long): User = userRepository.findById(userId).orElseThrow {
-        UserException.NotFound(userId.toString())
-    }
+    fun getById(userId: Long): User =
+        userRepository.findById(userId).orElseThrow {
+            UserException.NotFound(userId.toString())
+        }
 }

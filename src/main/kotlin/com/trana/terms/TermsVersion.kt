@@ -23,19 +23,14 @@ class TermsVersion(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     val type: TermsType,
-
     @Column(nullable = false, length = 20)
     val version: String,
-
     @Column(nullable = false, length = 200)
     val title: String,
-
     @Column(name = "content_url", nullable = false)
     val contentUrl: String,
-
     @Column(name = "content_hash", nullable = false, length = 64)
     val contentHash: String,
-
     @Column(name = "effective_at", nullable = false)
     val effectiveAt: Instant,
 ) {

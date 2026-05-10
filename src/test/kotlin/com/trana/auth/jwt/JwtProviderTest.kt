@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test
 import java.time.Duration
 
 class JwtProviderTest {
-    private val properties = JwtProperties(
-        issuer = "trana",
-        audience = "trana-app",
-        secret = "test-secret-do-not-use-in-prod-32bytes-minimum-length-required",
-        accessTokenTtl = Duration.ofMinutes(15),
-        refreshTokenTtl = Duration.ofDays(30),
-    )
+    private val properties =
+        JwtProperties(
+            issuer = "trana",
+            audience = "trana-app",
+            secret = "test-secret-do-not-use-in-prod-32bytes-minimum-length-required",
+            accessTokenTtl = Duration.ofMinutes(15),
+            refreshTokenTtl = Duration.ofDays(30),
+        )
 
     private val provider = JwtProvider(properties)
 
@@ -37,11 +38,12 @@ class JwtProviderTest {
     @Test
     fun verifyWithDifferentSecretThrows() {
         val token = provider.createAccessToken(userId = 123L)
-        val otherProvider = JwtProvider(
-            properties.copy(
-                secret = "different-secret-do-not-use-in-prod-32bytes-other-key-required",
-            ),
-        )
+        val otherProvider =
+            JwtProvider(
+                properties.copy(
+                    secret = "different-secret-do-not-use-in-prod-32bytes-other-key-required",
+                ),
+            )
         Assertions.assertThrows(Exception::class.java) {
             otherProvider.verify(token)
         }

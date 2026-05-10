@@ -14,15 +14,17 @@ class GoogleAuthAdapter : SocialAuthAdapter {
     private val restClient = RestClient.create(GOOGLE_API_BASE_URL)
 
     override fun fetchUserInfo(accessToken: String): SocialUserInfo {
-        val response = try {
-            restClient.get()
-                .uri("/oauth2/v3/userinfo")
-                .header("Authorization", "Bearer $accessToken")
-                .retrieve()
-                .body(GoogleUserResponse::class.java)
-        } catch (ex: RestClientException) {
-            throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE, cause = ex)
-        } ?: throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE)
+        val response =
+            try {
+                restClient
+                    .get()
+                    .uri("/oauth2/v3/userinfo")
+                    .header("Authorization", "Bearer $accessToken")
+                    .retrieve()
+                    .body(GoogleUserResponse::class.java)
+            } catch (ex: RestClientException) {
+                throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE, cause = ex)
+            } ?: throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE)
 
         return SocialUserInfo(
             provider = SocialProvider.GOOGLE,

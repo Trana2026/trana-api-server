@@ -10,5 +10,8 @@ interface TermsVersionRepository : JpaRepository<TermsVersion, Long> {
      */
     fun findByEffectiveAtBeforeOrderByEffectiveAtDesc(effectiveAt: Instant): List<TermsVersion>
 
-    fun findByTypeAndVersion(type: TermsType, version: String): TermsVersion?
+    fun findByTypeAndVersion(
+        type: TermsType,
+        version: String,
+    ): TermsVersion?
 }

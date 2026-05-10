@@ -27,35 +27,37 @@ import org.springframework.context.annotation.Configuration
 )
 class OpenApiConfig {
     @Bean
-    fun globalErrorResponseCustomizer(): OperationCustomizer = OperationCustomizer { operation, _ ->
-        if (!operation.responses.containsKey("500")) {
-            operation.responses.addApiResponse(
-                "500",
-                ApiResponse()
-                    .description("서버 오류 (외부 API 장애 또는 처리되지 않은 예외)")
-                    .content(
-                        Content().addMediaType(
-                            "application/problem+json",
-                            MediaType().schema(
-                                Schema<Any>().`$ref`("#/components/schemas/ProblemDetailResponse"),
+    fun globalErrorResponseCustomizer(): OperationCustomizer =
+        OperationCustomizer { operation, _ ->
+            if (!operation.responses.containsKey("500")) {
+                operation.responses.addApiResponse(
+                    "500",
+                    ApiResponse()
+                        .description("서버 오류 (외부 API 장애 또는 처리되지 않은 예외)")
+                        .content(
+                            Content().addMediaType(
+                                "application/problem+json",
+                                MediaType().schema(
+                                    Schema<Any>().`$ref`("#/components/schemas/ProblemDetailResponse"),
+                                ),
                             ),
                         ),
-                    ),
-            )
+                )
+            }
+            operation
         }
-        operation
-    }
 
     companion object {
-        private val SERVER_ERROR_EXAMPLE = """
-              {
-                "type": "about:blank",
-                "title": "COMMON_500",
-                "status": 500,
-                "detail": "서버 오류가 발생했습니다",
-                "code": "COMMON_500",
-                "timestamp": "2026-05-07T14:30:00Z"
-              }
-        """.trimIndent()
+        private val SERVER_ERROR_EXAMPLE =
+            """
+            {
+              "type": "about:blank",
+              "title": "COMMON_500",
+              "status": 500,
+              "detail": "서버 오류가 발생했습니다",
+              "code": "COMMON_500",
+              "timestamp": "2026-05-07T14:30:00Z"
+            }
+            """.trimIndent()
     }
 }

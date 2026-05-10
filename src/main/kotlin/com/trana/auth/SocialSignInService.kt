@@ -29,17 +29,19 @@ class SocialSignInService(
         socialAuthAdapters.associateBy { it.provider }
 
     fun signIn(request: SocialSignInRequest): SignInResponse {
-        val adapter = adaptersByProvider[request.provider]
-            ?: throw AuthException.UnsupportedProvider(request.provider)
+        val adapter =
+            adaptersByProvider[request.provider]
+                ?: throw AuthException.UnsupportedProvider(request.provider)
 
         val socialUser = adapter.fetchUserInfo(request.accessToken)
 
-        val user = userService.findOrCreateBySocial(
-            provider = socialUser.provider,
-            providerUserId = socialUser.providerUserId,
-            email = socialUser.email,
-            nickname = socialUser.nickname,
-        )
+        val user =
+            userService.findOrCreateBySocial(
+                provider = socialUser.provider,
+                providerUserId = socialUser.providerUserId,
+                email = socialUser.email,
+                nickname = socialUser.nickname,
+            )
 
         val userId = checkNotNull(user.id) { "User id should be assigned after save" }
 
@@ -51,11 +53,12 @@ class SocialSignInService(
     }
 
     fun refresh(request: RefreshRequest): SignInResponse {
-        val userId = try {
-            jwtProvider.extractUserId(request.refreshToken)
-        } catch (ex: io.jsonwebtoken.JwtException) {
-            throw AuthException.InvalidToken("refresh token 검증 실패: ${ex.message}")
-        }
+        val userId =
+            try {
+                jwtProvider.extractUserId(request.refreshToken)
+            } catch (ex: io.jsonwebtoken.JwtException) {
+                throw AuthException.InvalidToken("refresh token 검증 실패: ${ex.message}", cause = ex)
+            }
 
         val user = userService.getById(userId)
 

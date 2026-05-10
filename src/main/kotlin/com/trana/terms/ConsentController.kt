@@ -9,22 +9,25 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/consents")
 @SecurityRequirement(name = "bearerAuth")
-class ConsentController(private val userConsentService: UserConsentService) : ConsentApi {
+class ConsentController(
+    private val userConsentService: UserConsentService,
+) : ConsentApi {
     override fun agree(
         request: AgreeRequest,
         @AuthenticationPrincipal userId: Long,
         httpRequest: HttpServletRequest,
     ): List<ConsentResponse> {
-        val command = AgreeCommand(
-            userId = userId,
-            termsVersionIds = request.termsVersionIds,
-            contextType = request.contextType,
-            ageGroup = request.ageGroup,
-            ip = extractIp(httpRequest),
-            userAgent = httpRequest.getHeader("User-Agent"),
-            signupSessionId = request.signupSessionId,
-            contextId = request.contextId,
-        )
+        val command =
+            AgreeCommand(
+                userId = userId,
+                termsVersionIds = request.termsVersionIds,
+                contextType = request.contextType,
+                ageGroup = request.ageGroup,
+                ip = extractIp(httpRequest),
+                userAgent = httpRequest.getHeader("User-Agent"),
+                signupSessionId = request.signupSessionId,
+                contextId = request.contextId,
+            )
         return userConsentService.agree(command).map { it.toResponse() }
     }
 
@@ -34,8 +37,9 @@ class ConsentController(private val userConsentService: UserConsentService) : Co
     }
 }
 
-private fun UserConsent.toResponse() = ConsentResponse(
-    id = id!!,
-    termsVersionId = termsVersionId,
-    agreedAt = agreedAt,
-)
+private fun UserConsent.toResponse() =
+    ConsentResponse(
+        id = id!!,
+        termsVersionId = termsVersionId,
+        agreedAt = agreedAt,
+    )

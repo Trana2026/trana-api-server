@@ -22,11 +22,9 @@ import java.time.Instant
 class SocialAccount(
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     val provider: SocialProvider,
-
     @Column(name = "provider_user_id", nullable = false, length = 255)
     val providerUserId: String,
 ) {

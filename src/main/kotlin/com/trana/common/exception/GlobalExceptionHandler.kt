@@ -27,21 +27,22 @@ import java.time.Instant
  */
 @RestControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
-
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     /** 우리 비즈니스 예외 처리. */
     @ExceptionHandler(DomainException::class)
     fun handleDomain(ex: DomainException): ResponseEntity<ProblemDetail> {
         val errorCode = ex.errorCode
-        val problemDetail = ProblemDetail.forStatusAndDetail(
-            errorCode.status,
-            ex.message ?: errorCode.message,
-        ).apply {
-            title = errorCode.code
-            setProperty("code", errorCode.code)
-            setProperty("timestamp", Instant.now().toString())
-        }
+        val problemDetail =
+            ProblemDetail
+                .forStatusAndDetail(
+                    errorCode.status,
+                    ex.message ?: errorCode.message,
+                ).apply {
+                    title = errorCode.code
+                    setProperty("code", errorCode.code)
+                    setProperty("timestamp", Instant.now().toString())
+                }
 
         if (errorCode.status.is5xxServerError) {
             log.error("DomainException [{}]: {}", errorCode.code, ex.message, ex)
@@ -62,23 +63,26 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         status: HttpStatusCode,
         request: WebRequest,
     ): ResponseEntity<Any>? {
-        val errors = ex.bindingResult.fieldErrors.map {
-            mapOf(
-                "field" to it.field,
-                "message" to (it.defaultMessage ?: "유효하지 않은 값"),
-                "rejectedValue" to it.rejectedValue?.toString(),
-            )
-        }
+        val errors =
+            ex.bindingResult.fieldErrors.map {
+                mapOf(
+                    "field" to it.field,
+                    "message" to (it.defaultMessage ?: "유효하지 않은 값"),
+                    "rejectedValue" to it.rejectedValue?.toString(),
+                )
+            }
         val errorCode = ErrorCode.INVALID_INPUT
-        val problemDetail = ProblemDetail.forStatusAndDetail(
-            errorCode.status,
-            "입력값 검증에 실패했습니다",
-        ).apply {
-            title = errorCode.code
-            setProperty("code", errorCode.code)
-            setProperty("timestamp", Instant.now().toString())
-            setProperty("errors", errors)
-        }
+        val problemDetail =
+            ProblemDetail
+                .forStatusAndDetail(
+                    errorCode.status,
+                    "입력값 검증에 실패했습니다",
+                ).apply {
+                    title = errorCode.code
+                    setProperty("code", errorCode.code)
+                    setProperty("timestamp", Instant.now().toString())
+                    setProperty("errors", errors)
+                }
 
         log.warn("Validation failed: {} field(s)", errors.size)
 
@@ -89,14 +93,16 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(Exception::class)
     fun handleUnknown(ex: Exception): ResponseEntity<ProblemDetail> {
         val errorCode = ErrorCode.INTERNAL_SERVER_ERROR
-        val problemDetail = ProblemDetail.forStatusAndDetail(
-            errorCode.status,
-            errorCode.message,
-        ).apply {
-            title = errorCode.code
-            setProperty("code", errorCode.code)
-            setProperty("timestamp", Instant.now().toString())
-        }
+        val problemDetail =
+            ProblemDetail
+                .forStatusAndDetail(
+                    errorCode.status,
+                    errorCode.message,
+                ).apply {
+                    title = errorCode.code
+                    setProperty("code", errorCode.code)
+                    setProperty("timestamp", Instant.now().toString())
+                }
 
         log.error("Unhandled exception", ex)
 
