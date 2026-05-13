@@ -1,4 +1,8 @@
-# 로컬 개발 환경 설정
+# 로컬 개발 환경 설정 — 템플릿
+# 이 파일을 application-local.yml로 복사한 후 placeholder 값을 채우세요.
+# 시크릿 생성:
+#   openssl rand -base64 32    # JWT secret / crypto password
+#   openssl rand -hex 16       # crypto salt
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/trana
@@ -21,6 +25,9 @@ trana:
   jwt:
     issuer: trana
     audience: trana-app
-    secret: dev-only-secret-do-not-use-in-prod-32bytes-minimum-length-required
+    secret: <REPLACE_WITH_openssl_rand_base64_32>
     access-token-ttl: PT15M
     refresh-token-ttl: P30D
+  crypto:
+    password: <REPLACE_WITH_openssl_rand_base64_32>
+    salt: <REPLACE_WITH_openssl_rand_hex_16>
