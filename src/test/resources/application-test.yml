@@ -1,0 +1,25 @@
+# 테스트 전용 설정 — CI + 로컬 테스트 공통
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trana
+    username: trana
+    password: trana1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+
+trana:
+  jwt:
+    issuer: trana
+    audience: trana-app
+    secret: test-secret-do-not-use-in-prod-32bytes-minimum-length-required
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
+  crypto:
+    password: test-password-do-not-use-in-prod
+    salt: deadbeefcafebabe1234567890abcdef
