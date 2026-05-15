@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: ghcr.io/railwayapp-templates/postgres-ssl:18
     container_name: trana-db
     ports:
       - "5432:5432"
@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: trana
       POSTGRES_PASSWORD: trana1234
       POSTGRES_DB: trana
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
 
