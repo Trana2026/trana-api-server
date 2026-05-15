@@ -1,48 +1,42 @@
 package com.trana.auth.oauth
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.trana.auth.AuthException
 import com.trana.user.SocialProvider
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtException
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientException
 
+/**
+ * Google OIDC id_token 검증 어댑터.
+ *
+ * Flutter SDK가 serverClientId(Web Client ID) + scopes=["openid","email","profile"]로
+ * 로그인 → id_token에 sub, email, name, picture claims 포함.
+ */
 @Component
-class GoogleAuthAdapter : SocialAuthAdapter {
+class GoogleAuthAdapter(
+    @Qualifier("googleIdTokenDecoder")
+    private val jwtDecoder: JwtDecoder,
+) : SocialAuthAdapter {
     override val provider = SocialProvider.GOOGLE
 
-    private val restClient = RestClient.create(GOOGLE_API_BASE_URL)
-
-    override fun fetchUserInfo(accessToken: String): SocialUserInfo {
-        val response =
+    override fun verify(idToken: String): SocialUserInfo {
+        val jwt =
             try {
-                restClient
-                    .get()
-                    .uri("/oauth2/v3/userinfo")
-                    .header("Authorization", "Bearer $accessToken")
-                    .retrieve()
-                    .body(GoogleUserResponse::class.java)
-            } catch (ex: RestClientException) {
+                jwtDecoder.decode(idToken)
+            } catch (ex: JwtException) {
                 throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE, cause = ex)
-            } ?: throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE)
+            }
+
+        val sub =
+            jwt.subject
+                ?: throw AuthException.InvalidSocialToken(SocialProvider.GOOGLE)
 
         return SocialUserInfo(
             provider = SocialProvider.GOOGLE,
-            providerUserId = response.sub,
-            email = response.email,
-            nickname = response.name,
+            providerUserId = sub,
+            email = jwt.getClaimAsString("email"),
+            nickname = jwt.getClaimAsString("name"),
         )
     }
-
-    companion object {
-        private const val GOOGLE_API_BASE_URL = "https://www.googleapis.com"
-    }
 }
-
-private data class GoogleUserResponse(
-    val sub: String,
-    val email: String? = null,
-    val name: String? = null,
-    @JsonProperty("email_verified")
-    val emailVerified: Boolean? = null,
-)

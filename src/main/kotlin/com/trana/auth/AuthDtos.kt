@@ -12,11 +12,11 @@ data class SocialSignInRequest(
     )
     val provider: SocialProvider,
     @Schema(
-        description = "공급자 access_token (Flutter SDK가 받아온 값)",
-        example = "kakao_access_token_string_here",
+        description = "공급자 id_token (OIDC JWT — Flutter SDK가 openid scope로 받아온 값)",
+        example = "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
-    val accessToken: String,
+    val idToken: String,
 )
 
 @Schema(description = "로그인 응답 — 가입/로그인 성공 시 반환")

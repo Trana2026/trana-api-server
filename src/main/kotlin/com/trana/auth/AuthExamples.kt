@@ -45,14 +45,14 @@ internal object AuthExamples {
     const val REQUEST_KAKAO = """
           {
             "provider": "KAKAO",
-            "accessToken": "kakao_access_token_here"
+            "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
           }
       """
 
     const val REQUEST_GOOGLE = """
           {
             "provider": "GOOGLE",
-            "accessToken": "google_access_token_here"
+            "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
           }
       """
 

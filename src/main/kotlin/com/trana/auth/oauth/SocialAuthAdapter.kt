@@ -3,23 +3,29 @@ package com.trana.auth.oauth
 import com.trana.user.SocialProvider
 
 /**
- * 소셜 공급자별 OAuth 연동 추상화.
+ * 소셜 공급자별 OIDC id_token 검증 추상화.
  *
- * 클라이언트가 받아온 access_token을 받아 공급자 API 호출 → 사용자 정보 반환.
+ * 클라이언트(Flutter SDK)가 받아온 id_token (OIDC JWT)을
+ * 공급자별 JwtDecoder로 검증하고 사용자 정보 추출.
  *
  * 각 공급자별 구현:
- * - KakaoAuthAdapter: Kakao API
- * - GoogleAuthAdapter: Google OAuth (W2 이후)
- * - AppleAuthAdapter: Apple Sign In (W2 이후)
+ * - KakaoAuthAdapter: Kakao OIDC (kauth.kakao.com)
+ * - GoogleAuthAdapter: Google OIDC (accounts.google.com)
+ * - AppleAuthAdapter: Apple Sign In (appleid.apple.com) — W6 이후
+ *
+ * 검증 항목 (NimbusJwtDecoder가 처리):
+ * - 서명 (JWKS public key, RS256)
+ * - iss (issuer)
+ * - exp (만료)
+ * - aud (우리 client-id 일치)
  */
 interface SocialAuthAdapter {
-    /** 어떤 provider를 처리하는지 식별. */
     val provider: SocialProvider
 
     /**
-     * 공급자 access_token을 검증하고 사용자 정보 조회.
+     * id_token 검증 후 사용자 정보 추출.
      *
-     * @throws RuntimeException 토큰 무효 / API 호출 실패
+     * @throws com.trana.auth.AuthException.InvalidSocialToken 검증 실패
      */
-    fun fetchUserInfo(accessToken: String): SocialUserInfo
+    fun verify(idToken: String): SocialUserInfo
 }

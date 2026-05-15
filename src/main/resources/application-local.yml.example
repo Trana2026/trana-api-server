@@ -31,3 +31,10 @@ trana:
   crypto:
     password: <REPLACE_WITH_openssl_rand_base64_32>
     salt: <REPLACE_WITH_openssl_rand_hex_16>
+  oauth:
+    kakao:
+      issuer: https://kauth.kakao.com
+      client-id: <Kakao Developers Console의 REST API 키>
+    google:
+      issuer: https://accounts.google.com
+      client-id:

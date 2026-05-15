@@ -1,22 +1,91 @@
-### 1. Kakao access_token 갱신 (Kakao refresh token으로)
+### ============================================================
+### KAKAO — id_token 발급/갱신
+### Swagger에서 sign-in 호출 시 사용할 id_token 추출용
+### ============================================================
+
+### [1] Kakao code → token 교환 (최초 1회, refresh_token 발급)
+### 사전: 브라우저로 다음 URL 열어 로그인 후 redirect URL의 code 복사 →
+### http-client.private.env.json의 kakaoAuthCode에 입력
+### https://kauth.kakao.com/oauth/authorize?client_id={{kakaoClientId}}&redirect_uri={{kakaoRedirectUri}}&response_type=code&scope=openid
+POST https://kauth.kakao.com/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&client_id={{kakaoClientId}}&client_secret={{kakaoClientSecret}}&redirect_uri={{kakaoRedirectUri}}&code={{kakaoAuthCode}}
+
+> {%
+client.global.set("kakaoIdToken", response.body.id_token);
+client.global.set("kakaoRefreshToken", response.body.refresh_token);
+
+client.log("\n========================================");
+client.log("KAKAO ID_TOKEN (Swagger sign-in의 idToken에 붙여넣기):");
+client.log(response.body.id_token);
+client.log("========================================\n");
+
+client.test("Kakao code 교환 성공", () => client.assert(response.status === 200));
+client.test("id_token 포함 (OIDC 활성화 확인)", () => client.assert(response.body.id_token != null));
+%}
+
+
+### [2] Kakao refresh → id_token 갱신 (반복 사용)
 POST https://kauth.kakao.com/oauth/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=refresh_token&client_id={{kakaoClientId}}&client_secret={{kakaoClientSecret}}&refresh_token={{kakaoRefreshToken}}
 
 > {%
-client.global.set("kakaoAccessToken", response.body.access_token);
+client.global.set("kakaoIdToken", response.body.id_token);
+
+client.log("\n========================================");
+client.log("KAKAO ID_TOKEN (Swagger sign-in의 idToken에 붙여넣기):");
+client.log(response.body.id_token);
+client.log("========================================\n");
+
 client.test("Kakao 토큰 갱신 성공", () => client.assert(response.status === 200));
+client.test("id_token 포함", () => client.assert(response.body.id_token != null));
+%}
+
+### ============================================================
+### GOOGLE — id_token 발급/갱신
+### Swagger에서 sign-in 호출 시 사용할 id_token 추출용
+### ============================================================
+
+### [3] Google code → token 교환 (최초 1회, refresh_token 발급)
+### 사전: 브라우저로 다음 URL 열어 로그인 후 redirect URL의 code 복사 →
+### http-client.private.env.json의 googleAuthCode에 입력
+### https://accounts.google.com/o/oauth2/v2/auth?client_id={{googleClientId}}&redirect_uri={{googleRedirectUri}}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent
+POST https://oauth2.googleapis.com/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&client_id={{googleClientId}}&client_secret={{googleClientSecret}}&redirect_uri={{googleRedirectUri}}&code={{googleAuthCode}}
+
+> {%
+client.global.set("googleIdToken", response.body.id_token);
+client.global.set("googleRefreshToken", response.body.refresh_token);
+
+client.log("\n========================================");
+client.log("GOOGLE ID_TOKEN (Swagger sign-in의 idToken에 붙여넣기):");
+client.log(response.body.id_token);
+client.log("========================================\n");
+
+client.test("Google code 교환 성공", () => client.assert(response.status === 200));
+client.test("id_token 포함", () => client.assert(response.body.id_token != null));
 %}
 
 
-### Google access_token 갱신 (Google refresh token으로)
+### [4] Google refresh → id_token 갱신 (반복 사용)
 POST https://oauth2.googleapis.com/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=refresh_token&client_id={{googleClientId}}&client_secret={{googleClientSecret}}&refresh_token={{googleRefreshToken}}
 
 > {%
-client.global.set("googleAccessToken", response.body.access_token);
+client.global.set("googleIdToken", response.body.id_token);
+
+client.log("\n========================================");
+client.log("GOOGLE ID_TOKEN (Swagger sign-in의 idToken에 붙여넣기):");
+client.log(response.body.id_token);
+client.log("========================================\n");
+
 client.test("Google 토큰 갱신 성공", () => client.assert(response.status === 200));
+client.test("id_token 포함", () => client.assert(response.body.id_token != null));
 %}

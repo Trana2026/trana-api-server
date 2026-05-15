@@ -46,8 +46,6 @@ docs/
 .claude/
 CLAUDE.md
 
-### HTTP Client ###
-**/http-client.private.env.json
-
 ### Secrets ###
 src/main/resources/application-local.yml
+**/http-client.private.env.json
