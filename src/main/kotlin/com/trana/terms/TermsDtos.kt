@@ -2,6 +2,7 @@ package com.trana.terms
 
 import com.trana.user.AgeGroup
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotEmpty
 import java.time.Instant
 import java.util.UUID
 
@@ -28,6 +29,7 @@ data class AgreeRequest(
         example = "[1, 2, 3]",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
+    @NotEmpty(message = "동의할 약관을 하나 이상 선택해주세요")
     val termsVersionIds: List<Long>,
     @Schema(
         description = "동의 컨텍스트",

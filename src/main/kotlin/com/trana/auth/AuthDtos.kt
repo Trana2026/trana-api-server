@@ -2,6 +2,7 @@ package com.trana.auth
 
 import com.trana.user.SocialProvider
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 
 @Schema(description = "소셜 로그인 요청")
 data class SocialSignInRequest(
@@ -16,6 +17,7 @@ data class SocialSignInRequest(
         example = "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
+    @NotBlank(message = "idToken은 필수입니다")
     val idToken: String,
 )
 
@@ -44,5 +46,6 @@ data class RefreshRequest(
         description = "Refresh token (sign-in 시 발급된 것)",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
+    @NotBlank(message = "refreshToken은 필수입니다")
     val refreshToken: String,
 )

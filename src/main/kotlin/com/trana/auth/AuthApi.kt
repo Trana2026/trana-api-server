@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
@@ -77,6 +78,7 @@ interface AuthApi {
             ],
         )
         @org.springframework.web.bind.annotation.RequestBody
+        @Valid
         request: SocialSignInRequest,
     ): SignInResponse
 
@@ -125,6 +127,7 @@ Refresh token으로 새 access / refresh token 발급.
             ],
         )
         @org.springframework.web.bind.annotation.RequestBody
+        @Valid
         request: RefreshRequest,
     ): SignInResponse
 }
