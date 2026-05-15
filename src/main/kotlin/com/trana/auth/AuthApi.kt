@@ -16,11 +16,12 @@ interface AuthApi {
     @Operation(
         summary = "소셜 로그인 (가입 + 로그인 통합)",
         description = """
-클라이언트(Flutter)가 받아온 공급자 access_token으로 우리 서버 인증.
-- 신규 사용자: 자동 가입 + JWT 발급
-- 기존 사용자: JWT 재발급
-- 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
-      """,
+  클라이언트(Flutter)가 받아온 공급자 id_token (OIDC JWT)으로 우리 서버 인증.
+  - 신규 사용자: 자동 가입 + JWT 발급
+  - 기존 사용자: JWT 재발급
+  - 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
+  - 사전 조건: 공급자 OIDC 활성화 + Flutter SDK가 openid scope 요청
+        """,
     )
     @ApiResponses(
         value = [
