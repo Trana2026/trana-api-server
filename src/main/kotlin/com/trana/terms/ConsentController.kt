@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/consents")
+@RequestMapping("/v1/consents")
 @SecurityRequirement(name = "bearerAuth")
 class ConsentController(
     private val userConsentService: UserConsentService,
