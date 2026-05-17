@@ -3,6 +3,7 @@ package com.trana.identity.adapter
 import java.time.LocalDate
 
 // ───── input ─────
+@Suppress("ArrayInDataClass")
 data class ImageInput(
     val bytes: ByteArray,
     val format: ImageFormat, // JPG | PNG (NCP는 PDF/TIFF도 받지만 우리는 신분증/셀카만)

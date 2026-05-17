@@ -49,20 +49,6 @@ class OpenApiConfig {
             operation
         }
 
-    companion object {
-        private val SERVER_ERROR_EXAMPLE =
-            """
-            {
-              "type": "about:blank",
-              "title": "COMMON_500",
-              "status": 500,
-              "detail": "서버 오류가 발생했습니다",
-              "code": "COMMON_500",
-              "timestamp": "2026-05-07T14:30:00Z"
-            }
-            """.trimIndent()
-    }
-
     @Bean
     fun pathSortCustomizer(): OpenApiCustomizer =
         OpenApiCustomizer { openApi ->
