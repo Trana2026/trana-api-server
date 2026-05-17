@@ -2,18 +2,22 @@ package com.trana.identity
 
 import com.trana.common.exception.ProblemDetailResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.multipart.MultipartFile
 
 @Tag(name = "Identity", description = "신원 인증 (KYC) — 신분증 OCR + 얼굴 비교")
+@SecurityRequirement(name = "bearerAuth")
 interface IdentityApi {
     @Operation(
         summary = "신분증 OCR",
@@ -33,6 +37,7 @@ interface IdentityApi {
     )
     @PostMapping("/id-card", consumes = ["multipart/form-data"])
     fun recognizeIdCard(
+        @Parameter(hidden = true) userId: Long?,
         @RequestPart("file") file: MultipartFile,
     ): IdCardOcrResponse
 
@@ -64,11 +69,23 @@ interface IdentityApi {
 
     @Operation(
         summary = "얼굴 비교",
-        description = "신분증 사진 + 셀카 → similarity(0.0~1.0) + isMatch(threshold 0.8 이상)",
+        description =
+            "신분증 사진 + 셀카 + requestId → similarity(0.0~1.0) + isMatch. " +
+                "requestId는 OCR 단계에서 받은 값 (KYC 시도 record 매칭용).",
     )
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "비교 성공"),
+            ApiResponse(
+                responseCode = "404",
+                description = "requestId 세션 없음",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "requestId 세션 만료",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
             ApiResponse(
                 responseCode = "500",
                 description = "NCP 호출 실패",
@@ -78,6 +95,7 @@ interface IdentityApi {
     )
     @PostMapping("/face-compare", consumes = ["multipart/form-data"])
     fun compareFaces(
+        @RequestParam("requestId") requestId: String,
         @RequestPart("cardImage") cardImage: MultipartFile,
         @RequestPart("faceImage") faceImage: MultipartFile,
     ): FaceCompareResponse

@@ -1,9 +1,12 @@
 package com.trana.identity
 
+import com.trana.audit.AuditLogger
+import com.trana.common.crypto.Sha256Hasher
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.FaceCompareResult
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.IdCardOcrOutput
+import com.trana.identity.adapter.IdCardRecognitionResult
 import com.trana.identity.adapter.IdCardSensitiveData
 import com.trana.identity.adapter.IdCardVerifyAdapter
 import com.trana.identity.adapter.IdCardVerifyInput
@@ -11,41 +14,150 @@ import com.trana.identity.adapter.IdCardVerifyResult
 import com.trana.identity.adapter.IdType
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.adapter.idType
+import com.trana.user.AgeGroup
+import com.trana.user.UserService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.Period
+import com.trana.identity.adapter.Gender as KycGender
+import com.trana.user.Gender as UserGender
 
-/**
- * KYC 도메인 서비스.
- *
- * - 어댑터(OCR/Verify/Compare) 오케스트레이션
- * - OCR 단계: 평문 식별번호를 세션 DB에 암호화 저장 (Verify 단계용)
- * - Verify 단계: 세션에서 평문 조회 → idType별 input 변환 → 어댑터 호출
- * - Compare 단계: 단순 위임
- *
- * (추후) IdentityVerification Entity에 영구 결과 기록 + User 백필 + audit log
- */
 @Service
 class IdentityService(
     private val idCardOcrAdapter: IdCardOcrAdapter,
     private val idCardVerifyAdapter: IdCardVerifyAdapter,
     private val faceCompareAdapter: FaceCompareAdapter,
     private val sessionService: IdCardVerifySessionService,
+    private val verificationRepository: IdentityVerificationRepository,
+    private val userService: UserService,
+    private val auditLogger: AuditLogger,
 ) {
-    fun recognizeIdCard(image: ImageInput): IdCardOcrOutput {
+    @Transactional
+    fun recognizeIdCard(
+        image: ImageInput,
+        userId: Long? = null,
+    ): IdCardOcrOutput {
         val output = idCardOcrAdapter.recognizeIdCard(image)
         sessionService.save(output.sensitive.toSessionData(output.result.idType))
+        val record = verificationRepository.save(output.toPendingVerification(userId))
+        auditLogger.log(
+            eventType = EVENT_OCR,
+            actorUserId = userId,
+            entityType = ENTITY_TYPE,
+            entityId = record.id,
+            metadata =
+                mapOf(
+                    "idType" to output.result.idType.name,
+                    "ncpRequestId" to output.sensitive.requestId,
+                ),
+        )
         return output
     }
 
+    @Transactional
     fun verifyIdCard(requestId: String): IdCardVerifyResult {
         val session = sessionService.findActive(requestId)
-        return idCardVerifyAdapter.verify(session.toVerifyInput())
+        val result = idCardVerifyAdapter.verify(session.toVerifyInput())
+        val record = updateVerificationRecord(requestId) { it.applyVerify(result) }
+        auditLogger.log(
+            eventType = EVENT_VERIFY,
+            actorUserId = record.userId,
+            entityType = ENTITY_TYPE,
+            entityId = record.id,
+            metadata =
+                mapOf(
+                    "passed" to result.isValid,
+                    "errorCode" to result.errorCode,
+                    "errorMessage" to result.errorMessage,
+                ),
+        )
+        return result
     }
 
+    @Transactional
     fun compareFaces(
+        requestId: String,
         idCardImage: ImageInput,
         selfieImage: ImageInput,
-    ): FaceCompareResult = faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+    ): FaceCompareResult {
+        sessionService.findActive(requestId)
+        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+        val record = updateVerificationRecord(requestId) { it.applyCompare(result) }
+        auditLogger.log(
+            eventType = EVENT_COMPARE,
+            actorUserId = record.userId,
+            entityType = ENTITY_TYPE,
+            entityId = record.id,
+            metadata =
+                mapOf(
+                    "similarity" to result.similarity,
+                    "isMatch" to result.isMatch,
+                    "finalStatus" to record.status.name,
+                ),
+        )
+        if (record.status == IdentityVerificationStatus.SUCCESS && record.userId != null) {
+            backfillUser(record)
+        }
+        return result
+    }
+
+    private fun backfillUser(record: IdentityVerification) {
+        val userId = record.userId ?: return
+        val birthDate = record.birthDate ?: error("KYC birthDate null")
+        val gender = record.gender ?: error("KYC gender null")
+        val user = userService.getById(userId)
+        user.applyKycResult(
+            name = record.name ?: error("KYC name null"),
+            birthDate = birthDate,
+            gender = gender.toUserGender(),
+            ageGroup = computeAgeGroup(birthDate),
+        )
+    }
+
+    private fun updateVerificationRecord(
+        requestId: String,
+        block: (IdentityVerification) -> Unit,
+    ): IdentityVerification {
+        val record =
+            verificationRepository.findByNcpDocumentRequestId(requestId)
+                ?: error("IdentityVerification record 없음 (requestId=$requestId)")
+        block(record)
+        return verificationRepository.save(record)
+    }
+
+    private fun IdCardOcrOutput.toPendingVerification(userId: Long?): IdentityVerification =
+        IdentityVerification(
+            userId = userId,
+            idType = result.idType,
+            ncpDocumentRequestId = sensitive.requestId,
+            identifierHash = result.computeIdentifierHash(),
+            name = result.name,
+            birthDate = result.birthDate,
+            gender = result.gender,
+        )
+
+    private fun IdCardRecognitionResult.computeIdentifierHash(): String =
+        when (this) {
+            is IdCardRecognitionResult.ResidentIdCard -> personalNumberHash
+            is IdCardRecognitionResult.DriverLicense -> personalNumberHash
+            is IdCardRecognitionResult.Passport -> Sha256Hasher.hashHex(passportNumber)
+            is IdCardRecognitionResult.AlienRegistration -> alienRegNumberHash
+        }
+
+    private fun KycGender.toUserGender(): UserGender =
+        when (this) {
+            KycGender.MALE -> UserGender.MALE
+            KycGender.FEMALE -> UserGender.FEMALE
+        }
+
+    private fun computeAgeGroup(birthDate: LocalDate): AgeGroup =
+        if (Period.between(birthDate, LocalDate.now()).years >= ADULT_AGE) {
+            AgeGroup.ADULT
+        } else {
+            AgeGroup.MINOR
+        }
 
     private fun IdCardSensitiveData.toSessionData(idType: IdType): IdCardSessionData =
         IdCardSessionData(
@@ -103,3 +215,8 @@ class IdentityService(
 }
 
 private const val SESSION_TTL_MINUTES = 10L
+private const val ADULT_AGE = 19 // 한국 민법상 만 19세 성인
+private const val EVENT_OCR = "IDENTITY_OCR"
+private const val EVENT_VERIFY = "IDENTITY_VERIFY"
+private const val EVENT_COMPARE = "IDENTITY_COMPARE"
+private const val ENTITY_TYPE = "IDENTITY_VERIFICATION"

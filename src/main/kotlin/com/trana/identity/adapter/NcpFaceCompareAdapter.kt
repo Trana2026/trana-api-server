@@ -91,4 +91,4 @@ class NcpFaceCompareAdapter(
 }
 
 private const val EKYC_SECRET_HEADER = "X-EKYC-SECRET"
-private const val FACE_MATCH_THRESHOLD = 0.8
+private const val FACE_MATCH_THRESHOLD = 0.5

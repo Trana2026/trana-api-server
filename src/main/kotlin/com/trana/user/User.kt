@@ -11,6 +11,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
+import java.time.LocalDate
 
 @Entity
 @Table(name = "users")
@@ -72,17 +73,17 @@ class User(
 
     fun applyKycResult(
         name: String,
-        birthDate: String,
-        phone: String,
+        birthDate: LocalDate,
         gender: Gender,
         ageGroup: AgeGroup,
+        phone: String? = null,
     ) {
         check(this.ageGroup == null) { "이미 KYC 완료된 사용자입니다" }
         this.name = name
-        this.birthDate = birthDate
-        this.phone = phone
+        this.birthDate = birthDate.toString() // LocalDate → "yyyy-MM-dd"
         this.gender = gender
         this.ageGroup = ageGroup
+        phone?.let { this.phone = it }
     }
 
     companion object {

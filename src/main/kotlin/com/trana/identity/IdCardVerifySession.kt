@@ -19,7 +19,7 @@ import java.time.OffsetDateTime
  * - 만료 후 @Scheduled cleanup task가 삭제
  */
 @Entity
-@Table(name = "id_card_verify_session")
+@Table(name = "id_card_verify_sessions")
 @Suppress("LongParameterList")
 class IdCardVerifySession(
     @Id

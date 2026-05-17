@@ -2,6 +2,7 @@ package com.trana.identity
 
 import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -11,18 +12,21 @@ import org.springframework.web.multipart.MultipartFile
 class IdentityController(
     private val identityService: IdentityService,
 ) : IdentityApi {
-    override fun recognizeIdCard(file: MultipartFile): IdCardOcrResponse =
-        identityService.recognizeIdCard(file.toImageInput()).toResponse()
+    override fun recognizeIdCard(
+        @AuthenticationPrincipal userId: Long?,
+        file: MultipartFile,
+    ): IdCardOcrResponse = identityService.recognizeIdCard(file.toImageInput(), userId).toResponse()
 
     override fun verifyIdCard(request: IdCardVerifyRequest): IdCardVerifyResponse =
         identityService.verifyIdCard(request.requestId).toResponse()
 
     override fun compareFaces(
+        requestId: String,
         cardImage: MultipartFile,
         faceImage: MultipartFile,
     ): FaceCompareResponse =
         identityService
-            .compareFaces(cardImage.toImageInput(), faceImage.toImageInput())
+            .compareFaces(requestId, cardImage.toImageInput(), faceImage.toImageInput())
             .toResponse()
 }
 

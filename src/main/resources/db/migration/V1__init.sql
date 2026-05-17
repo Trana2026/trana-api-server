@@ -164,7 +164,7 @@ EXECUTE FUNCTION worm_protect();
 -- - 10분 TTL (NCP requestId 유효 기간과 일치)
 -- - 식별번호는 BYTEA 암호화 (AES-256-GCM, common/crypto 사용)
 -- =========================================
-CREATE TABLE id_card_verify_session
+CREATE TABLE id_card_verify_sessions
 (
     request_id                VARCHAR(100) PRIMARY KEY,
     id_type                   VARCHAR(30)  NOT NULL,
@@ -181,15 +181,53 @@ CREATE TABLE id_card_verify_session
     created_at                TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_id_card_verify_session_expires ON id_card_verify_session (expires_at);
+CREATE INDEX idx_id_card_verify_session_expires ON id_card_verify_sessions (expires_at);
 
-COMMENT ON TABLE id_card_verify_session IS '신분증 OCR 후 Verify까지의 임시 세션 (10분 TTL). 평문 식별번호는 BYTEA 암호화';
-COMMENT ON COLUMN id_card_verify_session.request_id IS 'NCP Document API의 requestId (Verify 호출 시 키, 10분 유효)';
-COMMENT ON COLUMN id_card_verify_session.id_type IS 'ID_CARD | DRIVER_LICENSE | PASSPORT | ALIEN_REGISTRATION';
-COMMENT ON COLUMN id_card_verify_session.personal_number_encrypted IS 'AES-256-GCM (ic/dl 주민번호, ac 외국인등록번호, 모두 13자리)';
-COMMENT ON COLUMN id_card_verify_session.license_number IS '운전면허번호 (dl만, 평문 — 단독으론 식별 약함)';
-COMMENT ON COLUMN id_card_verify_session.license_security_code IS '면허증 암호일련번호 (dl, 옵션 — skipCodeCheck로 우회 가능)';
-COMMENT ON COLUMN id_card_verify_session.passport_number_encrypted IS 'AES-256-GCM (pp만, 영숫자 가변 길이)';
-COMMENT ON COLUMN id_card_verify_session.birth_date IS '여권 OCR 결과 생년월일 (pp Verify 필수)';
-COMMENT ON COLUMN id_card_verify_session.serial_number IS '외국인등록증 시리얼 번호 (ac Verify 필수)';
-COMMENT ON COLUMN id_card_verify_session.expires_at IS '10분 후 자동 만료. @Scheduled cleanup task가 주기 삭제';
+COMMENT ON TABLE id_card_verify_sessions IS '신분증 OCR 후 Verify까지의 임시 세션 (10분 TTL). 평문 식별번호는 BYTEA 암호화';
+COMMENT ON COLUMN id_card_verify_sessions.request_id IS 'NCP Document API의 requestId (Verify 호출 시 키, 10분 유효)';
+COMMENT ON COLUMN id_card_verify_sessions.id_type IS 'ID_CARD | DRIVER_LICENSE | PASSPORT | ALIEN_REGISTRATION';
+COMMENT ON COLUMN id_card_verify_sessions.personal_number_encrypted IS 'AES-256-GCM (ic/dl 주민번호, ac 외국인등록번호, 모두 13자리)';
+COMMENT ON COLUMN id_card_verify_sessions.license_number IS '운전면허번호 (dl만, 평문 — 단독으론 식별 약함)';
+COMMENT ON COLUMN id_card_verify_sessions.license_security_code IS '면허증 암호일련번호 (dl, 옵션 — skipCodeCheck로 우회 가능)';
+COMMENT ON COLUMN id_card_verify_sessions.passport_number_encrypted IS 'AES-256-GCM (pp만, 영숫자 가변 길이)';
+COMMENT ON COLUMN id_card_verify_sessions.birth_date IS '여권 OCR 결과 생년월일 (pp Verify 필수)';
+COMMENT ON COLUMN id_card_verify_sessions.serial_number IS '외국인등록증 시리얼 번호 (ac Verify 필수)';
+COMMENT ON COLUMN id_card_verify_sessions.expires_at IS '10분 후 자동 만료. @Scheduled cleanup task가 주기 삭제';
+
+-- =========================================
+-- identity_verifications: KYC 시도/결과 영구 저장
+-- - audit + 분쟁 증거 + 중복 가입 방지 (identifier_hash lookup)
+-- - id_card_verify_sessions(임시 10분)과 다른 영구 테이블
+-- =========================================
+CREATE TABLE identity_verifications
+(
+    id                      BIGSERIAL PRIMARY KEY,
+    user_id                 BIGINT,
+    signup_session_id       UUID,
+    id_type                 VARCHAR(30)  NOT NULL,
+    status                  VARCHAR(20)  NOT NULL,
+    ncp_document_request_id VARCHAR(100) NOT NULL,
+    identifier_hash         VARCHAR(64)  NOT NULL,
+    name                    VARCHAR(100),
+    birth_date              DATE,
+    gender                  VARCHAR(10),
+    verify_passed           BOOLEAN      NOT NULL,
+    verify_error_code       VARCHAR(50),
+    verify_error_message    TEXT,
+    face_similarity         DOUBLE PRECISION,
+    face_match              BOOLEAN,
+    failure_step            VARCHAR(30),
+    created_at              TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_identity_verifications_user ON identity_verifications (user_id, created_at DESC);
+CREATE INDEX idx_identity_verifications_session ON identity_verifications (signup_session_id);
+CREATE INDEX idx_identity_verifications_hash ON identity_verifications (identifier_hash);
+
+COMMENT ON TABLE identity_verifications IS 'KYC 시도/결과 영구 기록. id_card_verify_sessions(임시)과 별개';
+COMMENT ON COLUMN identity_verifications.user_id IS '논리 FK only (audit_logs 패턴). 가입 전이면 NULL + signup_session_id로 매칭';
+COMMENT ON COLUMN identity_verifications.signup_session_id IS 'multi-step signup 매칭 (user 생성 전 시점)';
+COMMENT ON COLUMN identity_verifications.status IS 'PENDING | SUCCESS | FAILED — OCR 시 PENDING 생성, Verify/Compare 단계 누적 update';
+COMMENT ON COLUMN identity_verifications.ncp_document_request_id IS 'NCP Document API requestId (장애 시 NCP 추적용)';
+COMMENT ON COLUMN identity_verifications.identifier_hash IS 'SHA-256 (ic/dl 주민번호, pp 여권번호, ac 외국인등록번호) — 중복 가입 lookup';
+COMMENT ON COLUMN identity_verifications.failure_step IS 'OCR | VERIFY | COMPARE | NULL(성공)';
