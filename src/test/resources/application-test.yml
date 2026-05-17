@@ -30,4 +30,11 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id: test-google-client-id
-
+  kyc:
+    ncp:
+      id-card:
+        invoke-url: https://test.example.com/ekyc/v1/test/test/id-card
+        secret-key: test-id-card-secret
+      face-compare:
+        invoke-url: https://test.example.com/ekyc/v1/test/test/face-compare
+        secret-key: test-face-secret

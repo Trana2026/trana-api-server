@@ -157,3 +157,39 @@ CREATE TRIGGER trg_audit_logs_worm
     ON audit_logs
     FOR EACH ROW
 EXECUTE FUNCTION worm_protect();
+
+-- =========================================
+-- id_card_verify_session: 신분증 OCR → Verify 단계까지의 임시 세션
+-- - 평문 식별번호 임시 보관 (Verify API 호출에 평문 필요)
+-- - 10분 TTL (NCP requestId 유효 기간과 일치)
+-- - 식별번호는 BYTEA 암호화 (AES-256-GCM, common/crypto 사용)
+-- =========================================
+CREATE TABLE id_card_verify_session
+(
+    request_id                VARCHAR(100) PRIMARY KEY,
+    id_type                   VARCHAR(30)  NOT NULL,
+    name                      VARCHAR(100) NOT NULL,
+    personal_number_encrypted BYTEA,
+    license_number            VARCHAR(30),
+    license_security_code     VARCHAR(20),
+    passport_number_encrypted BYTEA,
+    birth_date                DATE,
+    serial_number             VARCHAR(30),
+    issue_date                DATE,
+    expire_date               DATE,
+    expires_at                TIMESTAMPTZ  NOT NULL,
+    created_at                TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_id_card_verify_session_expires ON id_card_verify_session (expires_at);
+
+COMMENT ON TABLE id_card_verify_session IS '신분증 OCR 후 Verify까지의 임시 세션 (10분 TTL). 평문 식별번호는 BYTEA 암호화';
+COMMENT ON COLUMN id_card_verify_session.request_id IS 'NCP Document API의 requestId (Verify 호출 시 키, 10분 유효)';
+COMMENT ON COLUMN id_card_verify_session.id_type IS 'ID_CARD | DRIVER_LICENSE | PASSPORT | ALIEN_REGISTRATION';
+COMMENT ON COLUMN id_card_verify_session.personal_number_encrypted IS 'AES-256-GCM (ic/dl 주민번호, ac 외국인등록번호, 모두 13자리)';
+COMMENT ON COLUMN id_card_verify_session.license_number IS '운전면허번호 (dl만, 평문 — 단독으론 식별 약함)';
+COMMENT ON COLUMN id_card_verify_session.license_security_code IS '면허증 암호일련번호 (dl, 옵션 — skipCodeCheck로 우회 가능)';
+COMMENT ON COLUMN id_card_verify_session.passport_number_encrypted IS 'AES-256-GCM (pp만, 영숫자 가변 길이)';
+COMMENT ON COLUMN id_card_verify_session.birth_date IS '여권 OCR 결과 생년월일 (pp Verify 필수)';
+COMMENT ON COLUMN id_card_verify_session.serial_number IS '외국인등록증 시리얼 번호 (ac Verify 필수)';
+COMMENT ON COLUMN id_card_verify_session.expires_at IS '10분 후 자동 만료. @Scheduled cleanup task가 주기 삭제';

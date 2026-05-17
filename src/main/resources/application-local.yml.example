@@ -38,3 +38,11 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id:
+  kyc:
+    ncp:
+      id-card:
+        invoke-url: https://CHANGE_ME.apigw-pub.fin-ntruss.com/ekyc/v1/CHANGE_ME/CHANGE_ME/id-card
+        secret-key: CHANGE_ME
+      face-compare:
+        invoke-url: https://CHANGE_ME.apigw-pub.fin-ntruss.com/ekyc/v1/CHANGE_ME/CHANGE_ME/face-compare
+        secret-key: CHANGE_ME

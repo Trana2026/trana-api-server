@@ -24,6 +24,14 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id: ${GOOGLE_CLIENT_ID}
+  kyc:
+    ncp:
+      id-card:
+        invoke-url: ${NCP_EKYC_IDCARD_INVOKE_URL}
+        secret-key: ${NCP_EKYC_IDCARD_SECRET}
+      face-compare:
+        invoke-url: ${NCP_EKYC_FACE_INVOKE_URL}
+        secret-key: ${NCP_EKYC_FACE_SECRET}
 
 logging:
   level:
