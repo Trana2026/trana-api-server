@@ -2,10 +2,12 @@ package com.trana.common
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.SecurityScheme
+import io.swagger.v3.oas.models.Paths
 import io.swagger.v3.oas.models.media.Content
 import io.swagger.v3.oas.models.media.MediaType
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.responses.ApiResponse
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -60,4 +62,21 @@ class OpenApiConfig {
             }
             """.trimIndent()
     }
+
+    @Bean
+    fun pathSortCustomizer(): OpenApiCustomizer =
+        OpenApiCustomizer { openApi ->
+            val ordered =
+                listOf(
+                    // Identity (KYC 흐름 순서)
+                    "/v1/identity/id-card",
+                    "/v1/identity/verify-id-card",
+                    "/v1/identity/face-compare",
+                )
+            val current = openApi.paths
+            val sorted = Paths()
+            ordered.forEach { key -> current[key]?.let { sorted[key] = it } }
+            current.forEach { (key, item) -> if (key !in ordered) sorted[key] = item }
+            openApi.paths = sorted
+        }
 }

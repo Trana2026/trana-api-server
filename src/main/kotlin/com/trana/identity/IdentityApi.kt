@@ -37,26 +37,6 @@ interface IdentityApi {
     ): IdCardOcrResponse
 
     @Operation(
-        summary = "얼굴 비교",
-        description = "신분증 사진 + 셀카 → similarity(0.0~1.0) + isMatch(threshold 0.8 이상)",
-    )
-    @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "200", description = "비교 성공"),
-            ApiResponse(
-                responseCode = "500",
-                description = "NCP 호출 실패",
-                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
-            ),
-        ],
-    )
-    @PostMapping("/face-compare", consumes = ["multipart/form-data"])
-    fun compareFaces(
-        @RequestPart("cardImage") cardImage: MultipartFile,
-        @RequestPart("faceImage") faceImage: MultipartFile,
-    ): FaceCompareResponse
-
-    @Operation(
         summary = "신분증 진위확인",
         description =
             "OCR 단계의 requestId로 행안부/경찰청 진위확인. " +
@@ -81,4 +61,24 @@ interface IdentityApi {
     fun verifyIdCard(
         @RequestBody @Valid request: IdCardVerifyRequest,
     ): IdCardVerifyResponse
+
+    @Operation(
+        summary = "얼굴 비교",
+        description = "신분증 사진 + 셀카 → similarity(0.0~1.0) + isMatch(threshold 0.8 이상)",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "비교 성공"),
+            ApiResponse(
+                responseCode = "500",
+                description = "NCP 호출 실패",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+        ],
+    )
+    @PostMapping("/face-compare", consumes = ["multipart/form-data"])
+    fun compareFaces(
+        @RequestPart("cardImage") cardImage: MultipartFile,
+        @RequestPart("faceImage") faceImage: MultipartFile,
+    ): FaceCompareResponse
 }

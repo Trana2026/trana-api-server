@@ -1,47 +1,29 @@
 package com.trana.identity
 
-import com.trana.identity.adapter.FaceCompareAdapter
-import com.trana.identity.adapter.IdCardOcrAdapter
-import com.trana.identity.adapter.IdCardSensitiveData
-import com.trana.identity.adapter.IdCardVerifyAdapter
-import com.trana.identity.adapter.IdCardVerifyInput
-import com.trana.identity.adapter.IdType
 import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
-import com.trana.identity.adapter.idType
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
-import java.time.OffsetDateTime
 
 @RestController
 @RequestMapping("/v1/identity")
 class IdentityController(
-    private val idCardOcrAdapter: IdCardOcrAdapter,
-    private val idCardVerifyAdapter: IdCardVerifyAdapter,
-    private val faceCompareAdapter: FaceCompareAdapter,
-    private val sessionService: IdCardVerifySessionService,
+    private val identityService: IdentityService,
 ) : IdentityApi {
-    override fun recognizeIdCard(file: MultipartFile): IdCardOcrResponse {
-        val output = idCardOcrAdapter.recognizeIdCard(file.toImageInput())
-        sessionService.save(output.sensitive.toSessionData(output.result.idType))
-        return output.toResponse()
-    }
+    override fun recognizeIdCard(file: MultipartFile): IdCardOcrResponse =
+        identityService.recognizeIdCard(file.toImageInput()).toResponse()
 
-    override fun verifyIdCard(request: IdCardVerifyRequest): IdCardVerifyResponse {
-        val session = sessionService.findActive(request.requestId)
-        return idCardVerifyAdapter.verify(session.toVerifyInput()).toResponse()
-    }
+    override fun verifyIdCard(request: IdCardVerifyRequest): IdCardVerifyResponse =
+        identityService.verifyIdCard(request.requestId).toResponse()
 
     override fun compareFaces(
         cardImage: MultipartFile,
         faceImage: MultipartFile,
     ): FaceCompareResponse =
-        faceCompareAdapter
-            .compareFaces(
-                idCardImage = cardImage.toImageInput(),
-                selfieImage = faceImage.toImageInput(),
-            ).toResponse()
+        identityService
+            .compareFaces(cardImage.toImageInput(), faceImage.toImageInput())
+            .toResponse()
 }
 
 private fun MultipartFile.toImageInput(): ImageInput {
@@ -74,59 +56,3 @@ private fun detectImageFormat(
             }
         }
     }
-
-private fun IdCardSensitiveData.toSessionData(idType: IdType): IdCardSessionData =
-    IdCardSessionData(
-        requestId = requestId,
-        idType = idType,
-        name = name,
-        personalNumber = personalNumber,
-        licenseNumber = licenseNumber,
-        licenseSecurityCode = licenseSecurityCode,
-        passportNumber = passportNumber,
-        birthDate = birthDate,
-        serialNumber = serialNumber,
-        issueDate = issueDate,
-        expireDate = expireDate,
-        expiresAt = OffsetDateTime.now().plusMinutes(SESSION_TTL_MINUTES),
-    )
-
-private fun IdCardSessionData.toVerifyInput(): IdCardVerifyInput {
-    val base =
-        IdCardVerifyInput(
-            requestId = requestId,
-            idType = idType,
-            name = name,
-            issueDate = issueDate,
-        )
-    return when (idType) {
-        IdType.ID_CARD -> {
-            base.copy(personalNum = personalNumber)
-        }
-
-        IdType.DRIVER_LICENSE -> {
-            base.copy(
-                personalNum = personalNumber,
-                licenseNum = licenseNumber,
-                licenseCode = licenseSecurityCode,
-            )
-        }
-
-        IdType.PASSPORT -> {
-            base.copy(
-                passportNum = passportNumber,
-                birthDate = birthDate,
-                expireDate = expireDate,
-            )
-        }
-
-        IdType.ALIEN_REGISTRATION -> {
-            base.copy(
-                alienRegNum = personalNumber,
-                serialNum = serialNumber,
-            )
-        }
-    }
-}
-
-private const val SESSION_TTL_MINUTES = 10L

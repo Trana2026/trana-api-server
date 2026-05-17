@@ -38,10 +38,11 @@ class NcpIdCardVerifyAdapter(
                 .body<NcpIdCardVerifyResponse>()
                 ?: error("NCP Verify API 응답이 비어 있음")
 
+        val isValid = response.result == "SUCCESS"
         return IdCardVerifyResult(
-            isValid = response.result == "SUCCESS",
-            errorCode = response.code,
-            errorMessage = response.message,
+            isValid = isValid,
+            errorCode = if (isValid) null else response.code,
+            errorMessage = if (isValid) null else response.message,
         )
     }
 

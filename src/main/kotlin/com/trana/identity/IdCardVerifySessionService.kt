@@ -44,8 +44,10 @@ class IdCardVerifySessionService(
         val session =
             repository
                 .findById(requestId)
-                .orElseThrow { IllegalArgumentException("세션 없음: $requestId") }
-        check(!session.isExpired()) { "세션 만료됨: $requestId" }
+                .orElseThrow { IdentityException.SessionNotFound(requestId) }
+        if (session.isExpired()) {
+            throw IdentityException.SessionExpired(requestId)
+        }
         return session.toData()
     }
 
