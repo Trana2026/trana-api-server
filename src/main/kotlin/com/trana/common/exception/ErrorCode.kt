@@ -39,4 +39,10 @@ enum class ErrorCode(
     // === KYC 신원확인 (IDENTITY_*) ===
     IDENTITY_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "IDENTITY_404_SESSION", "Verify 세션을 찾을 수 없습니다 (OCR을 다시 진행해주세요)"),
     IDENTITY_SESSION_EXPIRED(HttpStatus.GONE, "IDENTITY_410_SESSION", "Verify 세션이 만료되었습니다 (OCR을 다시 진행해주세요)"),
+
+    // === 보호자 (GUARDIAN_*) ===
+    GUARDIAN_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "GUARDIAN_404_LINK", "보호자 링크를 찾을 수 없습니다"),
+    GUARDIAN_LINK_INVALID(HttpStatus.GONE, "GUARDIAN_410_LINK", "보호자 링크가 만료되었거나 이미 사용/취소되었습니다"),
+    GUARDIAN_NOT_MINOR(HttpStatus.FORBIDDEN, "GUARDIAN_403_NOT_MINOR", "미성년자만 보호자 링크를 발급할 수 있습니다"),
+    GUARDIAN_ALREADY_VERIFIED(HttpStatus.CONFLICT, "GUARDIAN_409_VERIFIED", "이미 보호자 인증이 완료된 사용자입니다"),
 }
