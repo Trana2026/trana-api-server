@@ -29,6 +29,7 @@ class SecurityConfig(
                         "/v1/auth/**",
                         "/v1/terms/**",
                         "/v1/identity/**",
+                        "/v1/guardian/identity/**",
                         "/actuator/health",
                         "/actuator/info",
                         "/v3/api-docs/**",

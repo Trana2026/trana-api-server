@@ -38,4 +38,11 @@ sealed class GuardianException(
             errorCode = ErrorCode.GUARDIAN_ALREADY_VERIFIED,
             message = "이미 보호자 인증이 완료된 사용자입니다 (userId=$userId)",
         )
+
+    class NotAdult(
+        birthDate: java.time.LocalDate,
+    ) : GuardianException(
+            errorCode = ErrorCode.GUARDIAN_NOT_ADULT,
+            message = "보호자는 성인(만 19세 이상)이어야 합니다 (birthDate=$birthDate)",
+        )
 }

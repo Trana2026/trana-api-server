@@ -63,6 +63,12 @@ class GuardianLinkService(
         if (!link.isUsable()) throw GuardianException.LinkInvalid(token)
         return link
     }
+
+    @Transactional
+    fun markUsed(token: String) {
+        val link = repository.findByToken(token) ?: throw GuardianException.LinkNotFound(token)
+        link.markUsed()
+    }
 }
 
 private const val TTL_DAYS = 3L

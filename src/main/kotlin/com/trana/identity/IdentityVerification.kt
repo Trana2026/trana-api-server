@@ -69,14 +69,16 @@ class IdentityVerification(
     val purpose: IdentityPurpose = IdentityPurpose.SIGNUP,
     @Column(name = "subject_user_id")
     val subjectUserId: Long? = null,
-    @Column(name = "guardian_id")
-    val guardianId: Long? = null,
     @Column(name = "guardian_link_token", length = 64)
     val guardianLinkToken: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
+
+    @Column(name = "guardian_id")
+    var guardianId: Long? = null
+        protected set
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -105,6 +107,13 @@ class IdentityVerification(
             status = IdentityVerificationStatus.FAILED
             failureStep = FailureStep.COMPARE
         }
+    }
+
+    /** Compare SUCCESS 후 guardians.id 연결 (GUARDIAN 인증 전용). */
+    fun linkToGuardian(guardianId: Long) {
+        check(purpose == IdentityPurpose.GUARDIAN) { "GUARDIAN purpose record만 guardian 연결 가능" }
+        check(this.guardianId == null) { "이미 guardian 연결된 record" }
+        this.guardianId = guardianId
     }
 }
 

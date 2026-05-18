@@ -45,4 +45,5 @@ enum class ErrorCode(
     GUARDIAN_LINK_INVALID(HttpStatus.GONE, "GUARDIAN_410_LINK", "보호자 링크가 만료되었거나 이미 사용/취소되었습니다"),
     GUARDIAN_NOT_MINOR(HttpStatus.FORBIDDEN, "GUARDIAN_403_NOT_MINOR", "미성년자만 보호자 링크를 발급할 수 있습니다"),
     GUARDIAN_ALREADY_VERIFIED(HttpStatus.CONFLICT, "GUARDIAN_409_VERIFIED", "이미 보호자 인증이 완료된 사용자입니다"),
+    GUARDIAN_NOT_ADULT(HttpStatus.FORBIDDEN, "GUARDIAN_403_NOT_ADULT", "보호자는 성인(만 19세 이상)이어야 합니다"),
 }
