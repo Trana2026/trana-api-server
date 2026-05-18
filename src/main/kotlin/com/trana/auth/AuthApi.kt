@@ -12,17 +12,18 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
-@Tag(name = "Auth", description = "인증 (소셜 로그인 / 토큰)")
+@Tag(name = "Auth", description = "인증")
 interface AuthApi {
     @Operation(
-        summary = "소셜 로그인 (가입 + 로그인 통합)",
+        summary = "소셜 로그인 (미성년자 가입 + 로그인)",
         description = """
-  클라이언트(Flutter)가 받아온 공급자 id_token (OIDC JWT)으로 우리 서버 인증.
-  - 신규 사용자: 자동 가입 + JWT 발급
-  - 기존 사용자: JWT 재발급
-  - 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
-  - 사전 조건: 공급자 OIDC 활성화 + Flutter SDK가 openid scope 요청
-        """,
+미성년자 가입 전용 흐름. 성인은 본인 KYC 흐름으로 가입 (이 endpoint 호출 X).
+- 신규 미성년자: 자동 가입 (age_group=MINOR) + JWT 발급
+- 기존 사용자: JWT 재발급
+- 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
+- 사전 조건: 공급자 OIDC 활성화 + Flutter SDK가 openid scope 요청
+- body의 ageGroup은 현재 MINOR만 허용 (성인 호출 시 거부)
+      """,
     )
     @ApiResponses(
         value = [

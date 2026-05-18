@@ -1,0 +1,59 @@
+-- V2: users + social_accounts (도메인 코어)
+
+-- =========================================
+-- users
+-- - 성인: KYC SUCCESS 시점에 INSERT (KYC 결과로 모든 필드 채워짐, age_group=ADULT)
+-- - 미성년자: 소셜 로그인 시점에 INSERT (nickname/email + age_group=MINOR, KYC 필드는 null)
+-- - 미성년자 가입 완료 = guardian_verified_at != null
+-- =========================================
+CREATE TABLE users
+(
+    id                   BIGSERIAL PRIMARY KEY,
+    public_code          VARCHAR(20) NOT NULL UNIQUE,
+    email                VARCHAR(255) UNIQUE,
+    nickname             VARCHAR(50),
+    age_group            VARCHAR(10),
+    status               VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    name                 VARCHAR(255),
+    birth_date           VARCHAR(50),
+    gender               VARCHAR(10),
+    phone                VARCHAR(255),
+    guardian_verified_at TIMESTAMPTZ,
+    push_enabled         BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    withdrawn_at         TIMESTAMPTZ
+);
+
+CREATE INDEX idx_users_public_code ON users (public_code);
+
+COMMENT ON COLUMN users.public_code IS '외부 노출용 식별자 (nanoid 12자, URL-safe)';
+COMMENT ON COLUMN users.email IS '소셜 로그인 시 공급자 제공 (미성년자만, 성인은 null 가능)';
+COMMENT ON COLUMN users.age_group IS 'ADULT | MINOR — 가입 흐름에서 결정. NULL = 가입 미완 임시 상태';
+COMMENT ON COLUMN users.status IS 'ACTIVE | WITHDRAWN';
+COMMENT ON COLUMN users.name IS 'KYC OCR 결과 (성인) 또는 NULL (미성년자)';
+COMMENT ON COLUMN users.birth_date IS 'KYC OCR 결과 — yyyy-MM-dd';
+COMMENT ON COLUMN users.gender IS 'MALE | FEMALE | OTHER';
+COMMENT ON COLUMN users.phone IS 'Verify 단계 사용자 입력 (성인) 또는 NULL (미성년자)';
+COMMENT ON COLUMN users.guardian_verified_at IS '보호자 인증 완료 시각 (MINOR만). NULL이면 미인증';
+COMMENT ON COLUMN users.push_enabled IS 'FCM 알림 수신 여부';
+COMMENT ON COLUMN users.withdrawn_at IS '탈퇴 시각. NULL이면 활성';
+
+-- =========================================
+-- social_accounts (미성년자 가입 시만 INSERT)
+-- - 성인은 소셜 로그인 안 받음
+-- =========================================
+CREATE TABLE social_accounts
+(
+    id               BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    provider         VARCHAR(20)  NOT NULL,
+    provider_user_id VARCHAR(255) NOT NULL,
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    UNIQUE (provider, provider_user_id)
+);
+
+CREATE INDEX idx_social_accounts_user ON social_accounts (user_id);
+
+COMMENT ON COLUMN social_accounts.provider IS 'KAKAO | GOOGLE | APPLE';
+COMMENT ON COLUMN social_accounts.provider_user_id IS '공급자 발급 사용자 ID (변경 불가)';

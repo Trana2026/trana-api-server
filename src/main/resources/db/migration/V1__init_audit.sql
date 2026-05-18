@@ -5,18 +5,18 @@
 -- audit_logs / signatures / 기타 이력성 테이블에 적용
 -- =========================================
 CREATE OR REPLACE FUNCTION worm_protect()
-      RETURNS TRIGGER AS
-  $$
+    RETURNS TRIGGER AS
+$$
 BEGIN
-      RAISE EXCEPTION 'WORM table: % is immutable (operation=%)', TG_TABLE_NAME, TG_OP;
+    RAISE EXCEPTION 'WORM table: % is immutable (operation=%)', TG_TABLE_NAME, TG_OP;
 END;
-  $$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
-  COMMENT ON FUNCTION worm_protect() IS 'WORM 트리거 함수 — UPDATE/DELETE 시 예외 발생';
+COMMENT ON FUNCTION worm_protect() IS 'WORM 트리거 함수 — UPDATE/DELETE 시 예외 발생';
 
-  -- =========================================
-  -- audit_logs (WORM, 법적 증거)
-  -- =========================================
+-- =========================================
+-- audit_logs (WORM, 법적 증거)
+-- =========================================
 CREATE TABLE audit_logs
 (
     id            BIGSERIAL PRIMARY KEY,
@@ -34,11 +34,11 @@ CREATE INDEX idx_audit_logs_actor ON audit_logs (actor_user_id, created_at DESC)
 CREATE INDEX idx_audit_logs_event ON audit_logs (event_type, created_at DESC);
 
 COMMENT ON TABLE audit_logs IS 'WORM. UPDATE/DELETE 금지 (트리거). 파티셔닝은 W7~';
-  COMMENT ON COLUMN audit_logs.actor_user_id IS '논리 FK only (cascade 사고 방지로 FK 미설정)';
-  COMMENT ON COLUMN audit_logs.metadata IS '부가 정보 (JSONB)';
+COMMENT ON COLUMN audit_logs.actor_user_id IS '논리 FK only (cascade 사고 방지로 FK 미설정)';
+COMMENT ON COLUMN audit_logs.metadata IS '부가 정보 (JSONB)';
 
 CREATE TRIGGER trg_audit_logs_worm
     BEFORE UPDATE OR DELETE
-ON audit_logs
-      FOR EACH ROW
-  EXECUTE FUNCTION worm_protect();
+    ON audit_logs
+    FOR EACH ROW
+EXECUTE FUNCTION worm_protect();

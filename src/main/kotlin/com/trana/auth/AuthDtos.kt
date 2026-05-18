@@ -1,24 +1,23 @@
 package com.trana.auth
 
 import com.trana.auth.oauth.SocialProvider
+import com.trana.user.entity.AgeGroup
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 
-@Schema(description = "소셜 로그인 요청")
+@Schema(description = "소셜 로그인 요청 — 미성년자 가입 전용 (성인은 KYC 흐름)")
 data class SocialSignInRequest(
-    @Schema(
-        description = "소셜 공급자",
-        example = "KAKAO",
-        requiredMode = Schema.RequiredMode.REQUIRED,
-    )
+    @Schema(description = "소셜 공급자", example = "KAKAO", requiredMode = Schema.RequiredMode.REQUIRED)
     val provider: SocialProvider,
-    @Schema(
-        description = "공급자 id_token (OIDC JWT — Flutter SDK가 openid scope로 받아온 값)",
-        example = "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
-        requiredMode = Schema.RequiredMode.REQUIRED,
-    )
+    @Schema(description = "공급자 id_token (OIDC JWT)", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "idToken은 필수입니다")
     val idToken: String,
+    @Schema(
+        description = "연령대 — 현재 MINOR만 허용 (성인은 KYC 흐름)",
+        example = "MINOR",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
+    val ageGroup: AgeGroup,
 )
 
 @Schema(description = "로그인 응답 — 가입/로그인 성공 시 반환")
