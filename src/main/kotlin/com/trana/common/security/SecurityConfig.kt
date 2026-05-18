@@ -1,7 +1,5 @@
-package com.trana.auth
+package com.trana.common.security
 
-import com.trana.auth.jwt.JwtAuthenticationEntryPoint
-import com.trana.auth.jwt.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod

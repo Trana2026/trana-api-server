@@ -1,7 +1,5 @@
 package com.trana.auth.oauth
 
-import com.trana.user.SocialProvider
-
 /**
  * 소셜 공급자에서 가져온 사용자 정보 (provider 통합 모델).
  *

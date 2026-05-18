@@ -1,5 +1,7 @@
 package com.trana.auth.jwt
 
+import com.trana.common.security.JwtProperties
+import com.trana.common.security.JwtProvider
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.Duration

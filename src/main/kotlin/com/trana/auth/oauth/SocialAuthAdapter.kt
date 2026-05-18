@@ -1,7 +1,5 @@
 package com.trana.auth.oauth
 
-import com.trana.user.SocialProvider
-
 /**
  * 소셜 공급자별 OIDC id_token 검증 추상화.
  *

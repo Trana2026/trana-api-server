@@ -1,4 +1,4 @@
-package com.trana.auth.jwt
+package com.trana.common.security
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts

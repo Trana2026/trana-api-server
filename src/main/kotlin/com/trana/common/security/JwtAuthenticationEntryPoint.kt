@@ -1,4 +1,4 @@
-package com.trana.auth.jwt
+package com.trana.common.security
 
 import com.trana.common.exception.ErrorCode
 import jakarta.servlet.http.HttpServletRequest

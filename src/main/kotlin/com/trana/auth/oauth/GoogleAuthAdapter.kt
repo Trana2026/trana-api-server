@@ -1,7 +1,6 @@
 package com.trana.auth.oauth
 
 import com.trana.auth.AuthException
-import com.trana.user.SocialProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtException

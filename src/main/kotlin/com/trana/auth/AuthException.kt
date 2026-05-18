@@ -1,8 +1,8 @@
 package com.trana.auth
 
+import com.trana.auth.oauth.SocialProvider
 import com.trana.common.exception.DomainException
 import com.trana.common.exception.ErrorCode
-import com.trana.user.SocialProvider
 
 sealed class AuthException(
     errorCode: ErrorCode,
