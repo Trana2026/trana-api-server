@@ -38,3 +38,9 @@ trana:
       face-compare:
         invoke-url: https://test.example.com/ekyc/v1/test/test/face-compare
         secret-key: test-face-secret
+  storage:
+    s3:
+      bucket: test-bucket
+      region: ap-northeast-2
+      access-key: test-access-key
+      secret-key: test-secret-key

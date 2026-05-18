@@ -46,6 +46,10 @@ class IdCardVerifySession(
     val issueDate: LocalDate? = null,
     @Column(name = "expire_date")
     val expireDate: LocalDate? = null,
+    @Column(name = "id_card_s3_key", length = 200)
+    val idCardS3Key: String? = null,
+    @Column(name = "id_card_mime", length = 50)
+    val idCardMime: String? = null,
     @Column(name = "expires_at", nullable = false)
     val expiresAt: OffsetDateTime,
 ) {

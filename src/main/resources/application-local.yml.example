@@ -46,3 +46,9 @@ trana:
       face-compare:
         invoke-url: https://CHANGE_ME.apigw-pub.fin-ntruss.com/ekyc/v1/CHANGE_ME/CHANGE_ME/face-compare
         secret-key: CHANGE_ME
+  storage:
+    s3:
+      bucket: trana-temp-dev
+      region: ap-northeast-2
+      access-key: <AWS IAM trana-server Access Key ID>
+      secret-key: <AWS IAM trana-server Secret Access Key>

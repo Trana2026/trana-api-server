@@ -34,6 +34,8 @@ class IdCardVerifySessionService(
                 serialNumber = data.serialNumber,
                 issueDate = data.issueDate,
                 expireDate = data.expireDate,
+                idCardS3Key = data.idCardS3Key,
+                idCardMime = data.idCardMime,
                 expiresAt = data.expiresAt,
             )
         repository.save(entity)
@@ -67,6 +69,8 @@ class IdCardVerifySessionService(
             serialNumber = serialNumber,
             issueDate = issueDate,
             expireDate = expireDate,
+            idCardS3Key = idCardS3Key,
+            idCardMime = idCardMime,
             expiresAt = expiresAt,
         )
 
@@ -88,5 +92,7 @@ data class IdCardSessionData(
     val serialNumber: String? = null,
     val issueDate: LocalDate? = null,
     val expireDate: LocalDate? = null,
+    val idCardS3Key: String? = null,
+    val idCardMime: String? = null,
     val expiresAt: OffsetDateTime,
 )

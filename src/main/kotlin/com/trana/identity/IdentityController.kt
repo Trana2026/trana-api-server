@@ -22,11 +22,10 @@ class IdentityController(
 
     override fun compareFaces(
         requestId: String,
-        cardImage: MultipartFile,
         faceImage: MultipartFile,
     ): FaceCompareResponse =
         identityService
-            .compareFaces(requestId, cardImage.toImageInput(), faceImage.toImageInput())
+            .compareFaces(requestId, faceImage.toImageInput())
             .toResponse()
 }
 

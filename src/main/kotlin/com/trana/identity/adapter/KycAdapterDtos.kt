@@ -10,7 +10,20 @@ data class ImageInput(
     val originalFilename: String, // multipart 전송 시 name 필드
 )
 
-enum class ImageFormat { JPG, PNG }
+enum class ImageFormat(
+    val mime: String,
+    val extension: String,
+) {
+    JPG("image/jpeg", "jpg"),
+    PNG("image/png", "png"),
+    ;
+
+    companion object {
+        fun fromMime(mime: String): ImageFormat =
+            entries.firstOrNull { it.mime.equals(mime, ignoreCase = true) }
+                ?: error("Unsupported MIME: $mime")
+    }
+}
 
 enum class IdType { ID_CARD, DRIVER_LICENSE, PASSPORT, ALIEN_REGISTRATION }
 

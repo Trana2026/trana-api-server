@@ -32,6 +32,12 @@ trana:
       face-compare:
         invoke-url: ${NCP_EKYC_FACE_INVOKE_URL}
         secret-key: ${NCP_EKYC_FACE_SECRET}
+  storage:
+    s3:
+      bucket: ${TRANA_S3_BUCKET}
+      region: ${TRANA_S3_REGION:ap-northeast-2}
+      access-key: ${TRANA_S3_ACCESS_KEY}
+      secret-key: ${TRANA_S3_SECRET_KEY}
 
 logging:
   level:

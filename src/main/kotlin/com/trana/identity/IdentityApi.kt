@@ -70,8 +70,8 @@ interface IdentityApi {
     @Operation(
         summary = "얼굴 비교",
         description =
-            "신분증 사진 + 셀카 + requestId → similarity(0.0~1.0) + isMatch. " +
-                "requestId는 OCR 단계에서 받은 값 (KYC 시도 record 매칭용).",
+            "셀카 + requestId → similarity(0.0~1.0) + isMatch. " +
+                "신분증 사진은 OCR 단계에서 서버가 보관 중 (별도 업로드 X).",
     )
     @ApiResponses(
         value = [
@@ -88,7 +88,7 @@ interface IdentityApi {
             ),
             ApiResponse(
                 responseCode = "500",
-                description = "NCP 호출 실패",
+                description = "NCP 호출 실패 또는 신분증 사진 S3 조회 실패",
                 content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
             ),
         ],
@@ -96,7 +96,6 @@ interface IdentityApi {
     @PostMapping("/face-compare", consumes = ["multipart/form-data"])
     fun compareFaces(
         @RequestParam("requestId") requestId: String,
-        @RequestPart("cardImage") cardImage: MultipartFile,
         @RequestPart("faceImage") faceImage: MultipartFile,
     ): FaceCompareResponse
 }

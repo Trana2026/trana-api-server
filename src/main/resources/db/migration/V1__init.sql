@@ -179,6 +179,8 @@ CREATE TABLE id_card_verify_sessions
     serial_number             VARCHAR(30),
     issue_date                DATE,
     expire_date               DATE,
+    id_card_s3_key            VARCHAR(200),
+    id_card_mime              VARCHAR(50),
     expires_at                TIMESTAMPTZ  NOT NULL,
     created_at                TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
@@ -195,6 +197,8 @@ COMMENT ON COLUMN id_card_verify_sessions.passport_number_encrypted IS 'AES-256-
 COMMENT ON COLUMN id_card_verify_sessions.birth_date IS '여권 OCR 결과 생년월일 (pp Verify 필수)';
 COMMENT ON COLUMN id_card_verify_sessions.serial_number IS '외국인등록증 시리얼 번호 (ac Verify 필수)';
 COMMENT ON COLUMN id_card_verify_sessions.expires_at IS '10분 후 자동 만료. @Scheduled cleanup task가 주기 삭제';
+COMMENT ON COLUMN id_card_verify_sessions.id_card_s3_key IS '신분증 사진 S3 객체 키 (예: identity/{requestId}/id-card.jpg). Compare 시 GET → 사용 후 deleteObject';
+COMMENT ON COLUMN id_card_verify_sessions.id_card_mime IS '신분증 사진 MIME 타입 (image/jpeg, image/png). NCP Compare 호출 시 필요';
 
 -- =========================================
 -- identity_verifications: KYC 시도/결과 영구 저장

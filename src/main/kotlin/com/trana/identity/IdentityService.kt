@@ -2,6 +2,7 @@ package com.trana.identity
 
 import com.trana.audit.AuditLogger
 import com.trana.common.crypto.Sha256Hasher
+import com.trana.common.storage.StorageService
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.FaceCompareResult
 import com.trana.identity.adapter.IdCardOcrAdapter
@@ -12,6 +13,7 @@ import com.trana.identity.adapter.IdCardVerifyAdapter
 import com.trana.identity.adapter.IdCardVerifyInput
 import com.trana.identity.adapter.IdCardVerifyResult
 import com.trana.identity.adapter.IdType
+import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.adapter.idType
 import com.trana.user.AgeGroup
@@ -33,6 +35,7 @@ class IdentityService(
     private val verificationRepository: IdentityVerificationRepository,
     private val userService: UserService,
     private val auditLogger: AuditLogger,
+    private val storageService: StorageService,
 ) {
     @Transactional
     fun recognizeIdCard(
@@ -40,7 +43,9 @@ class IdentityService(
         userId: Long? = null,
     ): IdCardOcrOutput {
         val output = idCardOcrAdapter.recognizeIdCard(image)
-        sessionService.save(output.sensitive.toSessionData(output.result.idType))
+        val s3Key = "identity/${output.sensitive.requestId}/id-card.${image.format.extension}"
+        storageService.put(s3Key, image.bytes, image.format.mime)
+        sessionService.save(output.sensitive.toSessionData(output.result.idType, s3Key, image.format.mime))
         val record = verificationRepository.save(output.toPendingVerification(userId))
         auditLogger.log(
             eventType = EVENT_OCR,
@@ -51,6 +56,7 @@ class IdentityService(
                 mapOf(
                     "idType" to output.result.idType.name,
                     "ncpRequestId" to output.sensitive.requestId,
+                    "s3Key" to s3Key,
                 ),
         )
         return output
@@ -79,11 +85,24 @@ class IdentityService(
     @Transactional
     fun compareFaces(
         requestId: String,
-        idCardImage: ImageInput,
         selfieImage: ImageInput,
     ): FaceCompareResult {
-        sessionService.findActive(requestId)
-        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+        val session = sessionService.findActive(requestId)
+        val s3Key = session.idCardS3Key ?: error("세션에 idCardS3Key 없음 (requestId=$requestId)")
+        val mime = session.idCardMime ?: error("세션에 idCardMime 없음 (requestId=$requestId)")
+        val format = ImageFormat.fromMime(mime)
+        val idCardImage =
+            ImageInput(
+                bytes = storageService.get(s3Key),
+                format = format,
+                originalFilename = "id-card.${format.extension}",
+            )
+        val result =
+            try {
+                faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+            } finally {
+                runCatching { storageService.delete(s3Key) }
+            }
         val record = updateVerificationRecord(requestId) { it.applyCompare(result) }
         auditLogger.log(
             eventType = EVENT_COMPARE,
@@ -159,7 +178,11 @@ class IdentityService(
             AgeGroup.MINOR
         }
 
-    private fun IdCardSensitiveData.toSessionData(idType: IdType): IdCardSessionData =
+    private fun IdCardSensitiveData.toSessionData(
+        idType: IdType,
+        s3Key: String,
+        mime: String,
+    ): IdCardSessionData =
         IdCardSessionData(
             requestId = requestId,
             idType = idType,
@@ -172,6 +195,8 @@ class IdentityService(
             serialNumber = serialNumber,
             issueDate = issueDate,
             expireDate = expireDate,
+            idCardS3Key = s3Key,
+            idCardMime = mime,
             expiresAt = OffsetDateTime.now().plusMinutes(SESSION_TTL_MINUTES),
         )
 

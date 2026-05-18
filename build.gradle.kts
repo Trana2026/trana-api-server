@@ -46,6 +46,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    implementation(platform("software.amazon.awssdk:bom:2.30.0"))
+    implementation("software.amazon.awssdk:s3")
 }
 
 kotlin {
