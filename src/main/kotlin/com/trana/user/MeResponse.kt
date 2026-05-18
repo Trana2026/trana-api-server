@@ -1,6 +1,7 @@
 package com.trana.user
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.Instant
 
 @Schema(description = "본인 정보 응답")
 data class MeResponse(
@@ -26,4 +27,15 @@ data class MeResponse(
         example = "ACTIVE",
     )
     val status: UserStatus,
+    @Schema(
+        description = "연령대 (KYC 또는 자기보고로 결정). null=미정",
+        example = "ADULT",
+        nullable = true,
+    )
+    val ageGroup: AgeGroup?,
+    @Schema(
+        description = "보호자 인증 완료 시각 (MINOR만 의미 있음). null=미인증",
+        nullable = true,
+    )
+    val guardianVerifiedAt: Instant?,
 )

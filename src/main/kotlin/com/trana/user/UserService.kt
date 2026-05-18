@@ -1,5 +1,6 @@
 package com.trana.user
 
+import com.trana.audit.AuditLogger
 import com.trana.common.util.PublicCodeGenerator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +11,7 @@ class UserService(
     private val userRepository: UserRepository,
     private val socialAccountRepository: SocialAccountRepository,
     private val publicCodeGenerator: PublicCodeGenerator,
+    private val auditLogger: AuditLogger,
 ) {
     /**
      * 소셜 로그인: 기존 매핑이 있으면 기존 사용자 반환, 없으면 신규 생성.
@@ -69,4 +71,19 @@ class UserService(
         userRepository.findById(userId).orElseThrow {
             UserException.NotFound(userId.toString())
         }
+
+    fun declareMinor(userId: Long): User {
+        val user = getById(userId)
+        user.markAsMinor()
+        auditLogger.log(
+            eventType = EVENT_USER_DECLARED_MINOR,
+            actorUserId = userId,
+            entityType = ENTITY_USER,
+            entityId = userId,
+        )
+        return user
+    }
 }
+
+private const val EVENT_USER_DECLARED_MINOR = "USER_DECLARED_MINOR"
+private const val ENTITY_USER = "USER"

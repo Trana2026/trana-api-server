@@ -75,6 +75,11 @@ class User(
         this.withdrawnAt = Instant.now()
     }
 
+    fun markAsMinor() {
+        check(ageGroup == null) { "이미 ageGroup이 설정된 사용자입니다" }
+        this.ageGroup = AgeGroup.MINOR
+    }
+
     fun markGuardianVerified() {
         check(ageGroup == AgeGroup.MINOR) { "보호자 인증은 미성년자만 가능합니다" }
         check(guardianVerifiedAt == null) { "이미 보호자 인증된 사용자입니다" }
@@ -88,9 +93,13 @@ class User(
         ageGroup: AgeGroup,
         phone: String? = null,
     ) {
-        check(this.ageGroup == null) { "이미 KYC 완료된 사용자입니다" }
+        val alreadyHasFullKyc = this.name != null && this.birthDate != null
+        check(!alreadyHasFullKyc) { "이미 KYC 완료된 사용자입니다" }
+        require(this.ageGroup == null || this.ageGroup == ageGroup) {
+            "ageGroup 일관성 위반 (기존=${this.ageGroup}, 신규=$ageGroup)"
+        }
         this.name = name
-        this.birthDate = birthDate.toString() // LocalDate → "yyyy-MM-dd"
+        this.birthDate = birthDate.toString()
         this.gender = gender
         this.ageGroup = ageGroup
         phone?.let { this.phone = it }

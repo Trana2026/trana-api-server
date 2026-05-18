@@ -13,13 +13,19 @@ class UserController(
 ) : UserApi {
     override fun getMe(
         @AuthenticationPrincipal userId: Long,
-    ): MeResponse {
-        val user = userService.getById(userId)
-        return MeResponse(
-            publicCode = user.publicCode,
-            email = user.email,
-            nickname = user.nickname,
-            status = user.status,
-        )
-    }
+    ): MeResponse = userService.getById(userId).toMeResponse()
+
+    override fun declareMinor(
+        @AuthenticationPrincipal userId: Long,
+    ): MeResponse = userService.declareMinor(userId).toMeResponse()
 }
+
+private fun User.toMeResponse(): MeResponse =
+    MeResponse(
+        publicCode = publicCode,
+        email = email,
+        nickname = nickname,
+        status = status,
+        ageGroup = ageGroup,
+        guardianVerifiedAt = guardianVerifiedAt,
+    )
