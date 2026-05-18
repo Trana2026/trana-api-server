@@ -2,7 +2,6 @@ package com.trana.common.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
@@ -26,16 +25,13 @@ class SecurityConfig(
                     .requestMatchers(
                         "/v1/auth/**",
                         "/v1/terms/**",
-                        "/v1/identity/**",
-                        "/v1/guardian/identity/**",
+                        "/v1/consents",
                         "/actuator/health",
                         "/actuator/info",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                     ).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/v1/guardian/links/*")
-                    .permitAll()
                     .anyRequest()
                     .authenticated()
             }.exceptionHandling { exc ->
