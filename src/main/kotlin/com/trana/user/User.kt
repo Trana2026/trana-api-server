@@ -58,6 +58,10 @@ class User(
     var withdrawnAt: Instant? = null
         protected set
 
+    @Column(name = "guardian_verified_at")
+    var guardianVerifiedAt: Instant? = null
+        protected set
+
     fun changeNickname(newNickname: String) {
         require(newNickname.length in NICKNAME_MIN_LENGTH..NICKNAME_MAX_LENGTH) {
             "닉네임은 ${NICKNAME_MIN_LENGTH}~${NICKNAME_MAX_LENGTH}자여야 합니다"
@@ -69,6 +73,12 @@ class User(
         check(status == UserStatus.ACTIVE) { "이미 탈퇴한 사용자입니다" }
         this.status = UserStatus.WITHDRAWN
         this.withdrawnAt = Instant.now()
+    }
+
+    fun markGuardianVerified() {
+        check(ageGroup == AgeGroup.MINOR) { "보호자 인증은 미성년자만 가능합니다" }
+        check(guardianVerifiedAt == null) { "이미 보호자 인증된 사용자입니다" }
+        this.guardianVerifiedAt = Instant.now()
     }
 
     fun applyKycResult(

@@ -64,6 +64,15 @@ class IdentityVerification(
     @Enumerated(EnumType.STRING)
     @Column(name = "failure_step", length = 30)
     var failureStep: FailureStep? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false, length = 20)
+    val purpose: IdentityPurpose = IdentityPurpose.SIGNUP,
+    @Column(name = "subject_user_id")
+    val subjectUserId: Long? = null,
+    @Column(name = "guardian_id")
+    val guardianId: Long? = null,
+    @Column(name = "guardian_link_token", length = 64)
+    val guardianLinkToken: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -102,3 +111,5 @@ class IdentityVerification(
 enum class IdentityVerificationStatus { PENDING, SUCCESS, FAILED }
 
 enum class FailureStep { OCR, VERIFY, COMPARE }
+
+enum class IdentityPurpose { SIGNUP, GUARDIAN }
