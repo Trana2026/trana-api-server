@@ -118,6 +118,19 @@ class IdentityVerification(
         this.status = VerificationStatus.SUCCESS
     }
 
+    fun markGuardianCompareSuccess(
+        similarity: Double,
+        boundGuardianId: Long,
+    ) {
+        check(status == VerificationStatus.PENDING) { "PENDING 상태에서만 compare 성공 처리 가능" }
+        check(verifyPassed) { "Verify 통과 후에만 compare 가능" }
+        check(purpose == VerificationPurpose.GUARDIAN) { "GUARDIAN 인증만 이 메서드 사용" }
+        this.faceSimilarity = similarity
+        this.faceMatch = true
+        this.guardianId = boundGuardianId
+        this.status = VerificationStatus.SUCCESS
+    }
+
     fun markCompareFailed(
         similarity: Double?,
         errorCode: String,
@@ -130,11 +143,6 @@ class IdentityVerification(
         this.verifyErrorMessage = errorMessage
         this.status = VerificationStatus.FAILED
         this.failureStep = FailureStep.COMPARE
-    }
-
-    fun bindGuardian(boundGuardianId: Long) {
-        check(purpose == VerificationPurpose.GUARDIAN) { "GUARDIAN 인증만 guardianId 바인딩 가능" }
-        this.guardianId = boundGuardianId
     }
 
     companion object {
@@ -159,12 +167,16 @@ class IdentityVerification(
                 gender = gender,
             )
 
+        @Suppress("LongParameterList")
         fun startGuardian(
             idType: String,
             ncpDocumentRequestId: String,
             identifierHash: String,
             subjectUserId: Long,
             guardianLinkToken: String,
+            name: String,
+            birthDate: LocalDate,
+            gender: Gender,
         ): IdentityVerification =
             IdentityVerification(
                 idType = idType,
@@ -173,6 +185,9 @@ class IdentityVerification(
                 purpose = VerificationPurpose.GUARDIAN,
                 subjectUserId = subjectUserId,
                 guardianLinkToken = guardianLinkToken,
+                name = name,
+                birthDate = birthDate,
+                gender = gender,
             )
     }
 }

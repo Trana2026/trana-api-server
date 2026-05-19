@@ -70,3 +70,23 @@ data class SignUpResponse(
     )
     val requiresGuardian: Boolean,
 )
+
+@Schema(description = "보호자 신분증 진위확인 요청")
+data class GuardianVerifyIdCardRequest(
+    @field:NotBlank
+    @Schema(description = "OCR 단계에서 받은 requestId", example = "20a4...")
+    val requestId: String,
+    @field:NotBlank
+    @Schema(description = "guardian_links 토큰 (미성년자에게 받은 URL의 token 부분)", example = "V1StGXR8_Z5jdHi6B-myT")
+    val token: String,
+)
+
+@Schema(description = "보호자 KYC 가입 완료 응답")
+data class GuardianBindResponse(
+    @Schema(description = "보호 대상 미성년자 user_id", example = "1")
+    val subjectUserId: Long,
+    @Schema(description = "보호자 마스터 ID (동일 보호자 다중 자녀 인증 시 같은 값)", example = "1")
+    val guardianId: Long,
+    @Schema(description = "검증 완료", example = "true")
+    val verified: Boolean,
+)

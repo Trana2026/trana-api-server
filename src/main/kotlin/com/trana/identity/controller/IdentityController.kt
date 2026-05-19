@@ -1,8 +1,5 @@
 package com.trana.identity.controller
 
-import com.trana.identity.IdentityException
-import com.trana.identity.adapter.ImageFormat
-import com.trana.identity.adapter.ImageInput
 import com.trana.identity.dto.RecognizeIdCardResponse
 import com.trana.identity.dto.RecordPhoneRequest
 import com.trana.identity.dto.RecordPhoneResponse
@@ -54,21 +51,6 @@ class IdentityController(
         kycSignupService
             .compareFaces(requestId, file.toImageInput())
             .toResponse()
-}
-
-private fun MultipartFile.toImageInput(): ImageInput {
-    val mime = contentType?.lowercase() ?: throw IdentityException.FileInvalid("Content-Type missing")
-    val format =
-        when (mime) {
-            "image/jpeg", "image/jpg" -> ImageFormat.JPG
-            "image/png" -> ImageFormat.PNG
-            else -> throw IdentityException.FileInvalid("지원하지 않는 MIME: $mime (image/jpeg, image/png만 허용)")
-        }
-    return ImageInput(
-        bytes = bytes,
-        format = format,
-        originalFilename = originalFilename ?: "upload.${format.extension}",
-    )
 }
 
 private fun RecognizeIdCardResult.toResponse(): RecognizeIdCardResponse =

@@ -98,4 +98,11 @@ sealed class IdentityException(
             "NCP $api 호출 실패",
             cause,
         )
+
+    class NotAdult(
+        identifierHash: String,
+    ) : IdentityException(
+            ErrorCode.GUARDIAN_NOT_ADULT,
+            "보호자는 성인(만 19세 이상)이어야 합니다 (hash=${identifierHash.take(8)}...)",
+        )
 }
