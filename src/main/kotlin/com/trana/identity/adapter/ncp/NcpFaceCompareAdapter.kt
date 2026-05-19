@@ -24,7 +24,7 @@ import java.util.UUID
  */
 @Component
 class NcpFaceCompareAdapter(
-    private val props: NcpEkycProperties,
+    props: NcpEkycProperties,
     private val objectMapper: ObjectMapper,
 ) : FaceCompareAdapter {
     private val client: RestClient =

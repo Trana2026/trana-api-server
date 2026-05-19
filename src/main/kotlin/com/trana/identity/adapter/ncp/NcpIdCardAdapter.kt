@@ -1,5 +1,6 @@
 package com.trana.identity.adapter.ncp
 
+import com.trana.identity.IdentityException
 import com.trana.identity.adapter.Gender
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.IdCardOcrOutput
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.body
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
@@ -31,8 +33,9 @@ import java.util.UUID
  * 4종 지원: 주민등록증(ic) / 운전면허증(dl) / 여권(pp) / 외국인등록증(ac).
  */
 @Component
+@Suppress("TooManyFunctions")
 class NcpIdCardAdapter(
-    private val props: NcpEkycProperties,
+    props: NcpEkycProperties,
     private val objectMapper: ObjectMapper,
 ) : IdCardOcrAdapter {
     private val client: RestClient =
@@ -43,8 +46,13 @@ class NcpIdCardAdapter(
             .build()
 
     override fun recognizeIdCard(image: ImageInput): IdCardOcrOutput {
+        val response = callDocumentApi(image)
+        return parseDocumentResponse(response)
+    }
+
+    private fun callDocumentApi(image: ImageInput): NcpDocumentResponse {
         val body = buildDocumentMultipart(image)
-        val response =
+        return try {
             client
                 .post()
                 .uri("/document")
@@ -52,10 +60,24 @@ class NcpIdCardAdapter(
                 .body(body)
                 .retrieve()
                 .body<NcpDocumentResponse>()
-                ?: error("NCP Document API 응답이 비어 있음")
-
-        return mapToOutput(response)
+                ?: throw IdentityException.NcpCallFailed(
+                    "Document",
+                    IllegalStateException("empty response"),
+                )
+        } catch (e: RestClientException) {
+            throw IdentityException.NcpCallFailed("Document", e)
+        }
     }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun parseDocumentResponse(response: NcpDocumentResponse): IdCardOcrOutput =
+        try {
+            mapToOutput(response)
+        } catch (e: IdentityException) {
+            throw e
+        } catch (e: RuntimeException) {
+            throw IdentityException.OcrRejected(e.message ?: "OCR 결과 파싱 실패", e)
+        }
 
     private fun buildDocumentMultipart(image: ImageInput): MultiValueMap<String, HttpEntity<*>> {
         val body = LinkedMultiValueMap<String, HttpEntity<*>>()

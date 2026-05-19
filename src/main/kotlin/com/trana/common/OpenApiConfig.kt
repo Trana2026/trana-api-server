@@ -77,6 +77,15 @@ class OpenApiConfig {
         }
 
     @Bean
+    fun defaultGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("전체")
+            .pathsToMatch("/v1/**")
+            .addOpenApiCustomizer(pathOrderCustomizer)
+            .build()
+
+    @Bean
     fun adultGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()

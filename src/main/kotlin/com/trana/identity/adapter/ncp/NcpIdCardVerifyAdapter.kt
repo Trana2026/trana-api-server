@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
  */
 @Component
 class NcpIdCardVerifyAdapter(
-    private val props: NcpEkycProperties,
+    props: NcpEkycProperties,
 ) : IdCardVerifyAdapter {
     private val client: RestClient =
         RestClient

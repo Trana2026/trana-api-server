@@ -2,6 +2,7 @@ package com.trana.identity
 
 import com.trana.common.exception.DomainException
 import com.trana.common.exception.ErrorCode
+import java.util.UUID
 
 /**
  * KYC 신원확인 도메인 예외.
@@ -34,14 +35,14 @@ sealed class IdentityException(
         )
 
     class SignupSessionNotFound(
-        signupSessionId: java.util.UUID,
+        signupSessionId: UUID,
     ) : IdentityException(
             ErrorCode.IDENTITY_SIGNUP_SESSION_NOT_FOUND,
             "가입 세션을 찾을 수 없습니다 (signupSessionId=$signupSessionId)",
         )
 
     class SignupSessionExpired(
-        signupSessionId: java.util.UUID,
+        signupSessionId: UUID,
     ) : IdentityException(
             ErrorCode.IDENTITY_SIGNUP_SESSION_EXPIRED,
             "가입 세션이 만료되었습니다 (signupSessionId=$signupSessionId)",
@@ -49,9 +50,11 @@ sealed class IdentityException(
 
     class OcrRejected(
         reason: String,
+        cause: Throwable? = null,
     ) : IdentityException(
             ErrorCode.IDENTITY_OCR_REJECTED,
             "신분증 OCR 인식 실패: $reason",
+            cause,
         )
 
     class VerifyRejected(

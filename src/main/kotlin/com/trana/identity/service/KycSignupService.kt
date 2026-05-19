@@ -9,7 +9,6 @@ import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.IdentityVerification
-import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.terms.service.ConsentService
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional
 class KycSignupService(
     private val faceCompareAdapter: FaceCompareAdapter,
     private val sessionService: IdCardVerifySessionService,
-    private val verificationRepository: IdentityVerificationRepository,
     private val stateLookup: KycStateLookup,
     private val consentService: ConsentService,
     private val userService: UserService,

@@ -10,7 +10,6 @@ import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.IdCardOcrAdapter
-import com.trana.identity.adapter.IdCardOcrOutput
 import com.trana.identity.adapter.IdType
 import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
@@ -20,6 +19,7 @@ import com.trana.identity.adapter.toDomainGender
 import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.IdentityVerification
 import com.trana.identity.entity.VerificationPurpose
+import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.user.entity.Gender
 import com.trana.user.repository.UserRepository
@@ -45,6 +45,7 @@ class KycGuardianService(
     private val verificationRepository: IdentityVerificationRepository,
     private val stateLookup: KycStateLookup,
     private val kycSessionService: KycSessionService,
+    private val ocrPersister: IdCardOcrPersister,
     private val guardianRepository: GuardianRepository,
     private val guardianLinkService: GuardianLinkService,
     private val userRepository: UserRepository,
@@ -64,15 +65,23 @@ class KycGuardianService(
         val identifierHash = hashIdentifier(ocr.result.identifierHashRaw, ocr.result.idType)
         stateLookup.requireAdult(ocr.result.birthDate, identifierHash)
 
-        if (verificationRepository.existsByIdentifierHashAndStatus(
-                identifierHash,
-                com.trana.identity.entity.VerificationStatus.SUCCESS,
-            )
-        ) {
+        if (verificationRepository.existsByIdentifierHashAndStatus(identifierHash, VerificationStatus.SUCCESS)) {
             throw IdentityException.Duplicate(identifierHash)
         }
 
-        val verification = saveOcrArtifacts(ocr, image, identifierHash, link.userId, token)
+        val verification =
+            ocrPersister.persist(ocr, image) {
+                IdentityVerification.startGuardian(
+                    idType = ocr.result.idType.name,
+                    ncpDocumentRequestId = ocr.sensitive.requestId,
+                    identifierHash = identifierHash,
+                    subjectUserId = link.userId,
+                    guardianLinkToken = token,
+                    name = ocr.result.name,
+                    birthDate = ocr.result.birthDate,
+                    gender = ocr.result.gender.toDomainGender(),
+                )
+            }
 
         auditLogger.log(
             eventType = "GUARDIAN_IDENTITY_OCR_PASSED",
@@ -219,47 +228,6 @@ class KycGuardianService(
         rawOrHash: String,
         idType: IdType,
     ): String = if (idType == IdType.PASSPORT) Sha256Hasher.hashHex(rawOrHash) else rawOrHash
-
-    @Suppress("LongParameterList")
-    private fun saveOcrArtifacts(
-        ocr: IdCardOcrOutput,
-        image: ImageInput,
-        identifierHash: String,
-        subjectUserId: Long,
-        token: String,
-    ): IdentityVerification {
-        val s3Key = "identity/${ocr.sensitive.requestId}/id-card.${image.format.extension}"
-        storageService.put(s3Key, image.bytes, image.format.mime)
-
-        sessionService.create(
-            requestId = ocr.sensitive.requestId,
-            idType = ocr.result.idType.name,
-            name = ocr.sensitive.name,
-            personalNumber = ocr.sensitive.personalNumber,
-            licenseNumber = ocr.sensitive.licenseNumber,
-            licenseSecurityCode = ocr.sensitive.licenseSecurityCode,
-            passportNumber = ocr.sensitive.passportNumber,
-            birthDate = ocr.sensitive.birthDate,
-            serialNumber = ocr.sensitive.serialNumber,
-            issueDate = ocr.sensitive.issueDate,
-            expireDate = ocr.sensitive.expireDate,
-            idCardS3Key = s3Key,
-            idCardMime = image.format.mime,
-        )
-
-        return verificationRepository.save(
-            IdentityVerification.startGuardian(
-                idType = ocr.result.idType.name,
-                ncpDocumentRequestId = ocr.sensitive.requestId,
-                identifierHash = identifierHash,
-                subjectUserId = subjectUserId,
-                guardianLinkToken = token,
-                name = ocr.result.name,
-                birthDate = ocr.result.birthDate,
-                gender = ocr.result.gender.toDomainGender(),
-            ),
-        )
-    }
 }
 
 data class CompareGuardianResult(

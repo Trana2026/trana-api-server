@@ -2,7 +2,6 @@ package com.trana.identity.service
 
 import com.trana.audit.AuditLogger
 import com.trana.common.crypto.Sha256Hasher
-import com.trana.common.storage.StorageService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.IdCardVerifyAdapter
@@ -40,7 +39,7 @@ class KycSessionService(
     private val sessionService: IdCardVerifySessionService,
     private val verificationRepository: IdentityVerificationRepository,
     private val stateLookup: KycStateLookup,
-    private val storageService: StorageService,
+    private val ocrPersister: IdCardOcrPersister,
     private val auditLogger: AuditLogger,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -58,27 +57,8 @@ class KycSessionService(
             throw IdentityException.Duplicate(identifierHash)
         }
 
-        val s3Key = "identity/${ocr.sensitive.requestId}/id-card.${image.format.extension}"
-        storageService.put(s3Key, image.bytes, image.format.mime)
-
-        sessionService.create(
-            requestId = ocr.sensitive.requestId,
-            idType = ocr.result.idType.name,
-            name = ocr.sensitive.name,
-            personalNumber = ocr.sensitive.personalNumber,
-            licenseNumber = ocr.sensitive.licenseNumber,
-            licenseSecurityCode = ocr.sensitive.licenseSecurityCode,
-            passportNumber = ocr.sensitive.passportNumber,
-            birthDate = ocr.sensitive.birthDate,
-            serialNumber = ocr.sensitive.serialNumber,
-            issueDate = ocr.sensitive.issueDate,
-            expireDate = ocr.sensitive.expireDate,
-            idCardS3Key = s3Key,
-            idCardMime = image.format.mime,
-        )
-
         val verification =
-            verificationRepository.save(
+            ocrPersister.persist(ocr, image) {
                 IdentityVerification.startSignup(
                     idType = ocr.result.idType.name,
                     ncpDocumentRequestId = ocr.sensitive.requestId,
@@ -87,8 +67,8 @@ class KycSessionService(
                     name = ocr.result.name,
                     birthDate = ocr.result.birthDate,
                     gender = ocr.result.gender.toDomainGender(),
-                ),
-            )
+                )
+            }
 
         auditLogger.log(
             eventType = "IDENTITY_OCR_PASSED",
