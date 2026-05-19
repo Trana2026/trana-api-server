@@ -1,5 +1,9 @@
-package com.trana.identity.adapter
+package com.trana.identity.adapter.ncp
 
+import com.trana.identity.adapter.FaceCompareAdapter
+import com.trana.identity.adapter.FaceCompareResult
+import com.trana.identity.adapter.ImageFormat
+import com.trana.identity.adapter.ImageInput
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders

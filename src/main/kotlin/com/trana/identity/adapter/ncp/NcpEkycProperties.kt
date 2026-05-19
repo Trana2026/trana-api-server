@@ -1,4 +1,4 @@
-package com.trana.identity.adapter
+package com.trana.identity.adapter.ncp
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

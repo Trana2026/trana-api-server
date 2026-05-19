@@ -1,4 +1,4 @@
-package com.trana.identity.adapter
+package com.trana.identity.adapter.ncp
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 

@@ -1,5 +1,6 @@
 package com.trana.identity.adapter
 
+import com.trana.identity.adapter.ncp.KoreanRrnParser
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate

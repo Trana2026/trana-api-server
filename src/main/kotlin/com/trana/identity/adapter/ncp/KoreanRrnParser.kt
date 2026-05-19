@@ -1,6 +1,7 @@
-package com.trana.identity.adapter
+package com.trana.identity.adapter.ncp
 
 import com.trana.common.crypto.Sha256Hasher
+import com.trana.identity.adapter.Gender
 import java.time.LocalDate
 
 object KoreanRrnParser {

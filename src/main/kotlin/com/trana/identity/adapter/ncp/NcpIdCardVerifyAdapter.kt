@@ -1,5 +1,9 @@
-package com.trana.identity.adapter
+package com.trana.identity.adapter.ncp
 
+import com.trana.identity.adapter.IdCardVerifyAdapter
+import com.trana.identity.adapter.IdCardVerifyInput
+import com.trana.identity.adapter.IdCardVerifyResult
+import com.trana.identity.adapter.IdType
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
