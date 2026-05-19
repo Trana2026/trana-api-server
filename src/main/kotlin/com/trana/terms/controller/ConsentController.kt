@@ -30,6 +30,7 @@ class ConsentController(
                 userId = userId,
                 contextId = request.contextId,
                 signupSessionId = request.signupSessionId,
+                guardianLinkToken = request.guardianLinkToken,
                 userAgent = httpRequest.getHeader("User-Agent"),
             )
         val consents = consentService.agree(command)

@@ -28,6 +28,15 @@ internal object ConsentExamples {
             }
         """
 
+    const val REQUEST_GUARDIAN_CONSENT = """
+          {
+            "termsVersionIds": [1, 2, 3],
+            "contextType": "SIGNUP",
+            "ageGroup": "ADULT",
+            "guardianLinkToken": "V1StGXR8_Z5jdHi6B-myT"
+          }
+      """
+
     // ───── 응답 예시 ─────
 
     const val RESPONSE_ADULT_SIGNUP = """
@@ -49,6 +58,17 @@ internal object ConsentExamples {
               ]
             }
         """
+
+    const val RESPONSE_GUARDIAN_CONSENT = """
+          {
+            "signupSessionId": null,
+            "consents": [
+              { "id": 11, "termsVersionId": 1, "agreedAt": "2026-05-19T12:00:00Z" },
+              { "id": 12, "termsVersionId": 2, "agreedAt": "2026-05-19T12:00:00Z" },
+              { "id": 13, "termsVersionId": 3, "agreedAt": "2026-05-19T12:00:00Z" }
+            ]
+          }
+      """
 
     // ───── 에러 예시 ─────
 
@@ -73,4 +93,26 @@ internal object ConsentExamples {
               "timestamp": "2026-05-19T12:00:00Z"
             }
         """
+
+    const val TOKEN_SESSION_CONFLICT = """
+          {
+            "type": "about:blank",
+            "title": "COMMON_400",
+            "status": 400,
+            "detail": "signupSessionId 와 guardianLinkToken 은 동시에 사용할 수 없습니다",
+            "code": "COMMON_400",
+            "timestamp": "2026-05-19T12:00:00Z"
+          }
+      """
+
+    const val GUARDIAN_LINK_INVALID = """
+          {
+            "type": "about:blank",
+            "title": "GUARDIAN_410_LINK",
+            "status": 410,
+            "detail": "보호자 인증 링크가 만료되었거나 이미 사용되었습니다",
+            "code": "GUARDIAN_410_LINK",
+            "timestamp": "2026-05-19T12:00:00Z"
+          }
+      """
 }

@@ -1,5 +1,6 @@
 package com.trana.terms.service
 
+import com.trana.guardian.service.GuardianLinkService
 import com.trana.terms.entity.ConsentContextType
 import com.trana.terms.entity.UserConsent
 import com.trana.terms.repository.UserConsentRepository
@@ -20,10 +21,17 @@ import java.util.UUID
 class ConsentService(
     private val userConsentRepository: UserConsentRepository,
     private val termsService: TermsService,
+    private val guardianLinkService: GuardianLinkService,
 ) {
     /** 여러 약관에 한 번에 동의 — batch INSERT. */
     fun agree(command: AgreeCommand): List<UserConsent> {
         require(command.termsVersionIds.isNotEmpty()) { "동의할 약관이 없습니다" }
+        require(!(command.signupSessionId != null && command.guardianLinkToken != null)) {
+            "signupSessionId 와 guardianLinkToken 은 동시에 사용할 수 없습니다"
+        }
+        if (command.guardianLinkToken != null) {
+            guardianLinkService.findActive(command.guardianLinkToken) // 만료/사용된 token → GuardianException
+        }
         require(command.ageGroup != AgeGroup.MINOR) {
             "미성년자 본인 동의는 지원하지 않습니다. 보호자 동의 흐름을 사용하세요"
         }
@@ -41,6 +49,7 @@ class ConsentService(
                         ip = command.ip,
                         contextId = command.contextId,
                         signupSessionId = signupSessionId,
+                        guardianLinkToken = command.guardianLinkToken,
                         userAgent = command.userAgent,
                     )
                 if (command.userId != null) consent.assignUserId(command.userId)
@@ -68,7 +77,12 @@ class ConsentService(
     private fun resolveSignupSessionId(command: AgreeCommand): UUID? =
         when {
             command.userId != null -> null
+
+            command.guardianLinkToken != null -> null
+
+            // ← 보호자 흐름: 토큰이 키, signupSessionId 발급 X
             command.signupSessionId != null -> command.signupSessionId
+
             else -> UUID.randomUUID()
         }
 }
@@ -81,5 +95,6 @@ data class AgreeCommand(
     val userId: Long? = null,
     val contextId: Long? = null,
     val signupSessionId: UUID? = null,
+    val guardianLinkToken: String? = null,
     val userAgent: String? = null,
 )

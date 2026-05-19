@@ -29,9 +29,12 @@ interface ConsentApi {
 - **성인 가입 (비인증, 첫 호출)**: 서버가 새 UUID 발급 → 응답에 포함. KYC 호출에 그대로 전달
 - **성인 가입 (비인증, 추가 약관 동의)**: 기존 signupSessionId 함께 보내면 같은 세션에 누적
 - **인증 사용자 (마케팅 등 추가 동의)**: JWT 인증된 userId로 즉시 매칭 → signupSessionId 무시, 응답에 null
+- **보호자 흐름 (비인증, 보호자 토큰)**: guardianLinkToken 첨부 → signupSessionId 발급 X. user_consents.guardian_link_token 으로 자녀와 매칭
 
 차단:
 - 미성년자 본인 동의 (ageGroup=MINOR) → 400
+- signupSessionId + guardianLinkToken 동시 첨부 → 400
+- 만료/사용된 guardianLinkToken → 410
             """,
     )
     @ApiResponses(
@@ -53,6 +56,11 @@ interface ConsentApi {
                                 summary = "인증 사용자 (signupSessionId=null)",
                                 value = ConsentExamples.RESPONSE_AUTHENTICATED,
                             ),
+                            ExampleObject(
+                                name = "guardianConsent",
+                                summary = "보호자 동의 (signupSessionId=null)",
+                                value = ConsentExamples.RESPONSE_GUARDIAN_CONSENT,
+                            ),
                         ],
                     ),
                 ],
@@ -65,6 +73,10 @@ interface ConsentApi {
                         schema = Schema(implementation = ProblemDetailResponse::class),
                         examples = [
                             ExampleObject(name = "minorNotAllowed", value = ConsentExamples.MINOR_NOT_ALLOWED),
+                            ExampleObject(
+                                name = "tokenSessionConflict",
+                                value = ConsentExamples.TOKEN_SESSION_CONFLICT,
+                            ),
                         ],
                     ),
                 ],
@@ -77,6 +89,18 @@ interface ConsentApi {
                         schema = Schema(implementation = ProblemDetailResponse::class),
                         examples = [
                             ExampleObject(name = "termsNotFound", value = ConsentExamples.TERMS_NOT_FOUND),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "보호자 링크 만료/사용됨",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "guardianLinkInvalid", value = ConsentExamples.GUARDIAN_LINK_INVALID),
                         ],
                     ),
                 ],
@@ -106,6 +130,12 @@ interface ConsentApi {
                             summary = "인증 사용자 마케팅 동의",
                             value = ConsentExamples.REQUEST_MARKETING_AUTHENTICATED,
                         ),
+                        ExampleObject(
+                            name = "guardianConsent",
+                            summary = "보호자 약관 동의 (token 첨부)",
+                            value = ConsentExamples.REQUEST_GUARDIAN_CONSENT,
+                        ),
+
                     ],
                 ),
             ],
