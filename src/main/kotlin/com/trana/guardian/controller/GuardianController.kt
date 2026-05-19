@@ -27,5 +27,5 @@ private fun GuardianLink.toResponse(webBaseUrl: String): GuardianLinkResponse =
     GuardianLinkResponse(
         token = token,
         expiresAt = expiresAt,
-        verifyUrl = "$webBaseUrl/verify/$token",
+        verifyUrl = "$webBaseUrl/verify/$token?openExternalBrowser=1",
     )

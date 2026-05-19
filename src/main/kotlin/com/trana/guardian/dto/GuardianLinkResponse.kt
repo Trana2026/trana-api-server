@@ -11,7 +11,7 @@ data class GuardianLinkResponse(
     val expiresAt: Instant,
     @Schema(
         description = "보호자가 접근할 URL — 미성년자가 보호자에게 공유 (KakaoTalk/SMS 등)",
-        example = "https://trana-web-guardian.vercel.app/verify/V1StGXR8_Z5jdHi6B-myT",
+        example = "https://trana-web-guardian.vercel.app/verify/V1StGXR8_Z5jdHi6B-myT?openExternalBrowser=1",
     )
     val verifyUrl: String,
 )
