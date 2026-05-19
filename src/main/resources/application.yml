@@ -40,3 +40,7 @@ server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
   shutdown: graceful
+
+trana:
+  guardian:
+    web-base-url: ${TRANA_GUARDIAN_WEB_BASE_URL:http://localhost:3000}
