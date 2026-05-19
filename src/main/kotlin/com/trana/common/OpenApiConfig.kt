@@ -2,10 +2,12 @@ package com.trana.common
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.SecurityScheme
+import io.swagger.v3.oas.models.Paths
 import io.swagger.v3.oas.models.media.Content
 import io.swagger.v3.oas.models.media.MediaType
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.responses.ApiResponse
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
@@ -49,7 +51,33 @@ class OpenApiConfig {
         }
 
     @Bean
-    fun adultGroup(): GroupedOpenApi =
+    fun pathOrderCustomizer(): OpenApiCustomizer =
+        OpenApiCustomizer { openApi ->
+            val explicitOrder =
+                listOf(
+                    // Identity (성인 KYC 4-step)
+                    "/v1/identity/id-card",
+                    "/v1/identity/verify-id-card",
+                    "/v1/identity/phone",
+                    "/v1/identity/face-compare",
+                    // Guardian KYC (Phase 6에서 채울 예정)
+                    "/v1/identity/guardian/id-card",
+                    "/v1/identity/guardian/verify-id-card",
+                    "/v1/identity/guardian/face-compare",
+                )
+            val originalPaths = openApi.paths ?: return@OpenApiCustomizer
+            val sorted = Paths()
+            explicitOrder.forEach { path ->
+                originalPaths[path]?.let { sorted.addPathItem(path, it) }
+            }
+            originalPaths.forEach { (path, item) ->
+                if (path !in explicitOrder) sorted.addPathItem(path, item)
+            }
+            openApi.paths(sorted)
+        }
+
+    @Bean
+    fun adultGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("성인")
@@ -60,19 +88,20 @@ class OpenApiConfig {
                 "/v1/users/**",
                 "/v1/auth/refresh",
             ).pathsToExclude("/v1/identity/guardian/**")
+            .addOpenApiCustomizer(pathOrderCustomizer)
             .build()
 
     @Bean
-    fun minorGroup(): GroupedOpenApi =
+    fun minorGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("미성년자")
             .pathsToMatch(
                 "/v1/auth/**",
-                "/v1/consents",
                 "/v1/terms/**",
                 "/v1/guardian/**",
                 "/v1/identity/guardian/**",
                 "/v1/users/**",
-            ).build()
+            ).addOpenApiCustomizer(pathOrderCustomizer)
+            .build()
 }

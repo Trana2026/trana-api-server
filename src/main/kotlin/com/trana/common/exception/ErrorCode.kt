@@ -39,6 +39,19 @@ enum class ErrorCode(
     // === KYC 신원확인 (IDENTITY_*) ===
     IDENTITY_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "IDENTITY_404_SESSION", "Verify 세션을 찾을 수 없습니다 (OCR을 다시 진행해주세요)"),
     IDENTITY_SESSION_EXPIRED(HttpStatus.GONE, "IDENTITY_410_SESSION", "Verify 세션이 만료되었습니다 (OCR을 다시 진행해주세요)"),
+    IDENTITY_SIGNUP_SESSION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "IDENTITY_404_SIGNUP",
+        "가입 세션을 찾을 수 없습니다 (약관 동의부터 다시 진행해주세요)",
+    ),
+    IDENTITY_SIGNUP_SESSION_EXPIRED(HttpStatus.GONE, "IDENTITY_410_SIGNUP", "가입 세션이 만료되었습니다 (약관 동의부터 다시 진행해주세요)"),
+    IDENTITY_OCR_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "IDENTITY_422_OCR", "신분증 OCR 인식에 실패했습니다"),
+    IDENTITY_VERIFY_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "IDENTITY_422_VERIFY", "신분증 진위확인에 실패했습니다"),
+    IDENTITY_COMPARE_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "IDENTITY_422_COMPARE", "얼굴 일치 확인에 실패했습니다"),
+    IDENTITY_VERIFY_REQUIRED(HttpStatus.CONFLICT, "IDENTITY_409_VERIFY_REQUIRED", "신분증 진위확인을 먼저 완료해주세요"),
+    IDENTITY_DUPLICATE(HttpStatus.CONFLICT, "IDENTITY_409_DUPLICATE", "이미 본인인증된 사용자입니다"),
+    IDENTITY_FILE_INVALID(HttpStatus.BAD_REQUEST, "IDENTITY_400_FILE", "신분증 사진 파일이 유효하지 않습니다"),
+    IDENTITY_NCP_FAILED(HttpStatus.BAD_GATEWAY, "IDENTITY_502_NCP", "신원확인 외부 서비스 통신에 실패했습니다"),
 
     // === 보호자 (GUARDIAN_*) ===
     GUARDIAN_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "GUARDIAN_404_LINK", "보호자 링크를 찾을 수 없습니다"),

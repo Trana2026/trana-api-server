@@ -107,6 +107,31 @@ data class IdCardOcrOutput(
 )
 
 /**
+ * identifierHash 도출용 raw value.
+ *
+ * - 주민등록증/운전면허증/외국인등록증: adapter가 이미 SHA-256 hashed
+ * - 여권: 평문 passportNumber 반환 → 호출자가 Sha256Hasher.hashHex() 적용
+ */
+val IdCardRecognitionResult.identifierHashRaw: String
+    get() =
+        when (this) {
+            is IdCardRecognitionResult.ResidentIdCard -> personalNumberHash
+            is IdCardRecognitionResult.DriverLicense -> personalNumberHash
+            is IdCardRecognitionResult.AlienRegistration -> alienRegNumberHash
+            is IdCardRecognitionResult.Passport -> passportNumber
+        }
+
+/**
+ * adapter Gender → domain user Gender.
+ * KYC에서 OTHER 케이스는 발생하지 않음 (adapter Gender enum이 MALE/FEMALE만).
+ */
+fun Gender.toDomainGender(): com.trana.user.entity.Gender =
+    when (this) {
+        Gender.MALE -> com.trana.user.entity.Gender.MALE
+        Gender.FEMALE -> com.trana.user.entity.Gender.FEMALE
+    }
+
+/**
  * NCP Verify API 호출에 필요한 평문 식별 정보.
  *
  * 어댑터 → Service까지의 메모리 전달용. **응답 DTO에는 절대 노출 X**.

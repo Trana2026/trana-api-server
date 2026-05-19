@@ -24,6 +24,9 @@ class ConsentService(
     /** 여러 약관에 한 번에 동의 — batch INSERT. */
     fun agree(command: AgreeCommand): List<UserConsent> {
         require(command.termsVersionIds.isNotEmpty()) { "동의할 약관이 없습니다" }
+        require(command.ageGroup != AgeGroup.MINOR) {
+            "미성년자 본인 동의는 지원하지 않습니다. 보호자 동의 흐름을 사용하세요"
+        }
         command.termsVersionIds.forEach { termsService.getById(it) }
 
         val signupSessionId = resolveSignupSessionId(command)
