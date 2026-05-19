@@ -45,5 +45,6 @@ trana:
   cors:
     allowed-origins:
       - http://localhost:3000
+      - https://khedivial-instructive-thatcher.ngrok-free.dev
   guardian:
     web-base-url: ${TRANA_GUARDIAN_WEB_BASE_URL:http://localhost:3000}

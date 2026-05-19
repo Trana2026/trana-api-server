@@ -42,6 +42,7 @@ trana:
     allowed-origins:
       - https://trana-web-guardian.vercel.app
       - http://localhost:3000
+      - https://khedivial-instructive-thatcher.ngrok-free.dev
   guardian:
     web-base-url: https://trana-web-guardian.vercel.app
 
