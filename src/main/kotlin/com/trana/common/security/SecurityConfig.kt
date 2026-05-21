@@ -22,6 +22,7 @@ class SecurityConfig(
         val config =
             CorsConfiguration().apply {
                 allowedOrigins = corsProperties.allowedOrigins
+                allowedOriginPatterns = corsProperties.allowedOriginPatterns
                 allowedMethods =
                     listOf(
                         HttpMethod.GET.name(),
