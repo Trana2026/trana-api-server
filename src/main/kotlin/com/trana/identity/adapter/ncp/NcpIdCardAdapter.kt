@@ -8,6 +8,9 @@ import com.trana.identity.adapter.IdCardSensitiveData
 import com.trana.identity.adapter.IdType
 import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
+import com.trana.identity.adapter.MaskPolygon
+import com.trana.identity.adapter.MaskVertex
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -21,6 +24,7 @@ import org.springframework.web.client.body
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 /**
@@ -160,12 +164,14 @@ class NcpIdCardAdapter(
                 personalNumberHash = base.parsed.hash,
                 address = sub.address.firstText(),
             )
+        val maskRegions = collectMaskRegions(sub.personalNum)
         val sensitive =
             IdCardSensitiveData(
                 requestId = requestId,
                 name = base.name,
                 personalNumber = base.rrnSanitized,
                 issueDate = base.issueDate,
+                maskRegions = maskRegions,
             )
         return IdCardOcrOutput(result, sensitive)
     }
@@ -198,6 +204,7 @@ class NcpIdCardAdapter(
                 licenseNumber = licenseNumber,
                 address = sub.address.firstText(),
             )
+        val maskRegions = collectMaskRegions(sub.personalNum, sub.code)
         val sensitive =
             IdCardSensitiveData(
                 requestId = requestId,
@@ -206,6 +213,7 @@ class NcpIdCardAdapter(
                 licenseNumber = licenseNumber,
                 licenseSecurityCode = licenseSecurityCode,
                 issueDate = base.issueDate,
+                maskRegions = maskRegions,
             )
         return IdCardOcrOutput(result, sensitive)
     }
@@ -270,10 +278,21 @@ private data class BaseFields(
     val issueDate: LocalDate,
 )
 
-private fun parseDate(text: String): LocalDate? =
-    runCatching {
-        LocalDate.parse(text.replace(".", "-"))
-    }.getOrNull()
+private fun parseDate(text: String): LocalDate? {
+    val normalized =
+        text
+            .trim()
+            .replace(Regex("[\\s./\\-]+"), ".")
+            .trim('.')
+
+    val patterns = listOf("yyyy.MM.dd", "yyyy.M.d", "yyyyMMdd")
+    for (pattern in patterns) {
+        runCatching {
+            return LocalDate.parse(normalized, DateTimeFormatter.ofPattern(pattern))
+        }
+    }
+    return null
+}
 
 private fun extractBaseFields(
     rrnRaw: String,
@@ -284,10 +303,29 @@ private fun extractBaseFields(
     val rrnSanitized = rrnRaw.replace("-", "").trim()
     val parsed = KoreanRrnParser.parse(rrnSanitized)
     val name = nameTexts.firstTextOrError("이름")
+    val rawIssueDate = issueDateTexts.firstText()
     val issueDate =
-        issueDateTexts.firstText()?.let { parseDate(it) }
-            ?: throw IdentityException.OcrRejected("$idTypeLabel 발급일을 인식하지 못했습니다. 사진을 다시 찍어주세요.")
+        rawIssueDate?.let { parseDate(it) }
+            ?: run {
+                LoggerFactory.getLogger("NcpIdCardAdapter").warn(
+                    "issueDate parse failed: idType={} raw='{}'",
+                    idTypeLabel,
+                    rawIssueDate,
+                )
+                throw IdentityException.OcrRejected(
+                    "$idTypeLabel 발급일을 인식하지 못했습니다. 사진을 다시 찍어주세요.",
+                )
+            }
     return BaseFields(name, rrnSanitized, parsed, issueDate)
 }
+
+private fun collectMaskRegions(vararg fieldTexts: List<NcpText>?): List<MaskPolygon> =
+    fieldTexts
+        .asSequence()
+        .filterNotNull()
+        .flatten()
+        .flatMap { it.maskingPolys.orEmpty().asSequence() }
+        .map { poly -> MaskPolygon(vertices = poly.vertices.map { MaskVertex(it.x, it.y) }) }
+        .toList()
 
 private const val EKYC_SECRET_HEADER = "X-EKYC-SECRET"

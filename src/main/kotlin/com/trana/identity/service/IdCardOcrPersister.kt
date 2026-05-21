@@ -40,6 +40,7 @@ class IdCardOcrPersister(
             licenseSecurityCode = ocr.sensitive.licenseSecurityCode,
             serialNumber = ocr.sensitive.serialNumber,
             issueDate = ocr.sensitive.issueDate,
+            maskRegions = ocr.sensitive.maskRegions,
             idCardS3Key = s3Key,
             idCardMime = image.format.mime,
         )

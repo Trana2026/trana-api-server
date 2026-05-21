@@ -16,6 +16,7 @@ CREATE TABLE id_card_verify_sessions
     license_security_code     VARCHAR(20),
     serial_number             VARCHAR(30),
     issue_date                DATE,
+    ocr_mask_polygons         TEXT,
     id_card_s3_key            VARCHAR(200),
     id_card_mime              VARCHAR(50),
     expires_at                TIMESTAMPTZ  NOT NULL,
@@ -28,6 +29,7 @@ COMMENT ON TABLE id_card_verify_sessions IS 'OCR → Verify 임시 세션 (10분
 COMMENT ON COLUMN id_card_verify_sessions.request_id IS 'NCP Document API requestId (Verify 호출 키)';
 COMMENT ON COLUMN id_card_verify_sessions.id_type IS 'ID_CARD | DRIVER_LICENSE | ALIEN_REGISTRATION';
 COMMENT ON COLUMN id_card_verify_sessions.personal_number_encrypted IS 'AES-256-GCM (ic/dl 주민번호, ac 외국인등록번호)';
+COMMENT ON COLUMN id_card_verify_sessions.ocr_mask_polygons IS 'NCP maskingPolys JSON 직렬화 (프리뷰 합성용)';
 COMMENT ON COLUMN id_card_verify_sessions.id_card_s3_key IS '신분증 사진 S3 키 (Compare 시 GET, 사용 후 즉시 DELETE)';
 COMMENT ON COLUMN id_card_verify_sessions.id_card_mime IS '신분증 사진 MIME (image/jpeg, image/png)';
 

@@ -54,6 +54,18 @@ data class NcpAlienRegistration(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class NcpText(
     val text: String,
+    val maskingPolys: List<NcpMaskingPoly>? = null,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class NcpMaskingPoly(
+    val vertices: List<NcpVertex>,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class NcpVertex(
+    val x: Double,
+    val y: Double,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

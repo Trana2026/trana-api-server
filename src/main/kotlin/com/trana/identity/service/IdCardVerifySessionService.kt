@@ -1,10 +1,13 @@
 package com.trana.identity.service
 
+import com.trana.identity.adapter.MaskPolygon
 import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.repository.IdCardVerifySessionRepository
 import org.springframework.security.crypto.encrypt.BytesEncryptor
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -20,6 +23,7 @@ import java.time.LocalDate
 class IdCardVerifySessionService(
     private val repository: IdCardVerifySessionRepository,
     private val bytesEncryptor: BytesEncryptor,
+    private val objectMapper: ObjectMapper,
 ) {
     @Transactional
     @Suppress("LongParameterList")
@@ -32,6 +36,7 @@ class IdCardVerifySessionService(
         licenseSecurityCode: String? = null,
         serialNumber: String? = null,
         issueDate: LocalDate? = null,
+        maskRegions: List<MaskPolygon> = emptyList(),
         idCardS3Key: String,
         idCardMime: String,
     ): IdCardVerifySession {
@@ -45,6 +50,7 @@ class IdCardVerifySessionService(
                 licenseSecurityCode = licenseSecurityCode,
                 serialNumber = serialNumber,
                 issueDate = issueDate,
+                ocrMaskPolygons = maskRegions.takeIf { it.isNotEmpty() }?.let { objectMapper.writeValueAsString(it) },
                 idCardS3Key = idCardS3Key,
                 idCardMime = idCardMime,
                 expiresAt = Instant.now().plus(TTL),
@@ -59,6 +65,11 @@ class IdCardVerifySessionService(
     fun findActive(requestId: String): IdCardVerifySession? {
         val session = repository.findById(requestId).orElse(null) ?: return null
         return if (session.isExpired()) null else session
+    }
+
+    fun decodeMaskRegions(session: IdCardVerifySession): List<MaskPolygon> {
+        val raw = session.ocrMaskPolygons ?: return emptyList()
+        return objectMapper.readValue(raw, object : TypeReference<List<MaskPolygon>>() {})
     }
 
     fun decryptPersonalNumber(session: IdCardVerifySession): String? =

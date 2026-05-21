@@ -49,6 +49,7 @@ class KycGuardianService(
     private val userRepository: UserRepository,
     private val storageService: StorageService,
     private val auditLogger: AuditLogger,
+    private val idCardMasker: IdCardMasker,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -105,6 +106,21 @@ class KycGuardianService(
         val verification = stateLookup.loadPendingVerification(requestId)
         validateBelongsToToken(verification, token)
         return kycSessionService.verifyIdCard(requestId)
+    }
+
+    @Transactional(readOnly = true)
+    fun previewIdCard(
+        requestId: String,
+        token: String,
+    ): IdCardImagePreview {
+        val session = stateLookup.loadActiveSession(requestId)
+        val verification = stateLookup.loadPendingVerification(requestId)
+        validateBelongsToToken(verification, token)
+
+        val image = loadIdCardImage(session)
+        val polygons = sessionService.decodeMaskRegions(session)
+        val maskedBytes = idCardMasker.apply(image.bytes, polygons)
+        return IdCardImagePreview(bytes = maskedBytes, mime = "image/png")
     }
 
     fun compareFaces(
@@ -227,4 +243,10 @@ data class CompareGuardianResult(
     val subjectUserId: Long,
     val guardianId: Long,
     val verified: Boolean,
+)
+
+@Suppress("ArrayInDataClass")
+data class IdCardImagePreview(
+    val bytes: ByteArray,
+    val mime: String,
 )

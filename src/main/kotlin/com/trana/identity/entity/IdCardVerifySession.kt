@@ -37,6 +37,8 @@ class IdCardVerifySession(
     val serialNumber: String? = null,
     @Column(name = "issue_date")
     val issueDate: LocalDate? = null,
+    @Column(name = "ocr_mask_polygons", columnDefinition = "TEXT")
+    val ocrMaskPolygons: String? = null,
     @Column(name = "id_card_s3_key", length = 200)
     val idCardS3Key: String? = null,
     @Column(name = "id_card_mime", length = 50)

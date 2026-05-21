@@ -115,6 +115,15 @@ fun Gender.toDomainGender(): com.trana.user.entity.Gender =
         Gender.FEMALE -> com.trana.user.entity.Gender.FEMALE
     }
 
+data class MaskPolygon(
+    val vertices: List<MaskVertex>,
+)
+
+data class MaskVertex(
+    val x: Double,
+    val y: Double,
+)
+
 /**
  * NCP Verify API 호출에 필요한 평문 식별 정보.
  *
@@ -130,6 +139,7 @@ data class IdCardSensitiveData(
     val licenseSecurityCode: String? = null, // dl 암호일련번호 (옵션 — skipCodeCheck 가능)
     val serialNumber: String? = null, // ac Verify 필수
     val issueDate: LocalDate? = null, // ic/dl/ac 모두 (Verify 필수)
+    val maskRegions: List<MaskPolygon> = emptyList(),
 )
 
 // ───── output: 얼굴비교 ─────

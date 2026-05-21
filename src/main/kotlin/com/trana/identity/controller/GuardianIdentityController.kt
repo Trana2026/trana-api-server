@@ -5,9 +5,13 @@ import com.trana.identity.dto.GuardianVerifyIdCardRequest
 import com.trana.identity.dto.RecognizeIdCardResponse
 import com.trana.identity.dto.VerifyIdCardResponse
 import com.trana.identity.service.CompareGuardianResult
+import com.trana.identity.service.IdCardImagePreview
 import com.trana.identity.service.KycGuardianService
 import com.trana.identity.service.RecognizeIdCardResult
 import com.trana.identity.service.VerifyIdCardResult
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -27,6 +31,11 @@ class GuardianIdentityController(
 
     override fun verifyIdCard(request: GuardianVerifyIdCardRequest): VerifyIdCardResponse =
         kycGuardianService.verifyIdCard(request.requestId, request.token).toResponse()
+
+    override fun previewIdCard(
+        requestId: String,
+        token: String,
+    ): ResponseEntity<ByteArrayResource> = kycGuardianService.previewIdCard(requestId, token).toResponse()
 
     override fun compareFaces(
         requestId: String,
@@ -52,3 +61,10 @@ private fun VerifyIdCardResult.toResponse(): VerifyIdCardResponse =
 
 private fun CompareGuardianResult.toResponse(): GuardianBindResponse =
     GuardianBindResponse(subjectUserId = subjectUserId, guardianId = guardianId, verified = verified)
+
+private fun IdCardImagePreview.toResponse(): ResponseEntity<ByteArrayResource> =
+    ResponseEntity
+        .ok()
+        .contentType(MediaType.parseMediaType(mime))
+        .contentLength(bytes.size.toLong())
+        .body(ByteArrayResource(bytes))

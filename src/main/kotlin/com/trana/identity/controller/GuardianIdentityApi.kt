@@ -15,7 +15,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
@@ -182,6 +185,50 @@ NCP Verify API 호출 — 정부 record 대조.
         @Valid
         request: GuardianVerifyIdCardRequest,
     ): VerifyIdCardResponse
+
+    @Operation(
+        operationId = "kycGuardianPreviewIdCard",
+        summary = "보호자 신분증 OCR 이미지 프리뷰",
+        description = """
+  보호자가 OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
+
+  흐름:
+  - 사전 조건: OCR 완료 (requestId + token 보유)
+  - 응답: 신분증 사진 byte stream (image/jpeg 또는 image/png)
+  - 마스킹 없음 — 개발 단계, 추후 도입 예정
+
+  세션 만료(10분 초과) 시 410. token 불일치 시 410.
+      """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "신분증 사진 byte stream",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "세션 없음",
+                content = [
+                    Content(schema = Schema(implementation = ProblemDetailResponse::class)),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "세션 만료 또는 token 불일치",
+                content = [
+                    Content(schema = Schema(implementation = ProblemDetailResponse::class)),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/id-card/image", produces = [MediaType.IMAGE_PNG_VALUE])
+    fun previewIdCard(
+        @Parameter(description = "OCR step에서 받은 requestId", required = true)
+        @RequestParam("requestId") requestId: String,
+        @Parameter(description = "보호자 매칭 토큰 (jnanoid 21자)", required = true)
+        @RequestParam("token") token: String,
+    ): ResponseEntity<ByteArrayResource>
 
     @Operation(
         operationId = "guardianKycStep3CompareFaces",
