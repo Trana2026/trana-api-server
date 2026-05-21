@@ -42,6 +42,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                     title = errorCode.code
                     setProperty("code", errorCode.code)
                     setProperty("timestamp", Instant.now().toString())
+                    ex.properties.forEach { (key, value) -> setProperty(key, value) }
                 }
 
         if (errorCode.status.is5xxServerError) {

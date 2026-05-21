@@ -83,13 +83,17 @@ internal object IdentityExamples {
     const val VERIFY_REJECTED = """
             {
               "type": "about:blank",
-              "title": "IDENTITY_422_VERIFY",
               "status": 422,
-              "detail": "신분증 진위확인 실패: [CODE] message",
+              "title": "IDENTITY_422_VERIFY",
+              "detail": "신분증 진위 확인에 실패했습니다. 사진을 다시 찍어 진행해주세요.",
+              "instance": "/v1/identity/verify-id-card",
               "code": "IDENTITY_422_VERIFY",
-              "timestamp": "2026-05-19T12:00:00Z"
+              "timestamp": "2026-05-21T10:00:00Z",
+              "ncpCode": "0511",
+              "ncpMessage": "암호일련번호가 일치하지 않습니다.",
+              "hint": "RETRY_PHOTO"
             }
-        """
+       """
 
     const val VERIFY_REQUIRED = """
             {

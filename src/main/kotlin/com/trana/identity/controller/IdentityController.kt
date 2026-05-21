@@ -7,11 +7,15 @@ import com.trana.identity.dto.SignUpResponse
 import com.trana.identity.dto.VerifyIdCardRequest
 import com.trana.identity.dto.VerifyIdCardResponse
 import com.trana.identity.service.CompareFacesResult
+import com.trana.identity.service.IdCardImagePreview
 import com.trana.identity.service.KycSessionService
 import com.trana.identity.service.KycSignupService
 import com.trana.identity.service.RecognizeIdCardResult
 import com.trana.identity.service.RecordPhoneResult
 import com.trana.identity.service.VerifyIdCardResult
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -35,6 +39,9 @@ class IdentityController(
         kycSessionService
             .recognizeIdCard(signupSessionId, file.toImageInput())
             .toResponse()
+
+    override fun previewIdCard(requestId: String): ResponseEntity<ByteArrayResource> =
+        kycSessionService.previewIdCard(requestId).toResponse()
 
     override fun verifyIdCard(request: VerifyIdCardRequest): VerifyIdCardResponse =
         kycSessionService.verifyIdCard(request.requestId).toResponse()
@@ -75,3 +82,10 @@ private fun CompareFacesResult.toResponse(): SignUpResponse =
         publicCode = publicCode,
         requiresGuardian = requiresGuardian,
     )
+
+private fun IdCardImagePreview.toResponse(): ResponseEntity<ByteArrayResource> =
+    ResponseEntity
+        .ok()
+        .contentType(MediaType.parseMediaType(mime))
+        .contentLength(bytes.size.toLong())
+        .body(ByteArrayResource(bytes))

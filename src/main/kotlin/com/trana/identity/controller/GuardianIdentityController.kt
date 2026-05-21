@@ -29,13 +29,13 @@ class GuardianIdentityController(
             .recognizeIdCard(token, file.toImageInput())
             .toResponse()
 
-    override fun verifyIdCard(request: GuardianVerifyIdCardRequest): VerifyIdCardResponse =
-        kycGuardianService.verifyIdCard(request.requestId, request.token).toResponse()
-
     override fun previewIdCard(
         requestId: String,
         token: String,
     ): ResponseEntity<ByteArrayResource> = kycGuardianService.previewIdCard(requestId, token).toResponse()
+
+    override fun verifyIdCard(request: GuardianVerifyIdCardRequest): VerifyIdCardResponse =
+        kycGuardianService.verifyIdCard(request.requestId, request.token).toResponse()
 
     override fun compareFaces(
         requestId: String,

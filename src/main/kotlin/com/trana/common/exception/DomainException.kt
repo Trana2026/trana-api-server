@@ -20,4 +20,6 @@ abstract class DomainException(
     val errorCode: ErrorCode,
     message: String? = null,
     cause: Throwable? = null,
-) : RuntimeException(message ?: errorCode.message, cause)
+) : RuntimeException(message, cause) {
+    open val properties: Map<String, Any> = emptyMap()
+}

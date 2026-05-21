@@ -1,11 +1,13 @@
 package com.trana.identity.service
 
 import com.trana.audit.AuditLogger
+import com.trana.common.storage.StorageService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.IdCardVerifyAdapter
 import com.trana.identity.adapter.IdCardVerifyInput
 import com.trana.identity.adapter.IdType
+import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.adapter.idType
 import com.trana.identity.adapter.identifierHashRaw
@@ -40,6 +42,8 @@ class KycSessionService(
     private val stateLookup: KycStateLookup,
     private val ocrPersister: IdCardOcrPersister,
     private val auditLogger: AuditLogger,
+    private val storageService: StorageService,
+    private val idCardMasker: IdCardMasker,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -118,6 +122,17 @@ class KycSessionService(
         return VerifyIdCardResult(requestId = requestId, verified = true)
     }
 
+    @Transactional(readOnly = true)
+    fun previewIdCard(requestId: String): IdCardImagePreview {
+        val session = stateLookup.loadActiveSession(requestId)
+        stateLookup.loadPendingVerification(requestId)
+
+        val image = loadIdCardImage(session)
+        val polygons = sessionService.decodeMaskRegions(session)
+        val maskedBytes = idCardMasker.apply(image.bytes, polygons)
+        return IdCardImagePreview(bytes = maskedBytes, mime = "image/png")
+    }
+
     fun recordPhone(
         requestId: String,
         phone: String,
@@ -141,6 +156,17 @@ class KycSessionService(
             entityId = verification.id,
         )
         return RecordPhoneResult(requestId = requestId, phone = digits)
+    }
+
+    private fun loadIdCardImage(session: IdCardVerifySession): ImageInput {
+        val s3Key = checkNotNull(session.idCardS3Key) { "session.idCardS3Key null" }
+        val mime = checkNotNull(session.idCardMime) { "session.idCardMime null" }
+        val format = ImageFormat.fromMime(mime)
+        return ImageInput(
+            bytes = storageService.get(s3Key),
+            format = format,
+            originalFilename = "id-card.${format.extension}",
+        )
     }
 
     companion object {

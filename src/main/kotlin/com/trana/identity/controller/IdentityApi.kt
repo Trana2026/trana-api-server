@@ -17,7 +17,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
@@ -96,6 +99,47 @@ interface IdentityApi {
         @Parameter(description = "신분증 사진 (image/jpeg, image/png)", required = true)
         @RequestPart("file") file: MultipartFile,
     ): RecognizeIdCardResponse
+
+    @Operation(
+        operationId = "kycPreviewIdCard",
+        summary = "신분증 OCR 이미지 프리뷰",
+        description = """
+  OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
+
+  흐름:
+  - 사전 조건: OCR 완료 (requestId 보유)
+  - 응답: 신분증 사진 마스킹 적용된 PNG byte stream (식별번호 영역 검정 사각형)
+
+  세션 만료(10분 초과) 시 410.
+      """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "신분증 사진 byte stream (마스킹 PNG)",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "세션 없음",
+                content = [
+                    Content(schema = Schema(implementation = ProblemDetailResponse::class)),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "세션 만료",
+                content = [
+                    Content(schema = Schema(implementation = ProblemDetailResponse::class)),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/id-card/image", produces = [MediaType.IMAGE_PNG_VALUE])
+    fun previewIdCard(
+        @Parameter(description = "OCR step에서 받은 requestId", required = true)
+        @RequestParam("requestId") requestId: String,
+    ): ResponseEntity<ByteArrayResource>
 
     @Operation(
         operationId = "kycStep2VerifyIdCard",

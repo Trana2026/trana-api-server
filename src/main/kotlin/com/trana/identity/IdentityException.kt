@@ -58,12 +58,19 @@ sealed class IdentityException(
         )
 
     class VerifyRejected(
-        ncpErrorCode: String,
-        ncpErrorMessage: String,
+        val ncpErrorCode: String,
+        val ncpErrorMessage: String,
     ) : IdentityException(
             ErrorCode.IDENTITY_VERIFY_REJECTED,
-            "신분증 진위확인 실패: [$ncpErrorCode] $ncpErrorMessage",
-        )
+            "신분증 진위 확인에 실패했습니다. 사진을 다시 찍어 진행해주세요.",
+        ) {
+        override val properties: Map<String, Any> =
+            mapOf(
+                "ncpCode" to ncpErrorCode,
+                "ncpMessage" to ncpErrorMessage,
+                "hint" to "RETRY_PHOTO",
+            )
+    }
 
     class CompareRejected(
         similarity: Double?,

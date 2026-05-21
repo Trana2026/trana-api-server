@@ -55,13 +55,15 @@ class OpenApiConfig {
         OpenApiCustomizer { openApi ->
             val explicitOrder =
                 listOf(
-                    // Identity (성인 KYC 4-step)
+                    // Identity (성인 KYC 5-step)
                     "/v1/identity/id-card",
+                    "/v1/identity/id-card/image",
                     "/v1/identity/verify-id-card",
                     "/v1/identity/phone",
                     "/v1/identity/face-compare",
-                    // Guardian KYC (Phase 6에서 채울 예정)
+                    // Guardian KYC (4-step)
                     "/v1/identity/guardian/id-card",
+                    "/v1/identity/guardian/id-card/image",
                     "/v1/identity/guardian/verify-id-card",
                     "/v1/identity/guardian/face-compare",
                 )
