@@ -1,7 +1,6 @@
 package com.trana.identity.service
 
 import com.trana.audit.AuditLogger
-import com.trana.common.crypto.Sha256Hasher
 import com.trana.common.storage.StorageService
 import com.trana.guardian.GuardianException
 import com.trana.guardian.entity.Guardian
@@ -10,7 +9,6 @@ import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.IdCardOcrAdapter
-import com.trana.identity.adapter.IdType
 import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.adapter.idType
@@ -62,7 +60,7 @@ class KycGuardianService(
         stateLookup.loadSubjectMinor(link.userId)
 
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
-        val identifierHash = hashIdentifier(ocr.result.identifierHashRaw, ocr.result.idType)
+        val identifierHash = ocr.result.identifierHashRaw
         stateLookup.requireAdult(ocr.result.birthDate, identifierHash)
 
         if (verificationRepository.existsByIdentifierHashAndStatus(identifierHash, VerificationStatus.SUCCESS)) {
@@ -223,11 +221,6 @@ class KycGuardianService(
         runCatching { storageService.delete(s3Key) }
             .onFailure { log.warn("S3 id-card delete failed: key={}", s3Key, it) }
     }
-
-    private fun hashIdentifier(
-        rawOrHash: String,
-        idType: IdType,
-    ): String = if (idType == IdType.PASSPORT) Sha256Hasher.hashHex(rawOrHash) else rawOrHash
 }
 
 data class CompareGuardianResult(

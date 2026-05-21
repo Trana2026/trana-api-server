@@ -1,7 +1,6 @@
 package com.trana.identity.service
 
 import com.trana.audit.AuditLogger
-import com.trana.common.crypto.Sha256Hasher
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.IdCardVerifyAdapter
@@ -51,7 +50,7 @@ class KycSessionService(
         stateLookup.validateSignupSession(signupSessionId)
 
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
-        val identifierHash = hashIdentifier(ocr.result.identifierHashRaw, ocr.result.idType)
+        val identifierHash = ocr.result.identifierHashRaw
 
         if (verificationRepository.existsByIdentifierHashAndStatus(identifierHash, VerificationStatus.SUCCESS)) {
             throw IdentityException.Duplicate(identifierHash)
@@ -94,7 +93,6 @@ class KycSessionService(
         val input =
             session.toVerifyInput(
                 personalNum = sessionService.decryptPersonalNumber(session),
-                passportNum = sessionService.decryptPassportNumber(session),
             )
         val result = idCardVerifyAdapter.verify(input)
 
@@ -145,11 +143,6 @@ class KycSessionService(
         return RecordPhoneResult(requestId = requestId, phone = digits)
     }
 
-    private fun hashIdentifier(
-        rawOrHash: String,
-        idType: IdType,
-    ): String = if (idType == IdType.PASSPORT) Sha256Hasher.hashHex(rawOrHash) else rawOrHash
-
     companion object {
         private const val PHONE_DIGITS = 11
     }
@@ -177,10 +170,7 @@ data class RecordPhoneResult(
 
 // ───── 파일 내부 헬퍼 ─────
 
-private fun IdCardVerifySession.toVerifyInput(
-    personalNum: String?,
-    passportNum: String?,
-): IdCardVerifyInput {
+private fun IdCardVerifySession.toVerifyInput(personalNum: String?): IdCardVerifyInput {
     val type = IdType.valueOf(idType)
     return when (type) {
         IdType.ID_CARD -> {
@@ -202,18 +192,6 @@ private fun IdCardVerifySession.toVerifyInput(
                 licenseNum = licenseNumber,
                 licenseCode = licenseSecurityCode,
                 issueDate = issueDate,
-            )
-        }
-
-        IdType.PASSPORT -> {
-            IdCardVerifyInput(
-                requestId = requestId,
-                idType = type,
-                name = name,
-                passportNum = passportNum,
-                birthDate = birthDate,
-                issueDate = issueDate,
-                expireDate = expireDate,
             )
         }
 

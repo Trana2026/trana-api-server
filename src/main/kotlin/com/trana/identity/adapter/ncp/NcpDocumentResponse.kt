@@ -27,7 +27,6 @@ data class NcpIdCardResult(
     val idtype: String?,
     val ic: NcpIdCardSubject?,
     val dl: NcpIdCardSubject?,
-    val pp: NcpPassport?,
     val ac: NcpAlienRegistration?,
 )
 
@@ -39,18 +38,6 @@ data class NcpIdCardSubject(
     val issueDate: List<NcpText>?,
     val num: List<NcpText>?, // dl 면허번호 (ic는 null)
     val code: List<NcpText>?, // ← 추가 (dl 암호일련번호, Verify 필요)
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class NcpPassport(
-    val num: List<NcpText>?,
-    val surName: List<NcpText>?,
-    val givenName: List<NcpText>?,
-    val birthDate: List<NcpText>?,
-    val sex: List<NcpText>?,
-    val nationality: List<NcpText>?,
-    val issueDate: List<NcpText>?,
-    val expireDate: List<NcpText>?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

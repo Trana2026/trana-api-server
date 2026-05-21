@@ -38,11 +38,8 @@ class IdCardOcrPersister(
             personalNumber = ocr.sensitive.personalNumber,
             licenseNumber = ocr.sensitive.licenseNumber,
             licenseSecurityCode = ocr.sensitive.licenseSecurityCode,
-            passportNumber = ocr.sensitive.passportNumber,
-            birthDate = ocr.sensitive.birthDate,
             serialNumber = ocr.sensitive.serialNumber,
             issueDate = ocr.sensitive.issueDate,
-            expireDate = ocr.sensitive.expireDate,
             idCardS3Key = s3Key,
             idCardMime = image.format.mime,
         )

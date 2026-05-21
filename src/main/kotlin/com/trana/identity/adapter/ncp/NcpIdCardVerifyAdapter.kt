@@ -54,7 +54,6 @@ class NcpIdCardVerifyAdapter(
         when (idType) {
             IdType.ID_CARD -> "ic"
             IdType.DRIVER_LICENSE -> "dl"
-            IdType.PASSPORT -> "pp"
             IdType.ALIEN_REGISTRATION -> "ac"
         }
 
@@ -63,7 +62,6 @@ class NcpIdCardVerifyAdapter(
             when (input.idType) {
                 IdType.ID_CARD -> buildIcData(input)
                 IdType.DRIVER_LICENSE -> buildDlData(input)
-                IdType.PASSPORT -> buildPpData(input)
                 IdType.ALIEN_REGISTRATION -> buildAcData(input)
             }
         return mapOf(
@@ -93,15 +91,6 @@ class NcpIdCardVerifyAdapter(
         }
         return base
     }
-
-    private fun buildPpData(input: IdCardVerifyInput): Map<String, Any?> =
-        mapOf(
-            "fullNameKor" to input.name,
-            "num" to requireNotNull(input.passportNum) { "pp Verify: 여권번호 필수" },
-            "birthDate" to requireNotNull(input.birthDate?.format(DATE_FORMAT)) { "pp Verify: 생년월일 필수" },
-            "issueDate" to requireNotNull(input.issueDate?.format(DATE_FORMAT)) { "pp Verify: 발급일 필수" },
-            "expireDate" to requireNotNull(input.expireDate?.format(DATE_FORMAT)) { "pp Verify: 만료일 필수" },
-        )
 
     private fun buildAcData(input: IdCardVerifyInput): Map<String, Any?> =
         mapOf(

@@ -14,11 +14,8 @@ CREATE TABLE id_card_verify_sessions
     personal_number_encrypted BYTEA,
     license_number            VARCHAR(30),
     license_security_code     VARCHAR(20),
-    passport_number_encrypted BYTEA,
-    birth_date                DATE,
     serial_number             VARCHAR(30),
     issue_date                DATE,
-    expire_date               DATE,
     id_card_s3_key            VARCHAR(200),
     id_card_mime              VARCHAR(50),
     expires_at                TIMESTAMPTZ  NOT NULL,
@@ -29,9 +26,8 @@ CREATE INDEX idx_id_card_verify_session_expires ON id_card_verify_sessions (expi
 
 COMMENT ON TABLE id_card_verify_sessions IS 'OCR → Verify 임시 세션 (10분 TTL). 평문 식별번호 BYTEA 암호화';
 COMMENT ON COLUMN id_card_verify_sessions.request_id IS 'NCP Document API requestId (Verify 호출 키)';
-COMMENT ON COLUMN id_card_verify_sessions.id_type IS 'ID_CARD | DRIVER_LICENSE | PASSPORT | ALIEN_REGISTRATION';
+COMMENT ON COLUMN id_card_verify_sessions.id_type IS 'ID_CARD | DRIVER_LICENSE | ALIEN_REGISTRATION';
 COMMENT ON COLUMN id_card_verify_sessions.personal_number_encrypted IS 'AES-256-GCM (ic/dl 주민번호, ac 외국인등록번호)';
-COMMENT ON COLUMN id_card_verify_sessions.passport_number_encrypted IS 'AES-256-GCM (pp만)';
 COMMENT ON COLUMN id_card_verify_sessions.id_card_s3_key IS '신분증 사진 S3 키 (Compare 시 GET, 사용 후 즉시 DELETE)';
 COMMENT ON COLUMN id_card_verify_sessions.id_card_mime IS '신분증 사진 MIME (image/jpeg, image/png)';
 
@@ -77,7 +73,7 @@ COMMENT ON COLUMN identity_verifications.user_id IS '논리 FK (cascade 사고 �
 COMMENT ON COLUMN identity_verifications.signup_session_id IS '성인 가입 multi-step 매칭 (user 생성 전)';
 COMMENT ON COLUMN identity_verifications.status IS 'PENDING | SUCCESS | FAILED — OCR 시 PENDING 생성';
 COMMENT ON COLUMN identity_verifications.ncp_document_request_id IS 'NCP Document API requestId';
-COMMENT ON COLUMN identity_verifications.identifier_hash IS 'SHA-256 (주민번호/여권번호 등) — 중복 가입 lookup';
+COMMENT ON COLUMN identity_verifications.identifier_hash IS 'SHA-256 (주민번호/외국인등록번호) — 중복 가입 lookup';
 COMMENT ON COLUMN identity_verifications.phone IS 'Verify 단계 사용자 입력. Compare SUCCESS 시 user.phone 백필';
 COMMENT ON COLUMN identity_verifications.failure_step IS 'OCR | VERIFY | COMPARE | NULL(성공)';
 COMMENT ON COLUMN identity_verifications.purpose IS 'SIGNUP(본인) | GUARDIAN(보호자) — Phase 6에서 GUARDIAN 사용';

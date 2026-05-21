@@ -30,11 +30,8 @@ class IdCardVerifySessionService(
         personalNumber: String? = null,
         licenseNumber: String? = null,
         licenseSecurityCode: String? = null,
-        passportNumber: String? = null,
-        birthDate: LocalDate? = null,
         serialNumber: String? = null,
         issueDate: LocalDate? = null,
-        expireDate: LocalDate? = null,
         idCardS3Key: String,
         idCardMime: String,
     ): IdCardVerifySession {
@@ -46,11 +43,8 @@ class IdCardVerifySessionService(
                 personalNumberEncrypted = personalNumber?.let { encrypt(it) },
                 licenseNumber = licenseNumber,
                 licenseSecurityCode = licenseSecurityCode,
-                passportNumberEncrypted = passportNumber?.let { encrypt(it) },
-                birthDate = birthDate,
                 serialNumber = serialNumber,
                 issueDate = issueDate,
-                expireDate = expireDate,
                 idCardS3Key = idCardS3Key,
                 idCardMime = idCardMime,
                 expiresAt = Instant.now().plus(TTL),
@@ -69,9 +63,6 @@ class IdCardVerifySessionService(
 
     fun decryptPersonalNumber(session: IdCardVerifySession): String? =
         session.personalNumberEncrypted?.let { decrypt(it) }
-
-    fun decryptPassportNumber(session: IdCardVerifySession): String? =
-        session.passportNumberEncrypted?.let { decrypt(it) }
 
     @Transactional
     fun delete(requestId: String) {

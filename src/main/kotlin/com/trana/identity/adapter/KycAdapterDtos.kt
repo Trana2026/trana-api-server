@@ -25,11 +25,11 @@ enum class ImageFormat(
     }
 }
 
-enum class IdType { ID_CARD, DRIVER_LICENSE, PASSPORT, ALIEN_REGISTRATION }
+enum class IdType { ID_CARD, DRIVER_LICENSE, ALIEN_REGISTRATION }
 
 enum class Gender { MALE, FEMALE }
 
-// ───── output: 신분증 OCR (4종 분리) ─────
+// ───── output: 신분증 OCR (3종 분리) ─────
 sealed interface IdCardRecognitionResult {
     val name: String
     val birthDate: LocalDate
@@ -63,19 +63,6 @@ sealed interface IdCardRecognitionResult {
         val address: String?,
     ) : IdCardRecognitionResult
 
-    /** 여권 (한국/외국 공통) */
-    data class Passport(
-        override val name: String, // 영문 풀네임 (surName + givenName)
-        override val birthDate: LocalDate,
-        override val gender: Gender,
-        override val issueDate: LocalDate?,
-        override val rawConfidence: Boolean,
-        override val faceImageBase64: String?,
-        val passportNumber: String,
-        val nationality: String, // ISO 3166 국가 코드 (예: "KOR")
-        val expireDate: LocalDate?,
-    ) : IdCardRecognitionResult
-
     /** 외국인등록증 */
     data class AlienRegistration(
         override val name: String,
@@ -96,7 +83,6 @@ val IdCardRecognitionResult.idType: IdType
         when (this) {
             is IdCardRecognitionResult.ResidentIdCard -> IdType.ID_CARD
             is IdCardRecognitionResult.DriverLicense -> IdType.DRIVER_LICENSE
-            is IdCardRecognitionResult.Passport -> IdType.PASSPORT
             is IdCardRecognitionResult.AlienRegistration -> IdType.ALIEN_REGISTRATION
         }
 
@@ -108,17 +94,15 @@ data class IdCardOcrOutput(
 
 /**
  * identifierHash 도출용 raw value.
- *
- * - 주민등록증/운전면허증/외국인등록증: adapter가 이미 SHA-256 hashed
- * - 여권: 평문 passportNumber 반환 → 호출자가 Sha256Hasher.hashHex() 적용
+ * 모든 신분증은 adapter가 이미 SHA-256 hashed 반환.
  */
+
 val IdCardRecognitionResult.identifierHashRaw: String
     get() =
         when (this) {
             is IdCardRecognitionResult.ResidentIdCard -> personalNumberHash
             is IdCardRecognitionResult.DriverLicense -> personalNumberHash
             is IdCardRecognitionResult.AlienRegistration -> alienRegNumberHash
-            is IdCardRecognitionResult.Passport -> passportNumber
         }
 
 /**
@@ -144,11 +128,8 @@ data class IdCardSensitiveData(
     val personalNumber: String? = null, // ic/dl/ac 13자리 (외국인등록번호 포함)
     val licenseNumber: String? = null, // dl 면허번호
     val licenseSecurityCode: String? = null, // dl 암호일련번호 (옵션 — skipCodeCheck 가능)
-    val passportNumber: String? = null, // pp 여권번호
-    val birthDate: LocalDate? = null, // pp Verify 필수
     val serialNumber: String? = null, // ac Verify 필수
-    val issueDate: LocalDate? = null, // ic/dl/pp/ac 모두 (Verify 필수)
-    val expireDate: LocalDate? = null, // pp Verify 필수
+    val issueDate: LocalDate? = null, // ic/dl/ac 모두 (Verify 필수)
 )
 
 // ───── output: 얼굴비교 ─────
@@ -161,17 +142,14 @@ data class FaceCompareResult(
 @Suppress("LongParameterList")
 data class IdCardVerifyInput(
     val requestId: String, // NCP Document API의 requestId (10분 유효)
-    val idType: IdType, // 분기 키 (ic/dl/pp/ac)
+    val idType: IdType, // 분기 키 (ic/dl/ac)
     val name: String,
     val personalNum: String? = null, // ic/dl 주민번호 13자리 (sanitized)
     val licenseNum: String? = null, // dl 면허번호
     val licenseCode: String? = null, // dl 암호일련번호 (옵션 — null이면 skipCodeCheck)
-    val passportNum: String? = null, // pp 여권번호
-    val birthDate: java.time.LocalDate? = null, // pp Verify 필수
     val serialNum: String? = null, // ac 시리얼 (Verify 필수)
     val alienRegNum: String? = null, // ac 외국인등록번호 13자리
-    val issueDate: java.time.LocalDate? = null, // 모든 타입 Verify 필수
-    val expireDate: java.time.LocalDate? = null, // pp Verify 필수
+    val issueDate: LocalDate? = null, // 모든 타입 Verify 필수
 )
 
 // ───── output: 신분증 진위확인 ─────

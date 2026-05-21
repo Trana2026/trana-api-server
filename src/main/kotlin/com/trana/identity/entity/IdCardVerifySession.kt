@@ -33,16 +33,10 @@ class IdCardVerifySession(
     val licenseNumber: String? = null,
     @Column(name = "license_security_code", length = 20)
     val licenseSecurityCode: String? = null,
-    @Column(name = "passport_number_encrypted")
-    val passportNumberEncrypted: ByteArray? = null,
-    @Column(name = "birth_date")
-    val birthDate: LocalDate? = null,
     @Column(name = "serial_number", length = 30)
     val serialNumber: String? = null,
     @Column(name = "issue_date")
     val issueDate: LocalDate? = null,
-    @Column(name = "expire_date")
-    val expireDate: LocalDate? = null,
     @Column(name = "id_card_s3_key", length = 200)
     val idCardS3Key: String? = null,
     @Column(name = "id_card_mime", length = 50)

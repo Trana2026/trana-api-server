@@ -37,7 +37,7 @@ interface IdentityApi {
   흐름:
   - 사전 조건: POST /v1/consents 로 signupSessionId 발급 (30분 TTL)
   - 응답의 requestId는 이후 step에 그대로 전달
-  - 4종 신분증 지원: 주민등록증 / 운전면허증 / 여권 / 외국인등록증
+  - 3종 신분증 지원: 주민등록증 / 운전면허증 / 외국인등록증
   - 파일: image/jpeg 또는 image/png
 
   차단:

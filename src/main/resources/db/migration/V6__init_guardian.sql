@@ -22,7 +22,7 @@ CREATE TABLE guardians
 CREATE UNIQUE INDEX uq_guardians_identifier_hash ON guardians (identifier_hash);
 
 COMMENT ON TABLE guardians IS '보호자 마스터 (identifier_hash 기준 upsert)';
-COMMENT ON COLUMN guardians.identifier_hash IS 'SHA-256 (보호자 주민번호/외국인등록번호/여권번호)';
+COMMENT ON COLUMN guardians.identifier_hash IS 'SHA-256 (보호자 주민번호/외국인등록번호)';
 
 -- =========================================
 -- guardian_links
