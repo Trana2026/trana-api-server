@@ -19,7 +19,7 @@ import java.util.UUID
 /**
  * NCP CLOVA eKYC Face Compare API 어댑터.
  *
- * 신분증 얼굴 사진 + 셀카 → similarity(0.0~1.0) → threshold 적용 isMatch 도출.
+ * 신분증 얼굴 사진 + 셀카 → similarity(0.0~1.0) → 호출 측 threshold 적용 isMatch 도출.
  * Secret Key + invoke URL은 `trana.kyc.ncp.face-compare` 사용.
  */
 @Component
@@ -37,6 +37,7 @@ class NcpFaceCompareAdapter(
     override fun compareFaces(
         idCardImage: ImageInput,
         selfieImage: ImageInput,
+        threshold: Double,
     ): FaceCompareResult {
         val body = buildCompareMultipart(idCardImage, selfieImage)
         val response =
@@ -56,7 +57,7 @@ class NcpFaceCompareAdapter(
 
         return FaceCompareResult(
             similarity = similarity,
-            isMatch = similarity >= FACE_MATCH_THRESHOLD,
+            isMatch = similarity >= threshold,
         )
     }
 
@@ -95,4 +96,3 @@ class NcpFaceCompareAdapter(
 }
 
 private const val EKYC_SECRET_HEADER = "X-EKYC-SECRET"
-private const val FACE_MATCH_THRESHOLD = 0.5

@@ -1,0 +1,82 @@
+### ============================================================
+### MINOR seed — 카카오 미성년자 가입 + 보호자 링크 발급
+###
+### 사전: auth.http [1] 또는 [2] 실행 → kakaoIdToken 글로벌 변수 세팅
+### 본 파일 "Run All Requests in File" → verifyUrl 출력
+###
+### 같은 카카오 계정 (sub 고정) 이라도 link 는 매번 새로 발급됨.
+### 단 한 라운드 보호자 KYC 완료 (guardian_verified_at != null) 후에는
+### 409 ALREADY_VERIFIED 로 차단 → 아래 Cleanup SQL 참고.
+### ============================================================
+
+### [0] Kakao id_token 갱신 (auth.http [1] 한 번 실행해 kakaoRefreshToken 박혀있어야 함)
+POST https://kauth.kakao.com/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&client_id={{kakaoClientId}}&client_secret={{kakaoClientSecret}}&refresh_token={{kakaoRefreshToken}}
+
+> {%
+client.global.set("kakaoIdToken", response.body.id_token);
+client.test("Kakao 토큰 갱신 성공", () => client.assert(response.status === 200));
+%}
+
+
+### [1] 미성년자 소셜 sign-in (KAKAO)
+POST {{baseUrl}}/v1/auth/social/sign-in
+Content-Type: application/json
+
+{
+"provider": "KAKAO",
+"idToken": "{{kakaoIdToken}}",
+"ageGroup": "MINOR"
+}
+
+> {%
+client.global.set("minorAccessToken", response.body.accessToken);
+client.global.set("minorPublicCode", response.body.publicCode);
+
+client.log("\n========================================");
+client.log("MINOR publicCode: " + response.body.publicCode);
+client.log("========================================\n");
+
+client.test("sign-in 성공", () => client.assert(response.status === 200));
+client.test("accessToken 포함", () => client.assert(response.body.accessToken != null));
+%}
+
+
+### [2] 보호자 링크 발급 → verifyUrl
+POST {{baseUrl}}/v1/guardian/links
+Authorization: Bearer {{minorAccessToken}}
+
+> {%
+client.log("\n========================================");
+client.log("GUARDIAN verifyUrl (보호자에게 전달):");
+client.log(response.body.verifyUrl);
+client.log("token: " + response.body.token);
+client.log("expiresAt: " + response.body.expiresAt);
+client.log("========================================\n");
+
+client.test("link 발급 성공", () => client.assert(response.status === 200));
+client.test("verifyUrl 포함", () => client.assert(response.body.verifyUrl != null));
+%}
+
+
+### ============================================================
+### Cleanup (다음 라운드 전, 보호자 KYC 완료 후에만 필요)
+### dev DB 에 직접 psql 로 실행.
+###
+### -- 1. 해당 user id 확인
+### SELECT id, public_code, guardian_verified_at
+###   FROM users
+###  WHERE public_code = '<minorPublicCode 위 로그 참고>';
+###
+### -- 2. 정리 (id 를 <USER_ID> 에 박고 실행)
+### BEGIN;
+###   DELETE FROM guardian_links         WHERE user_id        = <USER_ID>;
+###   DELETE FROM identity_verifications WHERE subject_user_id = <USER_ID>;
+###   UPDATE users SET guardian_verified_at = NULL WHERE id  = <USER_ID>;
+### COMMIT;
+###
+### 또는 통째로 삭제 (보호자 (guardians) 는 identifier_hash unique 라 다음 KYC 에서 재사용):
+### DELETE FROM users WHERE id = <USER_ID>;
+### ============================================================

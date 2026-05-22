@@ -46,7 +46,7 @@ class KycSignupService(
         val phone = ensureReadyForCompare(verification, requestId)
 
         val idCardImage = loadIdCardImage(session)
-        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, ADULT_FACE_MATCH_THRESHOLD)
 
         if (!result.isMatch) {
             verification.markCompareFailed(
@@ -124,6 +124,8 @@ class KycSignupService(
             .onFailure { log.warn("S3 id-card delete failed (lifecycle 1d will cleanup): key={}", s3Key, it) }
     }
 }
+
+private const val ADULT_FACE_MATCH_THRESHOLD = 0.5
 
 data class CompareFacesResult(
     val accessToken: String,

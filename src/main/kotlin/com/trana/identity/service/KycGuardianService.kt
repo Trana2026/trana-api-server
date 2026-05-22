@@ -135,7 +135,7 @@ class KycGuardianService(
         if (!verification.verifyPassed) throw IdentityException.VerifyRequired(requestId)
 
         val idCardImage = loadIdCardImage(session)
-        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage)
+        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, GUARDIAN_FACE_MATCH_THRESHOLD)
 
         if (!result.isMatch) {
             verification.markCompareFailed(
@@ -238,6 +238,8 @@ class KycGuardianService(
             .onFailure { log.warn("S3 id-card delete failed: key={}", s3Key, it) }
     }
 }
+
+private const val GUARDIAN_FACE_MATCH_THRESHOLD = 0.35
 
 data class CompareGuardianResult(
     val subjectUserId: Long,
