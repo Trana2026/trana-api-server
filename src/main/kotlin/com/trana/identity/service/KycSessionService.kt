@@ -44,6 +44,7 @@ class KycSessionService(
     private val auditLogger: AuditLogger,
     private val storageService: StorageService,
     private val idCardMasker: IdCardMasker,
+    private val purger: IdentitySessionPurger,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -52,6 +53,11 @@ class KycSessionService(
         image: ImageInput,
     ): RecognizeIdCardResult {
         stateLookup.validateSignupSession(signupSessionId)
+
+        // 같은 signupSessionId의 기존 PENDING 세션 즉시 정리 (재진입 케이스 — 화면 이탈 후 다시 OCR)
+        verificationRepository
+            .findFirstBySignupSessionIdAndStatus(signupSessionId, VerificationStatus.PENDING)
+            ?.let { purger.purgeByRequestId(it.ncpDocumentRequestId) }
 
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
         val identifierHash = ocr.result.identifierHashRaw

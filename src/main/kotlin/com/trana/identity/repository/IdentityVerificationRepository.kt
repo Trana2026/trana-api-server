@@ -16,6 +16,15 @@ interface IdentityVerificationRepository : JpaRepository<IdentityVerification, L
     ): IdentityVerification?
 
     /**
+     * 보호자 KYC 재진입 시 기존 PENDING verification 조회 (token 매칭).
+     * KycGuardianService.recognizeIdCard 시작부에서 IdentitySessionPurger 호출 전에 사용.
+     */
+    fun findFirstByGuardianLinkTokenAndStatus(
+        guardianLinkToken: String,
+        status: VerificationStatus,
+    ): IdentityVerification?
+
+    /**
      * NCP requestId로 lookup (Verify/Compare 호출 시 step별 record 찾기).
      */
     fun findByNcpDocumentRequestId(ncpDocumentRequestId: String): IdentityVerification?
@@ -27,4 +36,14 @@ interface IdentityVerificationRepository : JpaRepository<IdentityVerification, L
         identifierHash: String,
         status: VerificationStatus,
     ): Boolean
+
+    /**
+     * Cleanup task용 — id_card_verify_session 만료 시 PENDING verification 같이 정리.
+     * SUCCESS/FAILED는 audit 가치라 보존.
+     * @return 삭제된 row 수 (0 = 매칭 없음)
+     */
+    fun deleteByNcpDocumentRequestIdAndStatus(
+        ncpDocumentRequestId: String,
+        status: VerificationStatus,
+    ): Int
 }

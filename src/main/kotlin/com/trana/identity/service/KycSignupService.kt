@@ -9,6 +9,8 @@ import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.IdentityVerification
+import com.trana.identity.entity.VerificationStatus
+import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.terms.service.ConsentService
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
@@ -34,6 +36,7 @@ class KycSignupService(
     private val storageService: StorageService,
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,
+    private val verificationRepository: IdentityVerificationRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -97,6 +100,45 @@ class KycSignupService(
             refreshToken = refreshToken,
             publicCode = newUser.publicCode,
             requiresGuardian = false,
+        )
+    }
+
+    /**
+     * 사용자 명시적 이탈 (DELETE /v1/identity/session).
+     *
+     * - idempotent: 없는 세션 요청도 정상 처리 (audit 만 다르게 기록)
+     * - 삭제 순서: S3 → identity_verifications IN_PROGRESS → id_card_verify_session → audit
+     * - SUCCESS/FAILED verification은 audit 가치라 보존
+     */
+    fun cancelSession(requestId: String) {
+        val session = sessionService.findActive(requestId)
+        if (session == null) {
+            auditLogger.log(
+                eventType = "SIGNUP_KYC_CANCEL_NOOP",
+                entityType = "ID_CARD_VERIFY_SESSION",
+                metadata = mapOf("requestIdPrefix" to requestId.take(8)),
+            )
+            return
+        }
+
+        deleteIdCardImage(session.idCardS3Key)
+
+        val verification = verificationRepository.findByNcpDocumentRequestId(requestId)
+        if (verification != null && verification.status == VerificationStatus.PENDING) {
+            verificationRepository.delete(verification)
+        }
+
+        sessionService.delete(requestId)
+
+        auditLogger.log(
+            eventType = "SIGNUP_KYC_CANCELED",
+            entityType = "ID_CARD_VERIFY_SESSION",
+            metadata =
+                mapOf(
+                    "requestIdPrefix" to requestId.take(8),
+                    "hadS3Object" to (session.idCardS3Key != null),
+                    "hadPendingVerification" to (verification?.status == VerificationStatus.PENDING),
+                ),
         )
     }
 

@@ -2,19 +2,12 @@ package com.trana.identity.repository
 
 import com.trana.identity.entity.IdCardVerifySession
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Modifying
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.time.Instant
 
 interface IdCardVerifySessionRepository : JpaRepository<IdCardVerifySession, String> {
     /**
-     * Cleanup task용 — 만료된 세션 일괄 삭제.
-     * @return 삭제된 row 수
+     * Cleanup task용 — 만료된 세션 목록 조회.
+     * 각 row마다 S3 객체 + identity_verifications PENDING row 정리 후 deleteById 호출.
      */
-    @Modifying
-    @Query("DELETE FROM IdCardVerifySession s WHERE s.expiresAt < :now")
-    fun deleteExpired(
-        @Param("now") now: Instant,
-    ): Int
+    fun findAllByExpiresAtBefore(now: Instant): List<IdCardVerifySession>
 }

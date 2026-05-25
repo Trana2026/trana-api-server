@@ -50,6 +50,7 @@ class KycGuardianService(
     private val storageService: StorageService,
     private val auditLogger: AuditLogger,
     private val idCardMasker: IdCardMasker,
+    private val purger: IdentitySessionPurger,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -59,6 +60,11 @@ class KycGuardianService(
     ): RecognizeIdCardResult {
         val link = stateLookup.loadActiveGuardianLink(token)
         stateLookup.loadSubjectMinor(link.userId)
+
+        // 같은 token의 기존 PENDING 세션 즉시 정리 (재진입 케이스 — 보호자 화면 이탈 후 다시 OCR)
+        verificationRepository
+            .findFirstByGuardianLinkTokenAndStatus(token, VerificationStatus.PENDING)
+            ?.let { purger.purgeByRequestId(it.ncpDocumentRequestId) }
 
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
         val identifierHash = ocr.result.identifierHashRaw
