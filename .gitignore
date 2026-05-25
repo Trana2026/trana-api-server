@@ -49,3 +49,6 @@ CLAUDE.md
 ### Secrets ###
 src/main/resources/application-local.yml
 **/http-client.private.env.json
+
+# Local dev seed/cleanup SQL (fake PII, varies per developer)
+/src/test/sql/
