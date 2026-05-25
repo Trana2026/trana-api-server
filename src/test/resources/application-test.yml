@@ -44,3 +44,8 @@ trana:
       region: ap-northeast-2
       access-key: test-access-key
       secret-key: test-secret-key
+  contract:
+    storage:
+      bucket: test-archive-bucket
+      presigned-upload-ttl-minutes: 10
+      max-attachment-size-bytes: 10485760

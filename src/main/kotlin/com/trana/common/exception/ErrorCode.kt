@@ -60,4 +60,17 @@ enum class ErrorCode(
     GUARDIAN_NOT_MINOR(HttpStatus.FORBIDDEN, "GUARDIAN_403_NOT_MINOR", "미성년자만 보호자 링크를 발급할 수 있습니다"),
     GUARDIAN_ALREADY_VERIFIED(HttpStatus.CONFLICT, "GUARDIAN_409_VERIFIED", "이미 보호자 인증이 완료된 사용자입니다"),
     GUARDIAN_NOT_ADULT(HttpStatus.FORBIDDEN, "GUARDIAN_403_NOT_ADULT", "보호자는 성인(만 19세 이상)이어야 합니다"),
+
+    // === 계약 (CONTRACT_*) — W4 도입 ===
+    CONTRACT_NOT_FOUND(HttpStatus.NOT_FOUND, "CONTRACT_404", "계약을 찾을 수 없습니다"),
+    CONTRACT_NOT_OWNER(HttpStatus.FORBIDDEN, "CONTRACT_403_OWNER", "본인이 작성한 계약만 수정할 수 있습니다"),
+    CONTRACT_NOT_DRAFT(HttpStatus.CONFLICT, "CONTRACT_409_NOT_DRAFT", "DRAFT 상태에서만 수정/삭제할 수 있습니다"),
+    CONTRACT_ALREADY_DELETED(HttpStatus.GONE, "CONTRACT_410_DELETED", "이미 삭제된 계약입니다"),
+    CONTRACT_MAX_ATTACHMENTS(HttpStatus.CONFLICT, "CONTRACT_409_ATTACHMENTS", "사진은 최대 7장까지 업로드할 수 있습니다"),
+    CONTRACT_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CONTRACT_404_ATTACHMENT", "첨부 파일을 찾을 수 없습니다"),
+    CONTRACT_INVALID_CONSENT_TYPE(HttpStatus.BAD_REQUEST, "CONTRACT_400_CONSENT", "계약 생성 시 보호자 동의 유형이 올바르지 않습니다"),
+    CONTRACT_GUARDIAN_CONSENT_REQUIRED(HttpStatus.CONFLICT, "CONTRACT_409_GUARDIAN_REQUIRED", "보호자 동의가 완료되지 않은 계약입니다"),
+    CONTRACT_GUARDIAN_CONSENT_ALREADY(HttpStatus.CONFLICT, "CONTRACT_409_GUARDIAN_ALREADY", "이미 보호자 동의가 완료된 계약입니다"),
+    CONTRACT_AI_EXTRACTION_FAILED(HttpStatus.BAD_GATEWAY, "CONTRACT_502_AI", "AI 추출 호출에 실패했습니다"),
+    CONTRACT_AI_RESPONSE_INVALID(HttpStatus.BAD_GATEWAY, "CONTRACT_502_AI_PARSE", "AI 응답을 파싱할 수 없습니다"),
 }
