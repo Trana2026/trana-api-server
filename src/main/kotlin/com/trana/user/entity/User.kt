@@ -72,17 +72,14 @@ class User(
     var guardianVerifiedAt: Instant? = null
         protected set
 
-    fun changeNickname(newNickname: String) {
-        require(newNickname.length in NICKNAME_MIN_LENGTH..NICKNAME_MAX_LENGTH) {
-            "닉네임은 $NICKNAME_MIN_LENGTH~$NICKNAME_MAX_LENGTH 자여야 합니다"
-        }
-        this.nickname = newNickname
-    }
-
     fun withdraw() {
         check(status == UserStatus.ACTIVE) { "이미 탈퇴한 사용자입니다" }
         this.status = UserStatus.WITHDRAWN
         this.withdrawnAt = Instant.now()
+        // PII 마스킹 — 재가입 시 email unique 충돌 회피 + 개인정보 최소화
+        // name/phone(성인 KYC)은 audit 가치라 W7+ 운영 정교화 시 결정
+        this.email = null
+        this.nickname = null
     }
 
     fun markGuardianVerified() {

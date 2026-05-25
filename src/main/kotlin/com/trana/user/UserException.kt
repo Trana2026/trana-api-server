@@ -14,4 +14,11 @@ sealed class UserException(
             errorCode = ErrorCode.USER_NOT_FOUND,
             message = "사용자를 찾을 수 없습니다 (identifier=$identifier)",
         )
+
+    class AlreadyWithdrawn(
+        userId: Long,
+    ) : UserException(
+            errorCode = ErrorCode.USER_ALREADY_WITHDRAWN,
+            message = "이미 탈퇴한 사용자입니다 (userId=$userId)",
+        )
 }

@@ -3,6 +3,8 @@ package com.trana.identity.repository
 import com.trana.identity.entity.IdentityVerification
 import com.trana.identity.entity.VerificationStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface IdentityVerificationRepository : JpaRepository<IdentityVerification, Long> {
@@ -35,6 +37,30 @@ interface IdentityVerificationRepository : JpaRepository<IdentityVerification, L
     fun existsByIdentifierHashAndStatus(
         identifierHash: String,
         status: VerificationStatus,
+    ): Boolean
+
+    /**
+     * 본인 KYC 중복 가입 차단 — ACTIVE user의 SUCCESS verification만 검사.
+     *
+     * 기존 existsByIdentifierHashAndStatus와 차이:
+     * - WITHDRAWN user의 SUCCESS는 제외 → 같은 신분증으로 재가입 허용
+     * - 보호자 KYC 차단은 별도 정책 (KycGuardianService는 기존 메서드 사용)
+     */
+    @Query(
+        """
+      SELECT CASE WHEN COUNT(v) > 0 THEN true ELSE false END
+      FROM IdentityVerification v
+      WHERE v.identifierHash = :hash
+        AND v.status = com.trana.identity.entity.VerificationStatus.SUCCESS
+        AND EXISTS (
+            SELECT 1 FROM com.trana.user.entity.User u
+            WHERE u.id = v.userId
+            AND u.status = com.trana.user.entity.UserStatus.ACTIVE
+        )
+      """,
+    )
+    fun existsActiveSuccessByIdentifierHash(
+        @Param("hash") hash: String,
     ): Boolean
 
     /**

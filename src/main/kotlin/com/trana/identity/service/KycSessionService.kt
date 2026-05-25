@@ -62,7 +62,7 @@ class KycSessionService(
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
         val identifierHash = ocr.result.identifierHashRaw
 
-        if (verificationRepository.existsByIdentifierHashAndStatus(identifierHash, VerificationStatus.SUCCESS)) {
+        if (verificationRepository.existsActiveSuccessByIdentifierHash(identifierHash)) {
             throw IdentityException.Duplicate(identifierHash)
         }
 

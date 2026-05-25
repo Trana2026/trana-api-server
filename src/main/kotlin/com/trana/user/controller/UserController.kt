@@ -17,6 +17,12 @@ class UserController(
     override fun getMe(
         @AuthenticationPrincipal userId: Long,
     ): MeResponse = userService.getById(userId).toMeResponse()
+
+    override fun withdraw(
+        @AuthenticationPrincipal userId: Long,
+    ) {
+        userService.withdraw(userId)
+    }
 }
 
 private fun User.toMeResponse(): MeResponse =

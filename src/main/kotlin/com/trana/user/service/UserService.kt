@@ -8,6 +8,7 @@ import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.Gender
 import com.trana.user.entity.SocialAccount
 import com.trana.user.entity.User
+import com.trana.user.entity.UserStatus
 import com.trana.user.repository.SocialAccountRepository
 import com.trana.user.repository.UserRepository
 import org.springframework.stereotype.Service
@@ -29,7 +30,7 @@ class UserService(
     private val auditLogger: AuditLogger,
 ) {
     /**
-     * 소셜 로그인: 기존 매핑이 있으면 기존 사용자 반환, 없으면 신규 생성.
+     * 소셜 로그인: 기존 매핑이 있으면 ACTIVE user 반환, WITHDRAWN이면 신규 user 생성 (재가입).
      * 미성년자 가입 전용 흐름 — 호출 시 ageGroup=MINOR 명시.
      */
     fun findOrCreateBySocial(
@@ -41,11 +42,18 @@ class UserService(
     ): User {
         val existing = socialAccountRepository.findByProviderAndProviderUserId(provider, providerUserId)
         if (existing != null) {
-            return userRepository.findById(existing.userId).orElseThrow {
-                IllegalStateException(
-                    "Orphan social_account: id=${existing.id}, userId=${existing.userId}",
-                )
+            val existingUser =
+                userRepository.findById(existing.userId).orElseThrow {
+                    IllegalStateException(
+                        "Orphan social_account: id=${existing.id}, userId=${existing.userId}",
+                    )
+                }
+            if (existingUser.status == UserStatus.ACTIVE) {
+                return existingUser
             }
+            // WITHDRAWN: 기존 매핑 삭제 (unique 충돌 회피) → 신규 user 생성 (아래 흐름 계속)
+            socialAccountRepository.delete(existing)
+            socialAccountRepository.flush()
         }
 
         val newUser =
@@ -76,6 +84,7 @@ class UserService(
                     "source" to "SOCIAL",
                     "provider" to provider.name,
                     "ageGroup" to ageGroup.name,
+                    "rejoined" to (existing != null),
                 ),
         )
         return newUser
@@ -129,7 +138,29 @@ class UserService(
         userRepository.findById(userId).orElseThrow {
             UserException.NotFound(userId.toString())
         }
+
+    /**
+     * 회원 탈퇴 — soft delete.
+     *
+     * - status=WITHDRAWN + withdrawnAt 설정 (User.withdraw() 위임)
+     * - 연관 데이터 (identity_verifications, user_consents, guardian_links)는 보존 (audit + 법적)
+     * - 재가입은 새 user 생성 (KycSessionService는 ACTIVE user의 SUCCESS만 차단, social 로그인은 WITHDRAWN 시 신규 user 발급)
+     */
+    fun withdraw(userId: Long) {
+        val user = getById(userId)
+        if (user.status == UserStatus.WITHDRAWN) {
+            throw UserException.AlreadyWithdrawn(userId)
+        }
+        user.withdraw()
+        auditLogger.log(
+            eventType = EVENT_USER_WITHDRAWN,
+            actorUserId = userId,
+            entityType = ENTITY_USER,
+            entityId = userId,
+        )
+    }
 }
 
 private const val EVENT_USER_CREATED = "USER_CREATED"
+private const val EVENT_USER_WITHDRAWN = "USER_WITHDRAWN"
 private const val ENTITY_USER = "USER"
