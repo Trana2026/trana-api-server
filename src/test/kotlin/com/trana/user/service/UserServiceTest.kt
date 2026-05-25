@@ -95,6 +95,7 @@ class UserServiceTest {
         } returns existingSocial
         every { userRepository.findById(1L) } returns Optional.of(withdrawnUser)
         every { socialAccountRepository.delete(existingSocial) } just Runs
+        every { socialAccountRepository.flush() } just Runs
         every { publicCodeGenerator.generate() } returns "PUBLIC-2"
         every { userRepository.save(any<User>()) } answers { firstArg<User>().withId(2L) }
         every { socialAccountRepository.save(any<SocialAccount>()) } answers { firstArg() }
