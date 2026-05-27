@@ -76,5 +76,21 @@ data class ContractListItem(
     val updatedAt: Instant,
 )
 
+@Schema(description = "계약 상태 전이 로그 (WORM audit)")
+data class ContractStatusLogResponse(
+    @field:Schema(description = "log row id", example = "1")
+    val id: Long,
+    @field:Schema(description = "이전 상태 (null = INITIAL = 계약 생성 시점)")
+    val fromStatus: ContractStatus?,
+    @field:Schema(description = "전이 후 상태")
+    val toStatus: ContractStatus,
+    @field:Schema(description = "전이를 일으킨 user (null = 시스템 자동)", example = "42")
+    val actorUserId: Long?,
+    @field:Schema(description = "사유 (취소 사유 등 — 현재 null)")
+    val reason: String?,
+    @field:Schema(description = "전이 시각 (UTC)")
+    val changedAt: Instant,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val LOCATION_MAX_LENGTH = 100

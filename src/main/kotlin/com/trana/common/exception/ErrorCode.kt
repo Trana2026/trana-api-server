@@ -73,6 +73,16 @@ enum class ErrorCode(
     CONTRACT_GUARDIAN_CONSENT_ALREADY(HttpStatus.CONFLICT, "CONTRACT_409_GUARDIAN_ALREADY", "이미 보호자 동의가 완료된 계약입니다"),
     CONTRACT_AI_EXTRACTION_FAILED(HttpStatus.BAD_GATEWAY, "CONTRACT_502_AI", "AI 추출 호출에 실패했습니다"),
     CONTRACT_AI_RESPONSE_INVALID(HttpStatus.BAD_GATEWAY, "CONTRACT_502_AI_PARSE", "AI 응답을 파싱할 수 없습니다"),
+    CONTRACT_NOT_READY_ELIGIBLE(
+        HttpStatus.BAD_REQUEST,
+        "CONTRACT_400_NOT_READY",
+        "READY 전이 조건 미충족 (필수 필드 누락)",
+    ),
+    CONTRACT_NOT_IN_READY_STATE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_NOT_READY",
+        "현재 READY 상태가 아닙니다",
+    ),
     CONTRACT_AI_IMAGE_COUNT_INVALID(
         HttpStatus.BAD_REQUEST,
         "CONTRACT_400_AI_IMAGE_COUNT",

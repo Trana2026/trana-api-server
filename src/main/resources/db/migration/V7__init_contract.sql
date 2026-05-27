@@ -49,7 +49,10 @@ CREATE TABLE contracts
 
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at                 TIMESTAMPTZ
+    deleted_at                 TIMESTAMPTZ,
+
+    CONSTRAINT chk_contracts_status
+        CHECK (status IN ('DRAFT', 'READY', 'SIGN_REQUESTED', 'REVISION_REQUESTED', 'SIGNED', 'COMPLETED', 'CANCELLED'))
 );
 
 CREATE INDEX idx_contracts_public_code ON contracts (public_code);
@@ -186,3 +189,35 @@ CREATE INDEX idx_guardian_links_contract
 
 COMMENT ON COLUMN guardian_links.purpose IS 'SIGNUP (미성년 가입) | CONTRACT_CONSENT (계약 보호자 동의, W4+)';
 COMMENT ON COLUMN guardian_links.contract_id IS 'CONTRACT_CONSENT 일 때만 NOT NULL (CHECK 제약)';
+
+-- ============================================================
+-- contract_status_logs (W5)
+-- WORM: insert-only. 상태 전이 audit. 분쟁 증거 (5년 보존)
+-- INITIAL 전이 = from_status NULL → to_status DRAFT (createDraft 시점)
+-- ============================================================
+CREATE TABLE contract_status_logs
+(
+    id            BIGSERIAL PRIMARY KEY,
+    contract_id   BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE RESTRICT,
+    from_status   VARCHAR(30),
+    to_status     VARCHAR(30) NOT NULL,
+    actor_user_id BIGINT,
+    reason        TEXT,
+    changed_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT chk_contract_status_logs_to
+        CHECK (to_status IN
+               ('DRAFT', 'READY', 'SIGN_REQUESTED', 'REVISION_REQUESTED', 'SIGNED', 'COMPLETED', 'CANCELLED')),
+    CONSTRAINT chk_contract_status_logs_from
+        CHECK (from_status IS NULL
+            OR from_status IN
+               ('DRAFT', 'READY', 'SIGN_REQUESTED', 'REVISION_REQUESTED', 'SIGNED', 'COMPLETED', 'CANCELLED'))
+);
+
+CREATE INDEX idx_contract_status_logs_contract
+    ON contract_status_logs (contract_id, changed_at);
+
+COMMENT ON TABLE contract_status_logs IS 'WORM 상태 전이 로그 — insert-only, audit/분쟁 증거 5년 보존';
+COMMENT ON COLUMN contract_status_logs.from_status IS '이전 상태. NULL = INITIAL (계약 생성 시점)';
+COMMENT ON COLUMN contract_status_logs.actor_user_id IS '전이를 일으킨 user. NULL = 시스템 자동 (만료 등)';
+COMMENT ON COLUMN contract_status_logs.reason IS '사유 (취소 사유 등 — nullable)';

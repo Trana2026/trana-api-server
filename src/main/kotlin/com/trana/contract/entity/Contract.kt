@@ -123,6 +123,25 @@ class Contract(
         this.guardianConsentAt = Instant.now()
     }
 
+    fun markReady() {
+        check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 READY 전이 가능 (current=$status)" }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        check(title != null) { "title 미입력 — AI 추출 또는 수동 입력 필요" }
+        check(price != null) { "price 미입력" }
+        check(conditionSummary != null) { "conditionSummary 미입력" }
+        check(conditionDetails != null) { "conditionDetails 미입력" }
+        if (consentType == ConsentType.GUARDIAN_REQUIRED) {
+            check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
+        }
+        this.status = ContractStatus.READY
+    }
+
+    fun markRevertToDraft() {
+        check(status == ContractStatus.READY) { "READY 상태에서만 DRAFT 되돌리기 가능 (current=$status)" }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        this.status = ContractStatus.DRAFT
+    }
+
     fun softDelete() {
         check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 삭제 가능" }
         check(deletedAt == null) { "이미 삭제된 계약" }
@@ -147,7 +166,7 @@ class Contract(
     }
 }
 
-enum class ContractStatus { DRAFT, SIGN_REQUESTED, REVISION_REQUESTED, SIGNED, COMPLETED }
+enum class ContractStatus { DRAFT, READY, SIGN_REQUESTED, REVISION_REQUESTED, SIGNED, COMPLETED, CANCELLED }
 
 enum class DisputeState { NONE, REPORTED, RESOLVED, DISMISSED }
 

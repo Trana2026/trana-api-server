@@ -2,10 +2,12 @@ package com.trana.contract.controller
 
 import com.trana.contract.dto.ContractListItem
 import com.trana.contract.dto.ContractResponse
+import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
+import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
 import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -66,6 +68,21 @@ class ContractDraftController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @RequestParam(required = false) status: ContractStatus?,
     ): List<ContractListItem> = service.listMyContracts(userId, status).map { it.toListItem() }
+
+    override fun markReady(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractResponse = service.transitionToReady(publicCode, userId).toResponse()
+
+    override fun revertToDraft(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractResponse = service.revertToDraft(publicCode, userId).toResponse()
+
+    override fun statusLogs(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): List<ContractStatusLogResponse> = service.listStatusLogs(publicCode, userId).map { it.toResponse() }
 }
 
 private fun Contract.toResponse(): ContractResponse =
@@ -94,4 +111,14 @@ private fun Contract.toListItem(): ContractListItem =
         title = title,
         price = price,
         updatedAt = requireNotNull(updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
+    )
+
+private fun ContractStatusLog.toResponse(): ContractStatusLogResponse =
+    ContractStatusLogResponse(
+        id = requireNotNull(id) { "ContractStatusLog.id 는 영속화 후 채워짐" },
+        fromStatus = fromStatus,
+        toStatus = toStatus,
+        actorUserId = actorUserId,
+        reason = reason,
+        changedAt = requireNotNull(changedAt) { "changedAt 은 @CreationTimestamp 로 채워짐" },
     )

@@ -103,6 +103,22 @@ sealed class ContractException(
             cause,
         )
 
+    class NotReadyEligible(
+        publicCode: String,
+        missingFields: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_READY_ELIGIBLE,
+            "READY 전이 불가 — 누락 필드: $missingFields (publicCode=$publicCode)",
+        )
+
+    class NotInReadyState(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_IN_READY_STATE,
+            "현재 READY 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
+
     class AiImageCountInvalid(
         requested: Int,
     ) : ContractException(
