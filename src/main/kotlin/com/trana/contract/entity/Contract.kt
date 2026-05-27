@@ -55,7 +55,7 @@ class Contract(
     @Column(name = "condition_details", columnDefinition = "text")
     var conditionDetails: String? = null,
     @Column(name = "warranty_period_days", nullable = false)
-    var warrantyPeriodDays: Int = WARRANTY_DEFAULT_DAYS,
+    val warrantyPeriodDays: Int = WARRANTY_DEFAULT_DAYS,
     @Column(name = "location", length = 100)
     var location: String? = null,
 ) {

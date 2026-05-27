@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -404,17 +405,17 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         operationId = "contractPdfDownload",
         summary = "PDF 다운로드 URL 발급",
         description = """
-  계약 본문 PDF 의 presigned GET URL 발급. TTL 10분.
+계약 본문 PDF 의 presigned GET URL 발급. TTL 10분.
 
-  조건:
-  - markReady 완료된 계약 (READY 이상). DRAFT 면 409
-  - 본인 계약만 (403)
+조건:
+- markReady 완료된 계약 (READY 이상). DRAFT 면 409
+- 본인 계약만 (403)
 
-  응답 사용:
-  - 즉시 GET 으로 다운로드
-  - 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
+응답 사용:
+- 즉시 GET 으로 다운로드
+- 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
 
-  S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
+S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
                 """,
     )
     @ApiResponses(
@@ -446,4 +447,72 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         userId: Long,
         @PathVariable publicCode: String,
     ): ContractPdfDownloadResponse
+
+    @Operation(
+        operationId = "contractPreviewPdf",
+        summary = "DRAFT 미리보기 PDF (markReady 전)",
+        description = """
+DRAFT 상태에서 markReady 전 PDF 미리보기. 같은 템플릿 / 동일 렌더링 → 최종 PDF 와 시각적으로 100% 일치.
+
+조건:
+- DRAFT 상태에서만 호출 가능. READY 이상은 `GET /pdf` 사용 (S3 영구 버전)
+- markReady 와 동일 검증: title / price / conditionSummary / conditionDetails 모두 채워져 있어야 함 (누락 시 400)
+- 미성년자: 보호자 동의 완료되어 있어야 함 (미완료 시 409)
+- 본인 계약만 (403)
+
+특징:
+- S3 업로드 X — 매번 새로 렌더링 후 byte stream 직접 응답
+- response Content-Type: application/pdf
+- 브라우저/Flutter PDF viewer 에서 직접 표시 가능
+
+활용:
+- "수정하기" / "생성하기" 버튼 있는 미리보기 화면
+- 사용자가 markReady 클릭 직전 마지막 검토
+                """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "미리보기 PDF byte stream",
+                content = [
+                    Content(
+                        mediaType = "application/pdf",
+                        schema = Schema(type = "string", format = "binary"),
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "필수 필드 누락 (markReady 조건 미충족)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notReady", value = ContractExamples.NOT_READY_ELIGIBLE)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "DRAFT 아님 또는 보호자 동의 미완료",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notDraft", value = ContractExamples.NOT_DRAFT),
+                            ExampleObject(
+                                name = "guardianRequired",
+                                value = ContractExamples.GUARDIAN_CONSENT_REQUIRED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/{publicCode}/preview", produces = ["application/pdf"])
+    fun previewPdf(
+        userId: Long,
+        @PathVariable publicCode: String,
+    ): ResponseEntity<ByteArray>
 }

@@ -12,6 +12,9 @@ import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
 import com.trana.contract.service.PdfDownloadView
 import io.swagger.v3.oas.annotations.Parameter
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
@@ -85,6 +88,18 @@ class ContractDraftController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
     ): List<ContractStatusLogResponse> = service.listStatusLogs(publicCode, userId).map { it.toResponse() }
+
+    override fun previewPdf(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ResponseEntity<ByteArray> {
+        val bytes = service.previewPdf(publicCode, userId)
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.APPLICATION_PDF)
+            .header(HttpHeaders.CONTENT_DISPOSITION, """attachment; filename="contract-preview.pdf"""")
+            .body(bytes)
+    }
 
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,

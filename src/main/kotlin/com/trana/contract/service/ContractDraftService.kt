@@ -157,18 +157,7 @@ class ContractDraftService(
     ): Contract {
         val contract = loadOwned(publicCode, userId)
         ensureDraft(contract)
-
-        val missing = mutableListOf<String>()
-        if (contract.title == null) missing.add("title")
-        if (contract.price == null) missing.add("price")
-        if (contract.conditionSummary == null) missing.add("conditionSummary")
-        if (contract.conditionDetails == null) missing.add("conditionDetails")
-        if (missing.isNotEmpty()) {
-            throw ContractException.NotReadyEligible(publicCode, missing.joinToString(", "))
-        }
-        if (contract.consentType == ConsentType.GUARDIAN_REQUIRED && contract.guardianConsentAt == null) {
-            throw ContractException.GuardianConsentRequired(publicCode)
-        }
+        validateReadyEligible(contract)
 
         val pdfBytes = pdfRenderer.render(contract)
         val pdfSha256 = sha256Hex(pdfBytes)
@@ -245,9 +234,34 @@ class ContractDraftService(
         )
     }
 
+    @Transactional(readOnly = true)
+    fun previewPdf(
+        publicCode: String,
+        userId: Long,
+    ): ByteArray {
+        val contract = loadOwned(publicCode, userId)
+        ensureDraft(contract)
+        validateReadyEligible(contract)
+        return pdfRenderer.render(contract)
+    }
+
     private fun ensureDraft(contract: Contract) {
         if (contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(contract.publicCode, contract.status.name)
+        }
+    }
+
+    private fun validateReadyEligible(contract: Contract) {
+        val missing = mutableListOf<String>()
+        if (contract.title == null) missing.add("title")
+        if (contract.price == null) missing.add("price")
+        if (contract.conditionSummary == null) missing.add("conditionSummary")
+        if (contract.conditionDetails == null) missing.add("conditionDetails")
+        if (missing.isNotEmpty()) {
+            throw ContractException.NotReadyEligible(contract.publicCode, missing.joinToString(", "))
+        }
+        if (contract.consentType == ConsentType.GUARDIAN_REQUIRED && contract.guardianConsentAt == null) {
+            throw ContractException.GuardianConsentRequired(contract.publicCode)
         }
     }
 
