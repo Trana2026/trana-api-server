@@ -107,6 +107,7 @@ CREATE TABLE contract_attachments
     original_filename VARCHAR(255),
     content_type      VARCHAR(100),
     size_bytes        BIGINT,
+    sha256            VARCHAR(64)  NOT NULL,
     sort_order        INT          NOT NULL DEFAULT 0,
     uploaded_at       TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
@@ -115,6 +116,7 @@ CREATE INDEX idx_contract_attachments_contract ON contract_attachments (contract
 
 COMMENT ON TABLE contract_attachments IS '게시글 스크린샷. S3 archive 3년 보존, EXIF 미저장';
 COMMENT ON COLUMN contract_attachments.s3_key IS 'trana-archive-{env} 버킷 키';
+COMMENT ON COLUMN contract_attachments.sha256 IS 'S3 객체 SHA-256 hex (64자). 분쟁 증거 / PDF 본문 해시 입력. register 시점 서버 계산';
 
 -- ============================================================
 -- contract_ai_extractions

@@ -33,6 +33,8 @@ class ContractAttachment(
     val contentType: String? = null,
     @Column(name = "size_bytes")
     val sizeBytes: Long? = null,
+    @Column(name = "sha256", nullable = false, length = 64)
+    val sha256: String,
     @Column(name = "sort_order", nullable = false)
     val sortOrder: Int = 0,
 ) {
@@ -51,6 +53,7 @@ class ContractAttachment(
             originalFilename: String?,
             contentType: String?,
             sizeBytes: Long?,
+            sha256: String,
             sortOrder: Int,
         ): ContractAttachment =
             ContractAttachment(
@@ -59,6 +62,7 @@ class ContractAttachment(
                 originalFilename = originalFilename,
                 contentType = contentType,
                 sizeBytes = sizeBytes,
+                sha256 = sha256,
                 sortOrder = sortOrder,
             )
     }

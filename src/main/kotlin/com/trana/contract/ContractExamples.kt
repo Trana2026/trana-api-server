@@ -152,39 +152,42 @@ internal object ContractExamples {
             """
 
     const val ATTACHMENT_REGISTER_RESPONSE = """
-                {
-                  "id": 101,
-                  "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
-                  "originalFilename": "screenshot-01.jpg",
-                  "contentType": "image/jpeg",
-                  "sizeBytes": 524288,
-                  "sortOrder": 0,
-                  "uploadedAt": "2026-05-20T10:05:00Z"
-                }
-            """
-
-    const val ATTACHMENT_LIST_RESPONSE = """
-                [
                   {
                     "id": 101,
                     "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
                     "originalFilename": "screenshot-01.jpg",
                     "contentType": "image/jpeg",
                     "sizeBytes": 524288,
+                    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "sortOrder": 0,
                     "uploadedAt": "2026-05-20T10:05:00Z"
-                  },
-                  {
-                    "id": 103,
-                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/def-uuid",
-                    "originalFilename": "screenshot-02.jpg",
-                    "contentType": "image/jpeg",
-                    "sizeBytes": 612345,
-                    "sortOrder": 1,
-                    "uploadedAt": "2026-05-20T10:05:30Z"
                   }
-                ]
-            """
+              """
+
+    const val ATTACHMENT_LIST_RESPONSE = """
+                  [
+                    {
+                      "id": 101,
+                      "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
+                      "originalFilename": "screenshot-01.jpg",
+                      "contentType": "image/jpeg",
+                      "sizeBytes": 524288,
+                      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "sortOrder": 0,
+                      "uploadedAt": "2026-05-20T10:05:00Z"
+                    },
+                    {
+                      "id": 103,
+                      "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/def-uuid",
+                      "originalFilename": "screenshot-02.jpg",
+                      "contentType": "image/jpeg",
+                      "sizeBytes": 612345,
+                      "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                      "sortOrder": 1,
+                      "uploadedAt": "2026-05-20T10:05:30Z"
+                    }
+                  ]
+              """
 
     const val AI_EXTRACT_REQUEST = """
                 {

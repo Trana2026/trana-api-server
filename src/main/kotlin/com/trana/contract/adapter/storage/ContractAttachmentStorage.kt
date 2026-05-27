@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
+import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
 
@@ -83,6 +84,32 @@ class ContractAttachmentStorage(
     }
 
     /**
+     * S3 객체 바이트를 스트리밍해서 SHA-256 hex 64자 반환.
+     *
+     * - register() 호출 시 서버가 직접 계산 → 분쟁 증거 + PDF 본문 해시(W5) 입력
+     * - 8KB chunk streaming — 10MB 이미지도 메모리 부담 X
+     * - 객체 없으면 NoSuchKeyException 전파 → register tx rollback
+     */
+    fun computeSha256(s3Key: String): String {
+        val request =
+            GetObjectRequest
+                .builder()
+                .bucket(props.bucket)
+                .key(s3Key)
+                .build()
+        val digest = MessageDigest.getInstance("SHA-256")
+        s3Client.getObject(request).use { stream ->
+            val buffer = ByteArray(HASH_BUFFER_SIZE)
+            while (true) {
+                val read = stream.read(buffer)
+                if (read <= 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    /**
      * S3 객체 삭제 — 첨부 단일 삭제 endpoint 에서 사용.
      *
      * - DB row 삭제 후 호출 (orphan S3 가 broken DB 참조보다 안전)
@@ -101,6 +128,10 @@ class ContractAttachmentStorage(
     val bucket: String get() = props.bucket
 
     val maxAttachmentSizeBytes: Long get() = props.maxAttachmentSizeBytes
+
+    companion object {
+        private const val HASH_BUFFER_SIZE = 8192
+    }
 }
 
 /** Service / Controller 로 전달되는 presigned URL 결과. */

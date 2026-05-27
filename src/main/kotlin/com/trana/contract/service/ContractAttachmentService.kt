@@ -69,6 +69,7 @@ class ContractAttachmentService(
     ): ContractAttachment {
         val contract = loadOwnedDraft(publicCode, userId)
         ensureCapacity(contract)
+        val sha256 = storage.computeSha256(s3Key)
         val nextOrder = attachmentRepository.countByContractId(contract.id!!).toInt()
         val attachment =
             ContractAttachment.create(
@@ -77,6 +78,7 @@ class ContractAttachmentService(
                 originalFilename = originalFilename,
                 contentType = contentType,
                 sizeBytes = sizeBytes,
+                sha256 = sha256,
                 sortOrder = nextOrder,
             )
         return attachmentRepository.save(attachment)

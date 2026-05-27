@@ -52,6 +52,11 @@ data class AttachmentResponse(
     val originalFilename: String?,
     val contentType: String?,
     val sizeBytes: Long?,
+    @field:Schema(
+        description = "S3 객체 SHA-256 hex (분쟁 증거 / PDF 본문 해시 입력)",
+        example = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    )
+    val sha256: String,
     @field:Schema(description = "UI 표시 순서 (0-based)", example = "0")
     val sortOrder: Int,
     val uploadedAt: Instant,

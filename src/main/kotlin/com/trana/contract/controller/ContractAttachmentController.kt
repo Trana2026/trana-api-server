@@ -74,6 +74,7 @@ private fun ContractAttachment.toResponse(): AttachmentResponse =
         originalFilename = originalFilename,
         contentType = contentType,
         sizeBytes = sizeBytes,
+        sha256 = sha256,
         sortOrder = sortOrder,
         uploadedAt = requireNotNull(uploadedAt) { "uploadedAt 은 @CreationTimestamp 로 채워짐" },
     )
