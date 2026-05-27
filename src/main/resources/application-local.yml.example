@@ -52,3 +52,6 @@ trana:
       region: ap-northeast-2
       access-key: <AWS IAM trana-server Access Key ID>
       secret-key: <AWS IAM trana-server Secret Access Key>
+  pdf-archive:
+      bucket: trana-pdf
+      presigned-get-ttl-minutes: 10

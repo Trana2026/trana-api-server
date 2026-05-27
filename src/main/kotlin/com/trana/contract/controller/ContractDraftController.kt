@@ -1,6 +1,7 @@
 package com.trana.contract.controller
 
 import com.trana.contract.dto.ContractListItem
+import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
@@ -9,6 +10,7 @@ import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
+import com.trana.contract.service.PdfDownloadView
 import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
@@ -83,6 +85,11 @@ class ContractDraftController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
     ): List<ContractStatusLogResponse> = service.listStatusLogs(publicCode, userId).map { it.toResponse() }
+
+    override fun pdfDownload(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractPdfDownloadResponse = service.getPdfDownload(publicCode, userId).toResponse()
 }
 
 private fun Contract.toResponse(): ContractResponse =
@@ -100,6 +107,7 @@ private fun Contract.toResponse(): ContractResponse =
         location = location,
         guardianConsentAt = guardianConsentAt,
         version = version,
+        contentHash = contentHash,
         createdAt = requireNotNull(createdAt) { "createdAt 은 @CreationTimestamp 로 채워져야 함" },
         updatedAt = requireNotNull(updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
     )
@@ -121,4 +129,11 @@ private fun ContractStatusLog.toResponse(): ContractStatusLogResponse =
         actorUserId = actorUserId,
         reason = reason,
         changedAt = requireNotNull(changedAt) { "changedAt 은 @CreationTimestamp 로 채워짐" },
+    )
+
+private fun PdfDownloadView.toResponse(): ContractPdfDownloadResponse =
+    ContractPdfDownloadResponse(
+        downloadUrl = downloadUrl,
+        expiresInSeconds = expiresInSeconds,
+        sha256 = sha256,
     )

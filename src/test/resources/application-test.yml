@@ -50,6 +50,9 @@ trana:
       presigned-upload-ttl-minutes: 10
       max-attachment-size-bytes: 10485760
       presigned-get-ttl-minutes: 5
+    pdf-archive:
+      bucket: test-pdf-archive
+      presigned-get-ttl-minutes: 10
     openai:
       api-key: test-openai-key
       base-url: https://test.openai.local/v1

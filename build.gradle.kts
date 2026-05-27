@@ -23,31 +23,47 @@ repositories {
 }
 
 dependencies {
+    // --- Web / API ---
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+
+    // --- Kotlin / Jackson ---
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("io.mockk:mockk:1.14.9")
-    testImplementation("com.ninja-squad:springmockk:5.0.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // --- Persistence ---
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
-    implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
+
+    // --- Auth / Security ---
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+
+    // --- External ID / Storage ---
+    implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
     implementation(platform("software.amazon.awssdk:bom:2.30.0"))
     implementation("software.amazon.awssdk:s3")
+
+    // --- PDF 생성 ---
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("com.openhtmltopdf:openhtmltopdf-core:1.0.10")
+    implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
+
+    // --- Dev / Test ---
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("com.ninja-squad:springmockk:5.0.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 kotlin {

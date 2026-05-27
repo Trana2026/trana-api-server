@@ -17,6 +17,7 @@ import com.trana.common.exception.ErrorCode
  * - GuardianConsentAlready: 이미 보호자 동의 완료 상태에서 재요청
  * - AiExtractionFailed: OpenAI 호출 실패 (5xx / timeout)
  * - AiResponseInvalid: OpenAI 응답 JSON 파싱 / schema 검증 실패
+ * - PdfNotGenerated: PDF 다운로드 요청 시 markReady 가 선행되지 않음
  */
 sealed class ContractException(
     errorCode: ErrorCode,
@@ -117,6 +118,14 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_NOT_IN_READY_STATE,
             "현재 READY 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
+
+    class PdfNotGenerated(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_PDF_NOT_GENERATED,
+            "PDF 가 아직 생성되지 않았습니다 (publicCode=$publicCode, status=$currentStatus, markReady 가 선행 필요)",
         )
 
     class AiImageCountInvalid(

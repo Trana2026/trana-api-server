@@ -377,6 +377,7 @@ internal object ContractExamples {
                     "location": "서울 강남구",
                     "guardianConsentAt": null,
                     "version": 1,
+                    "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "createdAt": "2026-05-20T10:00:00Z",
                     "updatedAt": "2026-05-20T10:15:00Z"
                   }
@@ -421,6 +422,27 @@ internal object ContractExamples {
                   "status": 409,
                   "detail": "현재 READY 상태가 아닙니다 (publicCode=Vh7sK2x9Pq3R, status=DRAFT)",
                   "code": "CONTRACT_409_NOT_READY",
+                  "timestamp": "2026-05-20T10:15:00Z"
+                }
+            """
+
+    // ───── PDF ─────
+
+    const val PDF_DOWNLOAD_RESPONSE = """
+                  {
+                    "downloadUrl": "https://trana-pdf-archive-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/pdf.pdf?X-Amz-Algorithm=...&X-Amz-Signature=...",
+                    "expiresInSeconds": 600,
+                    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                  }
+              """
+
+    const val PDF_NOT_GENERATED = """
+                {
+                  "type": "about:blank",
+                  "title": "CONTRACT_409_PDF_NOT_GENERATED",
+                  "status": 409,
+                  "detail": "PDF 가 아직 생성되지 않았습니다 (publicCode=Vh7sK2x9Pq3R, status=DRAFT, markReady 가 선행 필요)",
+                  "code": "CONTRACT_409_PDF_NOT_GENERATED",
                   "timestamp": "2026-05-20T10:15:00Z"
                 }
             """

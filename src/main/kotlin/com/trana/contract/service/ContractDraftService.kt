@@ -2,6 +2,7 @@ package com.trana.contract.service
 
 import com.trana.common.util.PublicCodeGenerator
 import com.trana.contract.ContractException
+import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractParty
@@ -17,6 +18,7 @@ import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.MessageDigest
 
 /**
  * 계약 DRAFT 단계 서비스 — 생성/조회/수정/삭제/목록.
@@ -34,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 @Transactional
+@Suppress("TooManyFunctions")
 class ContractDraftService(
     private val contractRepository: ContractRepository,
     private val contractPartyRepository: ContractPartyRepository,
@@ -41,6 +44,8 @@ class ContractDraftService(
     private val userRepository: UserRepository,
     private val publicCodeGenerator: PublicCodeGenerator,
     private val eventPublisher: ApplicationEventPublisher,
+    private val pdfRenderer: ContractPdfRenderer,
+    private val pdfArchiveStorage: ContractPdfArchiveStorage,
 ) {
     fun createDraft(
         creatorUserId: Long,
@@ -165,8 +170,13 @@ class ContractDraftService(
             throw ContractException.GuardianConsentRequired(publicCode)
         }
 
+        val pdfBytes = pdfRenderer.render(contract)
+        val pdfSha256 = sha256Hex(pdfBytes)
+        val pdfS3Key = buildPdfS3Key(publicCode)
+        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+
         val from = contract.status
-        contract.markReady()
+        contract.markReady(pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256)
 
         eventPublisher.publishEvent(
             ContractStatusChangedEvent(
@@ -215,9 +225,42 @@ class ContractDraftService(
         return statusLogRepository.findAllByContractIdOrderByChangedAtAsc(contract.id!!)
     }
 
+    @Transactional(readOnly = true)
+    fun getPdfDownload(
+        publicCode: String,
+        userId: Long,
+    ): PdfDownloadView {
+        val contract = loadOwned(publicCode, userId)
+        val s3Key =
+            contract.pdfS3Key
+                ?: throw ContractException.PdfNotGenerated(publicCode, contract.status.name)
+        val sha256 =
+            requireNotNull(contract.contentHash) {
+                "pdf_s3_key 가 있는데 content_hash 가 null — DB 불변식 위반"
+            }
+        return PdfDownloadView(
+            downloadUrl = pdfArchiveStorage.presignGet(s3Key),
+            expiresInSeconds = pdfArchiveStorage.presignedGetTtlSeconds,
+            sha256 = sha256,
+        )
+    }
+
     private fun ensureDraft(contract: Contract) {
         if (contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(contract.publicCode, contract.status.name)
         }
     }
+
+    private fun sha256Hex(bytes: ByteArray): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
 }
+
+data class PdfDownloadView(
+    val downloadUrl: String,
+    val expiresInSeconds: Long,
+    val sha256: String,
+)

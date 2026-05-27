@@ -44,6 +44,9 @@ trana:
       presigned-upload-ttl-minutes: 10
       max-attachment-size-bytes: 10485760
       presigned-get-ttl-minutes: 5
+    pdf-archive:
+      bucket: ${TRANA_CONTRACT_PDF_S3_BUCKET}
+      presigned-get-ttl-minutes: 10
     openai:
       api-key: ${TRANA_OPENAI_API_KEY}
       base-url: https://api.openai.com/v1

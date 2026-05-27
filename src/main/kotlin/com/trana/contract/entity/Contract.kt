@@ -26,7 +26,10 @@ import java.time.Instant
  *
  * 불변식:
  * - DRAFT 에서만 수정/삭제
- * - GUARDIAN_REQUIRED 인데 guardianConsentAt=null 이면 SIGN_REQUESTED 전이 금지 (W5)
+ * - DRAFT ↔ READY 전이는 markReady / markRevertToDraft 만 (Service 가 사전 검증, Entity 가 defense-in-depth)
+ * - markReady 는 pdfS3Key + sha256 필수 (READY 는 항상 PDF 존재)
+ * - revert 시 pdfS3Key/contentHash/pdfGeneratedAt 클리어 (S3 옛 버전은 Versioning 보존)
+ * - GUARDIAN_REQUIRED 인데 guardianConsentAt=null 이면 READY 진입 금지
  * - SIGN_REQUESTED 진입 후 본문 변경 불가 (W5)
  */
 @Entity
@@ -82,6 +85,18 @@ class Contract(
     var version: Int = 1
         protected set
 
+    @Column(name = "pdf_s3_key", length = 500)
+    var pdfS3Key: String? = null
+        protected set
+
+    @Column(name = "content_hash", length = 64)
+    var contentHash: String? = null
+        protected set
+
+    @Column(name = "pdf_generated_at")
+    var pdfGeneratedAt: Instant? = null
+        protected set
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant? = null
@@ -123,7 +138,10 @@ class Contract(
         this.guardianConsentAt = Instant.now()
     }
 
-    fun markReady() {
+    fun markReady(
+        pdfS3Key: String,
+        pdfSha256: String,
+    ) {
         check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 READY 전이 가능 (current=$status)" }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         check(title != null) { "title 미입력 — AI 추출 또는 수동 입력 필요" }
@@ -134,12 +152,18 @@ class Contract(
             check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
         }
         this.status = ContractStatus.READY
+        this.pdfS3Key = pdfS3Key
+        this.contentHash = pdfSha256
+        this.pdfGeneratedAt = Instant.now()
     }
 
     fun markRevertToDraft() {
         check(status == ContractStatus.READY) { "READY 상태에서만 DRAFT 되돌리기 가능 (current=$status)" }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.DRAFT
+        this.pdfS3Key = null
+        this.contentHash = null
+        this.pdfGeneratedAt = null
     }
 
     fun softDelete() {

@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>물품 매매 계약서</title>
+    <style type="text/css">
+        @page {
+            size: A4;
+            margin: 60pt 40pt;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 500;
+            color: #272829;
+            letter-spacing: -0.01em;
+            line-height: 1.5;
+        }
+
+        .container {
+            border: 1pt solid rgba(111, 114, 112, 0.25);
+            padding: 24pt 20pt 40pt 20pt;
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 20pt;
+            text-align: center;
+            margin: 0 0 40pt 0;
+        }
+
+        .clause {
+            margin-bottom: 28pt;
+        }
+
+        .clause-heading {
+            font-weight: 700;
+            font-size: 12pt;
+            margin-bottom: 10pt;
+        }
+
+        .clause-body {
+            font-weight: 500;
+            font-size: 12pt;
+        }
+
+        .clause-body .line + .line {
+            margin-top: 4pt;
+        }
+
+        .signature-section {
+            text-align: right;
+            margin-top: 28pt;
+        }
+
+        .signature-label {
+            font-weight: 500;
+            font-size: 14pt;
+            margin-bottom: 10pt;
+        }
+
+        .signature-box {
+            display: inline-block;
+            width: 89pt;
+            height: 50pt;
+            background-color: #F6F8F9;
+            border: 1pt solid #CDD0CE;
+            text-align: center;
+        }
+
+        .signature-placeholder {
+            font-weight: 700;
+            font-size: 12pt;
+            color: #B5B7B6;
+            line-height: 50pt;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">물품 매매 계약서</h1>
+
+    <div class="clause">
+        <div class="clause-heading">제1조 [목적]</div>
+        <div class="clause-body">
+            <div class="line">본 계약은 판매자가 제공한 정보에 기반하여 작성되었습니다.</div>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">제2조 [거래 대상]</div>
+        <div class="clause-body">
+            <div class="line">물품명: <span th:text="${title}">맥북 프로 M1 16GB</span></div>
+            <div class="line">금액: <span th:text="${#numbers.formatInteger(price, 0, 'COMMA')}">500,000</span>원</div>
+            <div class="line" th:if="${conditionSummary}">상태: <span th:text="${conditionSummary}">사용감 적음</span></div>
+            <div class="line" th:if="${conditionDetails}">세부: <span th:text="${conditionDetails}">1년 사용, 박스 미포함</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">제3조 [인도]</div>
+        <div class="clause-body">
+            <div class="line">본 거래는 <span th:text="${deliveryTypeLabel}">택배</span> 거래 방식으로 진행됩니다.</div>
+        </div>
+    </div>
+
+    <div class="clause">
+        <div class="clause-heading">제4조 [서명]</div>
+        <div class="clause-body">
+            <div class="line">본 문서는 전자서명법에 의거하여 법적 효력을 가진다.</div>
+        </div>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-label">판매자 서명</div>
+        <div class="signature-box">
+            <span class="signature-placeholder">(비어있음)</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

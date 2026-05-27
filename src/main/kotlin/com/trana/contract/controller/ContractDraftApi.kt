@@ -3,6 +3,7 @@ package com.trana.contract.controller
 import com.trana.common.exception.ProblemDetailResponse
 import com.trana.contract.ContractExamples
 import com.trana.contract.dto.ContractListItem
+import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
@@ -398,4 +399,51 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         userId: Long,
         @PathVariable publicCode: String,
     ): List<ContractStatusLogResponse>
+
+    @Operation(
+        operationId = "contractPdfDownload",
+        summary = "PDF 다운로드 URL 발급",
+        description = """
+  계약 본문 PDF 의 presigned GET URL 발급. TTL 10분.
+
+  조건:
+  - markReady 완료된 계약 (READY 이상). DRAFT 면 409
+  - 본인 계약만 (403)
+
+  응답 사용:
+  - 즉시 GET 으로 다운로드
+  - 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
+
+  S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
+                """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "presigned URL 발급",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractPdfDownloadResponse::class),
+                        examples = [ExampleObject(name = "url", value = ContractExamples.PDF_DOWNLOAD_RESPONSE)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "PDF 미생성 (markReady 필요)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notGenerated", value = ContractExamples.PDF_NOT_GENERATED)],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/{publicCode}/pdf")
+    fun pdfDownload(
+        userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractPdfDownloadResponse
 }

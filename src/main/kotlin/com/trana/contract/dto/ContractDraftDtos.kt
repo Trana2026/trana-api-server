@@ -63,6 +63,11 @@ data class ContractResponse(
     val guardianConsentAt: Instant?,
     @field:Schema(description = "리비전 버전 (W5+)", example = "1")
     val version: Int,
+    @field:Schema(
+        description = "PDF SHA-256 (READY 이상에서 채워짐, DRAFT 시 null)",
+        example = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    )
+    val contentHash: String?,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -90,6 +95,16 @@ data class ContractStatusLogResponse(
     val reason: String?,
     @field:Schema(description = "전이 시각 (UTC)")
     val changedAt: Instant,
+)
+
+@Schema(description = "PDF 다운로드 응답 (presigned GET URL)")
+data class ContractPdfDownloadResponse(
+    @field:Schema(description = "presigned GET URL (지정 TTL 내 다운로드)")
+    val downloadUrl: String,
+    @field:Schema(description = "URL 유효 시간 (초)", example = "600")
+    val expiresInSeconds: Long,
+    @field:Schema(description = "PDF SHA-256 (다운로드 후 검증용)")
+    val sha256: String,
 )
 
 private const val TITLE_MAX_LENGTH = 200

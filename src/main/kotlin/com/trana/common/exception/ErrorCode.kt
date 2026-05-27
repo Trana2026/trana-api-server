@@ -83,6 +83,11 @@ enum class ErrorCode(
         "CONTRACT_409_NOT_READY",
         "현재 READY 상태가 아닙니다",
     ),
+    CONTRACT_PDF_NOT_GENERATED(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_PDF_NOT_GENERATED",
+        "PDF 가 아직 생성되지 않은 계약입니다 (markReady 가 선행 필요)",
+    ),
     CONTRACT_AI_IMAGE_COUNT_INVALID(
         HttpStatus.BAD_REQUEST,
         "CONTRACT_400_AI_IMAGE_COUNT",
