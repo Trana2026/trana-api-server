@@ -19,38 +19,48 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@Tag(name = "Contract AI Extraction", description = "gpt-4o-mini Vision 으로 첨부 1~2장에서 prefill 자동 추출")
+@Tag(
+    name = "Contract AI Extraction",
+    description = "gpt-4o-mini Vision 으로 첨부 1~2장에서 prefill 자동 추출 (비동기)",
+)
 @SecurityRequirement(name = "bearerAuth")
 interface ContractAiApi {
     @Operation(
-        operationId = "contractAiExtract",
-        summary = "AI prefill 추출 실행",
+        operationId = "contractAiSubmit",
+        summary = "AI prefill 추출 요청 (비동기)",
         description = """
-사용자 동의(consentedAt) + 1~2장 첨부 → gpt-4o-mini Vision 호출 → prefill 4필드 자동 반영.
+사용자 동의(consentedAt) + 1~2장 첨부로 AI 추출 요청을 비동기 큐에 제출.
 
-자동 반영:
-- Contract.title / price / conditionSummary / conditionDetails 가 AI 결과로 업데이트됨
-- 기존 사용자 입력값은 덮어쓰기됨 → 프론트에서 confirm dialog 권장
+흐름:
+1. 본 endpoint 호출 → 즉시 202 + extractionId + status=PENDING
+2. 백그라운드에서 OpenAI Vision 호출 (~7초)
+3. 완료 시: status=SUCCESS, Contract.title/price/conditionSummary/conditionDetails 자동 반영
+4. 실패 시: status=FAILED, errorMessage 채움
 
-재호출:
-- 매번 새 ai_extractions row INSERT (audit 5년 보존)
-- prefill 4필드는 매번 덮어쓰기
+폴링:
+- GET /latest 또는 GET /{extractionId} 로 status 확인
+- 권장: 2초 간격, 30초 timeout
 
 제약:
 - DRAFT 상태에서만 호출 가능
 - attachmentIds 는 1~2개 (3장 이상은 400)
 - attachmentIds 는 본 계약 소속만 (cross-contract 404)
-              """,
+
+재호출:
+- 매번 새 row INSERT (audit 5년 보존)
+- 이전 PENDING 이 끝나기 전 새 요청도 허용 (각 요청은 독립적인 row)
+- prefill 자동 반영은 SUCCESS 시점 → 가장 늦게 끝난 SUCCESS 가 최종 반영
+                """,
     )
     @ApiResponses(
         value = [
             ApiResponse(
-                responseCode = "200",
-                description = "추출 성공 (prefill 자동 반영됨)",
+                responseCode = "202",
+                description = "추출 요청 등록 (status=PENDING). 폴링으로 결과 확인",
                 content = [
                     Content(
                         schema = Schema(implementation = AiExtractionResponse::class),
-                        examples = [ExampleObject(name = "extracted", value = ContractExamples.AI_EXTRACT_RESPONSE)],
+                        examples = [ExampleObject(name = "pending", value = ContractExamples.AI_EXTRACT_PENDING)],
                     ),
                 ],
             ),
@@ -81,19 +91,6 @@ interface ContractAiApi {
                     ),
                 ],
             ),
-            ApiResponse(
-                responseCode = "502",
-                description = "OpenAI 호출 실패 또는 응답 파싱 실패",
-                content = [
-                    Content(
-                        schema = Schema(implementation = ProblemDetailResponse::class),
-                        examples = [
-                            ExampleObject(name = "callFailed", value = ContractExamples.AI_EXTRACTION_FAILED),
-                            ExampleObject(name = "parseFailed", value = ContractExamples.AI_RESPONSE_INVALID),
-                        ],
-                    ),
-                ],
-            ),
         ],
     )
     @PostMapping
@@ -101,30 +98,34 @@ interface ContractAiApi {
         userId: Long,
         @PathVariable publicCode: String,
         @RequestBody @Valid request: ExtractPrefillRequest,
-    ): AiExtractionResponse
+    ): ResponseEntity<AiExtractionResponse>
 
     @Operation(
         operationId = "contractAiLatest",
-        summary = "가장 최근 AI 추출 결과 조회",
+        summary = "가장 최근 AI 추출 결과 (status 무관)",
         description = """
-본 계약의 가장 최근 AI 추출 결과 단건.
+본 계약의 가장 최근 row 1건 — status 와 관계없이 (PENDING/SUCCESS/FAILED).
 
-- 200: 결과 있음 (prefill 자동 반영된 값 그대로)
-- 204: 한 번도 추출하지 않음 (응답 본문 없음)
+- 200: 결과 있음 (status 별 nullable 필드 참조)
+- 204: 한 번도 추출하지 않음
 
 활용:
-- 페이지 리로드 시 마지막 추출 결과 + usage/latency 재표시
-              """,
+- 페이지 진입 시 직전 추출 상태 복원 (status=SUCCESS 면 prefill 표시, PENDING 이면 폴링 재개)
+                """,
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "이전 추출 결과 존재",
+                description = "최근 추출 결과 (status 별 다른 shape)",
                 content = [
                     Content(
                         schema = Schema(implementation = AiExtractionResponse::class),
-                        examples = [ExampleObject(name = "latest", value = ContractExamples.AI_EXTRACT_RESPONSE)],
+                        examples = [
+                            ExampleObject(name = "success", value = ContractExamples.AI_EXTRACT_SUCCESS),
+                            ExampleObject(name = "pending", value = ContractExamples.AI_EXTRACT_PENDING),
+                            ExampleObject(name = "failed", value = ContractExamples.AI_EXTRACT_FAILED),
+                        ],
                     ),
                 ],
             ),
@@ -135,5 +136,48 @@ interface ContractAiApi {
     fun latest(
         userId: Long,
         @PathVariable publicCode: String,
+    ): ResponseEntity<AiExtractionResponse>
+
+    @Operation(
+        operationId = "contractAiGetById",
+        summary = "특정 extractionId 폴링",
+        description = """
+submit 응답으로 받은 extractionId 로 status 확인.
+
+- 200: row 존재 (status 별 다른 shape)
+- 404: 본 계약 소속이 아닌 id (보안 차단)
+
+활용:
+- submit → extractionId 받음 → 2초 간격 폴링 → status=SUCCESS/FAILED 도달 시 중단
+                """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "추출 row 1건",
+                content = [
+                    Content(
+                        schema = Schema(implementation = AiExtractionResponse::class),
+                        examples = [
+                            ExampleObject(name = "pending", value = ContractExamples.AI_EXTRACT_PENDING),
+                            ExampleObject(name = "success", value = ContractExamples.AI_EXTRACT_SUCCESS),
+                            ExampleObject(name = "failed", value = ContractExamples.AI_EXTRACT_FAILED),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "본 계약 소속이 아닌 extractionId",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+        ],
+    )
+    @GetMapping("/{extractionId:[0-9]+}")
+    fun getById(
+        userId: Long,
+        @PathVariable publicCode: String,
+        @PathVariable extractionId: Long,
     ): ResponseEntity<AiExtractionResponse>
 }

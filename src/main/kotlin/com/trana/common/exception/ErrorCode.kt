@@ -78,4 +78,9 @@ enum class ErrorCode(
         "CONTRACT_400_AI_IMAGE_COUNT",
         "AI 분석은 1~2장의 사진만 가능합니다",
     ),
+    CONTRACT_AI_EXTRACTION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CONTRACT_404_AI_EXTRACTION",
+        "AI 추출 결과를 찾을 수 없습니다",
+    ),
 }

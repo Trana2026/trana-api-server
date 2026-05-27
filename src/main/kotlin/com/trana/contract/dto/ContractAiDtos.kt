@@ -2,6 +2,7 @@ package com.trana.contract.dto
 
 import com.trana.contract.adapter.openai.ExtractedPrefill
 import com.trana.contract.adapter.openai.OpenAiUsage
+import com.trana.contract.entity.ExtractionStatus
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
@@ -22,20 +23,36 @@ data class ExtractPrefillRequest(
     val consentedAt: Instant,
 )
 
-@Schema(description = "AI prefill 추출 응답 — Contract 의 title/price/conditionSummary/conditionDetails 4필드는 자동 반영됨")
+@Schema(
+    description = """
+AI prefill 추출 상태 응답 (비동기).
+
+- POST /extract: 즉시 202 + status=PENDING 반환
+- GET /latest 또는 GET /{extractionId}: 폴링용 — SUCCESS/FAILED 로 전이된 후 결과 확인
+
+status 별 채워지는 필드:
+- PENDING: prefill / latencyMs / usage / errorMessage 모두 null
+- SUCCESS: prefill / latencyMs / usage 채움 + Contract 본문에 자동 반영됨
+- FAILED: errorMessage 채움 (운영 디버깅, 사용자에게는 generic 메시지 권장)
+  """,
+)
 data class AiExtractionResponse(
-    @field:Schema(description = "ai_extractions row id (재현/audit)", example = "9001")
+    @field:Schema(description = "ai_extractions row id (재현/audit/폴링 키)", example = "9001")
     val extractionId: Long,
-    @field:Schema(description = "사용된 모델 (saved entity 기반)", example = "gpt-4o-mini")
+    @field:Schema(description = "추출 상태", example = "PENDING")
+    val status: ExtractionStatus,
+    @field:Schema(description = "사용된 모델", example = "gpt-4o-mini")
     val model: String,
-    @field:Schema(description = "프롬프트 버전 (saved entity 기반)", example = "v1")
+    @field:Schema(description = "프롬프트 버전", example = "v1")
     val promptVersion: String,
-    @field:Schema(description = "추출된 prefill — Contract 본문에 자동 반영됨")
-    val prefill: ExtractedPrefill,
-    @field:Schema(description = "OpenAI 호출 latency (ms)", example = "1842")
-    val latencyMs: Long,
-    @field:Schema(description = "OpenAI usage — 토큰 사용량 (prompt/completion/total)")
-    val usage: OpenAiUsage,
-    @field:Schema(description = "ai_extractions.extracted_at (UTC)")
+    @field:Schema(description = "추출된 prefill — SUCCESS 시만. Contract 본문 자동 반영됨")
+    val prefill: ExtractedPrefill?,
+    @field:Schema(description = "OpenAI 호출 latency (ms) — SUCCESS 시만", example = "7172")
+    val latencyMs: Long?,
+    @field:Schema(description = "OpenAI usage — SUCCESS 시만")
+    val usage: OpenAiUsage?,
+    @field:Schema(description = "실패 사유 — FAILED 시만 (운영 디버깅)")
+    val errorMessage: String?,
+    @field:Schema(description = "요청 등록 시각 — ai_extractions.extracted_at (UTC)")
     val extractedAt: Instant,
 )

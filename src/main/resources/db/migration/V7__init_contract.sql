@@ -119,6 +119,7 @@ COMMENT ON COLUMN contract_attachments.s3_key IS 'trana-archive-{env} 버킷 키
 -- ============================================================
 -- contract_ai_extractions
 -- gpt-4o-mini 호출 결과 + 사용자 동의 audit (5년 보존)
+-- W5: 비동기 처리. row 라이프사이클 = PENDING → SUCCESS / FAILED
 -- ============================================================
 CREATE TABLE contract_ai_extractions
 (
@@ -129,24 +130,37 @@ CREATE TABLE contract_ai_extractions
     consent_text_version VARCHAR(20) NOT NULL,
     consented_at         TIMESTAMPTZ NOT NULL,
     attachment_ids       BIGINT[]    NOT NULL,
-    extracted_json       TEXT        NOT NULL,
-    prompt_tokens        INT         NOT NULL,
-    completion_tokens    INT         NOT NULL,
-    total_tokens         INT         NOT NULL,
-    latency_ms           BIGINT      NOT NULL,
-    extracted_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+
+    -- 비동기 결과 (PENDING 동안 NULL, SUCCESS 시 채움)
+    status               VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    extracted_json       TEXT,
+    prompt_tokens        INT,
+    completion_tokens    INT,
+    total_tokens         INT,
+    latency_ms           BIGINT,
+    error_message        TEXT,
+
+    extracted_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT chk_contract_ai_extractions_status
+        CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED'))
 );
 
 CREATE INDEX idx_contract_ai_extractions_contract
     ON contract_ai_extractions (contract_id, extracted_at DESC);
 
+CREATE INDEX idx_contract_ai_extractions_status
+    ON contract_ai_extractions (status);
+
 COMMENT ON COLUMN contract_ai_extractions.model_name IS 'gpt-4o-mini';
 COMMENT ON COLUMN contract_ai_extractions.attachment_ids IS '추출 입력 사진 id 배열 (재현 가능)';
-COMMENT ON COLUMN contract_ai_extractions.extracted_json IS 'gpt-4o-mini raw 응답 (5년 보존)';
-COMMENT ON COLUMN contract_ai_extractions.prompt_tokens IS 'OpenAI usage.prompt_tokens — 비용 추적';
-COMMENT ON COLUMN contract_ai_extractions.completion_tokens IS 'OpenAI usage.completion_tokens — 비용 추적';
-COMMENT ON COLUMN contract_ai_extractions.total_tokens IS 'OpenAI usage.total_tokens — 모니터링/대시보드';
-COMMENT ON COLUMN contract_ai_extractions.latency_ms IS '호출 시작~응답 완료 (ms) — 성능 모니터링';
+COMMENT ON COLUMN contract_ai_extractions.status IS 'PENDING (요청 등록) | SUCCESS (응답 수신) | FAILED (예외)';
+COMMENT ON COLUMN contract_ai_extractions.extracted_json IS 'gpt-4o-mini raw 응답 (5년 보존). PENDING/FAILED 시 NULL';
+COMMENT ON COLUMN contract_ai_extractions.prompt_tokens IS 'OpenAI usage.prompt_tokens — 비용 추적. PENDING/FAILED 시 NULL';
+COMMENT ON COLUMN contract_ai_extractions.completion_tokens IS 'OpenAI usage.completion_tokens — 비용 추적. PENDING/FAILED 시 NULL';
+COMMENT ON COLUMN contract_ai_extractions.total_tokens IS 'OpenAI usage.total_tokens — 모니터링/대시보드. PENDING/FAILED 시 NULL';
+COMMENT ON COLUMN contract_ai_extractions.latency_ms IS '호출 시작~응답 완료 (ms) — 성능 모니터링. PENDING/FAILED 시 NULL';
+COMMENT ON COLUMN contract_ai_extractions.error_message IS 'FAILED 시 예외 메시지 (사용자 노출 안 함, 운영 로그)';
 
 -- ============================================================
 -- guardian_links 확장 (W4)

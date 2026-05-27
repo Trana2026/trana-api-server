@@ -2,7 +2,7 @@ package com.trana.contract.controller
 
 import com.trana.contract.dto.AiExtractionResponse
 import com.trana.contract.dto.ExtractPrefillRequest
-import com.trana.contract.service.AiExtractionView
+import com.trana.contract.service.AiExtractionStatusView
 import com.trana.contract.service.ContractAiExtractionService
 import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.http.ResponseEntity
@@ -21,14 +21,16 @@ class ContractAiController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
         @RequestBody request: ExtractPrefillRequest,
-    ): AiExtractionResponse =
-        service
-            .extract(
+    ): ResponseEntity<AiExtractionResponse> {
+        val view =
+            service.submit(
                 publicCode = publicCode,
                 userId = userId,
                 attachmentIds = request.attachmentIds,
                 consentedAt = request.consentedAt,
-            ).toResponse()
+            )
+        return ResponseEntity.accepted().body(view.toResponse())
+    }
 
     override fun latest(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -37,15 +39,26 @@ class ContractAiController(
         val view = service.getLatest(publicCode, userId) ?: return ResponseEntity.noContent().build()
         return ResponseEntity.ok(view.toResponse())
     }
+
+    override fun getById(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+        @PathVariable extractionId: Long,
+    ): ResponseEntity<AiExtractionResponse> {
+        val view = service.getById(publicCode, extractionId, userId)
+        return ResponseEntity.ok(view.toResponse())
+    }
 }
 
-private fun AiExtractionView.toResponse(): AiExtractionResponse =
+private fun AiExtractionStatusView.toResponse(): AiExtractionResponse =
     AiExtractionResponse(
         extractionId = extractionId,
+        status = status,
         model = model,
         promptVersion = promptVersion,
         prefill = prefill,
         latencyMs = latencyMs,
         usage = usage,
+        errorMessage = errorMessage,
         extractedAt = extractedAt,
     )

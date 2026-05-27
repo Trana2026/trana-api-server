@@ -109,4 +109,11 @@ sealed class ContractException(
             ErrorCode.CONTRACT_AI_IMAGE_COUNT_INVALID,
             "AI 분석 입력 사진 개수 위반 (requested=$requested, allowed=1~2)",
         )
+
+    class AiExtractionNotFound(
+        extractionId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_AI_EXTRACTION_NOT_FOUND,
+            "AI 추출 결과를 찾을 수 없습니다 (extractionId=$extractionId)",
+        )
 }

@@ -193,26 +193,56 @@ internal object ContractExamples {
                 }
             """
 
-    const val AI_EXTRACT_RESPONSE = """
-                {
-                  "extractionId": 9001,
-                  "model": "gpt-4o-mini",
-                  "promptVersion": "v1",
-                  "extractedAt": "2026-05-20T10:07:15Z",
-                  "latencyMs": 1842,
-                  "usage": {
-                    "prompt_tokens": 1250,
-                    "completion_tokens": 84,
-                    "total_tokens": 1334
-                  },
-                  "prefill": {
-                    "product_name": "에어팟 프로 2세대",
-                    "price": 180000,
-                    "condition_summary": "사용감 적음",
-                    "condition_details": "1년 사용, 케이스 미세 흠집 외 기능 정상"
+    const val AI_EXTRACT_PENDING = """
+                  {
+                    "extractionId": 9001,
+                    "status": "PENDING",
+                    "model": "gpt-4o-mini",
+                    "promptVersion": "v1",
+                    "prefill": null,
+                    "latencyMs": null,
+                    "usage": null,
+                    "errorMessage": null,
+                    "extractedAt": "2026-05-20T10:07:00Z"
                   }
-                }
-            """
+              """
+
+    const val AI_EXTRACT_SUCCESS = """
+                  {
+                    "extractionId": 9001,
+                    "status": "SUCCESS",
+                    "model": "gpt-4o-mini",
+                    "promptVersion": "v1",
+                    "prefill": {
+                      "product_name": "에어팟 프로 2세대",
+                      "price": 180000,
+                      "condition_summary": "사용감 적음",
+                      "condition_details": "1년 사용, 케이스 미세 흠집 외 기능 정상"
+                    },
+                    "latencyMs": 7172,
+                    "usage": {
+                      "prompt_tokens": 74109,
+                      "completion_tokens": 142,
+                      "total_tokens": 74251
+                    },
+                    "errorMessage": null,
+                    "extractedAt": "2026-05-20T10:07:00Z"
+                  }
+              """
+
+    const val AI_EXTRACT_FAILED = """
+                  {
+                    "extractionId": 9001,
+                    "status": "FAILED",
+                    "model": "gpt-4o-mini",
+                    "promptVersion": "v1",
+                    "prefill": null,
+                    "latencyMs": null,
+                    "usage": null,
+                    "errorMessage": "Read timed out: OpenAI 호출 응답 대기 초과",
+                    "extractedAt": "2026-05-20T10:07:00Z"
+                  }
+              """
 
     // ───── 상세 / 목록 ─────
 
@@ -316,17 +346,6 @@ internal object ContractExamples {
               }
           """
 
-    const val AI_EXTRACTION_FAILED = """
-              {
-                "type": "about:blank",
-                "title": "CONTRACT_502_AI",
-                "status": 502,
-                "detail": "AI 추출 호출에 실패했습니다",
-                "code": "CONTRACT_502_AI",
-                "timestamp": "2026-05-20T10:00:00Z"
-              }
-          """
-
     const val AI_IMAGE_COUNT_INVALID = """
               {
                 "type": "about:blank",
@@ -334,17 +353,6 @@ internal object ContractExamples {
                 "status": 400,
                 "detail": "AI 분석 입력 사진 개수 위반 (requested=5, allowed=1~2)",
                 "code": "CONTRACT_400_AI_IMAGE_COUNT",
-                "timestamp": "2026-05-20T10:00:00Z"
-              }
-          """
-
-    const val AI_RESPONSE_INVALID = """
-              {
-                "type": "about:blank",
-                "title": "CONTRACT_502_AI_PARSE",
-                "status": 502,
-                "detail": "AI 응답을 파싱할 수 없습니다: missing field 'product_name'",
-                "code": "CONTRACT_502_AI_PARSE",
                 "timestamp": "2026-05-20T10:00:00Z"
               }
           """
