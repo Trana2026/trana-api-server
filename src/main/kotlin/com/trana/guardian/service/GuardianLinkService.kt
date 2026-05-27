@@ -4,6 +4,7 @@ import com.trana.audit.AuditLogger
 import com.trana.common.util.GuardianLinkTokenGenerator
 import com.trana.guardian.GuardianException
 import com.trana.guardian.entity.GuardianLink
+import com.trana.guardian.entity.LinkPurpose
 import com.trana.guardian.repository.GuardianLinkRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
@@ -51,6 +52,45 @@ class GuardianLinkService(
             actorUserId = userId,
             entityType = "GUARDIAN_LINK",
             metadata = mapOf("tokenPrefix" to saved.token.take(8)),
+        )
+        return saved
+    }
+
+    /**
+     * 계약 보호자 동의용 링크 발급 (W4+, purpose=CONTRACT_CONSENT).
+     *
+     * - 미성년자가 본인 작성 계약마다 1회 발급 (재발급 가능)
+     * - 보호자가 토큰으로 KYC 진행 → Compare SUCCESS 시 contract.markGuardianConsented() + link.markUsed()
+     * - SIGNUP 용 create() 와 달리 guardianVerifiedAt 검사 안 함 (가입 완료된 미성년 전제)
+     */
+    fun createForContract(
+        minorUserId: Long,
+        contractId: Long,
+    ): GuardianLink {
+        val user = userService.getById(minorUserId)
+        if (user.ageGroup != AgeGroup.MINOR) {
+            throw GuardianException.NotMinor(minorUserId)
+        }
+
+        val link =
+            GuardianLink(
+                token = tokenGenerator.generate(),
+                userId = minorUserId,
+                expiresAt = Instant.now().plus(TTL),
+                purpose = LinkPurpose.CONTRACT_CONSENT,
+                contractId = contractId,
+            )
+        val saved = guardianLinkRepository.save(link)
+
+        auditLogger.log(
+            eventType = "CONTRACT_GUARDIAN_LINK_CREATED",
+            actorUserId = minorUserId,
+            entityType = "GUARDIAN_LINK",
+            metadata =
+                mapOf(
+                    "tokenPrefix" to saved.token.take(8),
+                    "contractId" to contractId.toString(),
+                ),
         )
         return saved
     }

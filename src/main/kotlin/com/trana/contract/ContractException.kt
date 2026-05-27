@@ -90,12 +90,9 @@ sealed class ContractException(
         )
 
     class AiExtractionFailed(
-        cause: Throwable,
-    ) : ContractException(
-            ErrorCode.CONTRACT_AI_EXTRACTION_FAILED,
-            "AI 추출 호출에 실패했습니다",
-            cause,
-        )
+        message: String,
+        cause: Throwable? = null,
+    ) : ContractException(ErrorCode.CONTRACT_AI_EXTRACTION_FAILED, message, cause)
 
     class AiResponseInvalid(
         reason: String,
@@ -104,5 +101,12 @@ sealed class ContractException(
             ErrorCode.CONTRACT_AI_RESPONSE_INVALID,
             "AI 응답을 파싱할 수 없습니다: $reason",
             cause,
+        )
+
+    class AiImageCountInvalid(
+        requested: Int,
+    ) : ContractException(
+            ErrorCode.CONTRACT_AI_IMAGE_COUNT_INVALID,
+            "AI 분석 입력 사진 개수 위반 (requested=$requested, allowed=1~2)",
         )
 }

@@ -130,6 +130,10 @@ CREATE TABLE contract_ai_extractions
     consented_at         TIMESTAMPTZ NOT NULL,
     attachment_ids       BIGINT[]    NOT NULL,
     extracted_json       TEXT        NOT NULL,
+    prompt_tokens        INT         NOT NULL,
+    completion_tokens    INT         NOT NULL,
+    total_tokens         INT         NOT NULL,
+    latency_ms           BIGINT      NOT NULL,
     extracted_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -139,6 +143,10 @@ CREATE INDEX idx_contract_ai_extractions_contract
 COMMENT ON COLUMN contract_ai_extractions.model_name IS 'gpt-4o-mini';
 COMMENT ON COLUMN contract_ai_extractions.attachment_ids IS '추출 입력 사진 id 배열 (재현 가능)';
 COMMENT ON COLUMN contract_ai_extractions.extracted_json IS 'gpt-4o-mini raw 응답 (5년 보존)';
+COMMENT ON COLUMN contract_ai_extractions.prompt_tokens IS 'OpenAI usage.prompt_tokens — 비용 추적';
+COMMENT ON COLUMN contract_ai_extractions.completion_tokens IS 'OpenAI usage.completion_tokens — 비용 추적';
+COMMENT ON COLUMN contract_ai_extractions.total_tokens IS 'OpenAI usage.total_tokens — 모니터링/대시보드';
+COMMENT ON COLUMN contract_ai_extractions.latency_ms IS '호출 시작~응답 완료 (ms) — 성능 모니터링';
 
 -- ============================================================
 -- guardian_links 확장 (W4)

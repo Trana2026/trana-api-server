@@ -35,17 +35,17 @@ interface IdentityApi {
         operationId = "kycStep1RecognizeIdCard",
         summary = "신분증 OCR (Step 1)",
         description = """
-  신분증 사진 multipart 업로드 → NCP OCR → 임시 세션 발급 (10분 TTL).
+신분증 사진 multipart 업로드 → NCP OCR → 임시 세션 발급 (10분 TTL).
 
-  흐름:
-  - 사전 조건: POST /v1/consents 로 signupSessionId 발급 (30분 TTL)
-  - 응답의 requestId는 이후 step에 그대로 전달
-  - 3종 신분증 지원: 주민등록증 / 운전면허증 / 외국인등록증
-  - 파일: image/jpeg 또는 image/png
+흐름:
+- 사전 조건: POST /v1/consents 로 signupSessionId 발급 (30분 TTL)
+- 응답의 requestId는 이후 step에 그대로 전달
+- 3종 신분증 지원: 주민등록증 / 운전면허증 / 외국인등록증
+- 파일: image/jpeg 또는 image/png
 
-  차단:
-  - identifier_hash 중복 (이미 본인인증된 사용자) → 409
-  - signup 세션 만료 → 410
+차단:
+- identifier_hash 중복 (이미 본인인증된 사용자) → 409
+- signup 세션 만료 → 410
           """,
     )
     @ApiResponses(
@@ -104,13 +104,13 @@ interface IdentityApi {
         operationId = "kycPreviewIdCard",
         summary = "신분증 OCR 이미지 프리뷰",
         description = """
-  OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
+OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
 
-  흐름:
-  - 사전 조건: OCR 완료 (requestId 보유)
-  - 응답: 신분증 사진 마스킹 적용된 PNG byte stream (식별번호 영역 검정 사각형)
+흐름:
+- 사전 조건: OCR 완료 (requestId 보유)
+- 응답: 신분증 사진 마스킹 적용된 PNG byte stream (식별번호 영역 검정 사각형)
 
-  세션 만료(10분 초과) 시 410.
+세션 만료(10분 초과) 시 410.
       """,
     )
     @ApiResponses(
@@ -145,11 +145,11 @@ interface IdentityApi {
         operationId = "kycStep2VerifyIdCard",
         summary = "신분증 진위확인 (Step 2)",
         description = """
-  NCP Verify API 호출 → 정부 record와 일치 검증.
+NCP Verify API 호출 → 정부 record와 일치 검증.
 
-  흐름:
-  - 사전 조건: Step 1 OCR 완료 (requestId 보유)
-  - 실패 시 422 + failureStep=VERIFY 로 audit 보존 (재시도 시 OCR부터 다시)
+흐름:
+- 사전 조건: Step 1 OCR 완료 (requestId 보유)
+- 실패 시 422 + failureStep=VERIFY 로 audit 보존 (재시도 시 OCR부터 다시)
           """,
     )
     @ApiResponses(
@@ -206,10 +206,10 @@ interface IdentityApi {
         operationId = "kycStep3RecordPhone",
         summary = "휴대폰 번호 기록 (Step 3)",
         description = """
-  Verify 통과 후 휴대폰 번호 저장.
+Verify 통과 후 휴대폰 번호 저장.
 
-  - 형식: 010 + 8자리 (하이픈 무관, 정규화하여 11자리 숫자만 저장)
-  - 실제 SMS 본인인증은 W7+ 도입 예정 (현재는 입력값 저장만)
+- 형식: 010 + 8자리 (하이픈 무관, 정규화하여 11자리 숫자만 저장)
+- 실제 SMS 본인인증은 W7+ 도입 예정 (현재는 입력값 저장만)
           """,
     )
     @ApiResponses(
@@ -256,17 +256,17 @@ interface IdentityApi {
         operationId = "kycStep4CompareFaces",
         summary = "얼굴 비교 + 가입 완료 (Step 4)",
         description = """
-  셀카 사진 multipart 업로드 → NCP Face Compare → user 생성 + JWT 발급.
+셀카 사진 multipart 업로드 → NCP Face Compare → user 생성 + JWT 발급.
 
-  흐름:
-  - 사전 조건: Step 3까지 완료 (verifyPassed=true + phone 저장)
-  - SUCCESS: user 생성 (ageGroup=ADULT) + JWT 발급 + S3 신분증 사진 삭제 + 약관 백필
-  - FAIL (similarity 임계값 미달): 422 + failureStep=COMPARE 로 audit
+흐름:
+- 사전 조건: Step 3까지 완료 (verifyPassed=true + phone 저장)
+- SUCCESS: user 생성 (ageGroup=ADULT) + JWT 발급 + S3 신분증 사진 삭제 + 약관 백필
+- FAIL (similarity 임계값 미달): 422 + failureStep=COMPARE 로 audit
 
-  응답 토큰:
-  - accessToken: 15분
-  - refreshToken: 30일
-  - requiresGuardian: 성인은 항상 false
+응답 토큰:
+- accessToken: 15분
+- refreshToken: 30일
+- requiresGuardian: 성인은 항상 false
           """,
     )
     @ApiResponses(

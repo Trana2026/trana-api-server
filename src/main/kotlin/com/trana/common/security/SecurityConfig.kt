@@ -52,11 +52,14 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
+                    .requestMatchers(HttpMethod.POST, "/v1/contracts/guardian-consent/approve")
+                    .permitAll()
                     .requestMatchers(
                         "/v1/auth/**",
                         "/v1/terms/**",
                         "/v1/consents",
                         "/v1/identity/**",
+                        "/v1/dev/**",
                         "/actuator/health",
                         "/actuator/info",
                         "/v3/api-docs/**",

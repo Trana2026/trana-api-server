@@ -1,8 +1,10 @@
 package com.trana.contract.adapter.storage
 
 import org.springframework.stereotype.Component
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest
 import java.time.Duration
 import java.time.Instant
@@ -22,6 +24,7 @@ import java.time.Instant
  */
 @Component
 class ContractAttachmentStorage(
+    private val s3Client: software.amazon.awssdk.services.s3.S3Client,
     private val s3Presigner: S3Presigner,
     private val props: ContractStorageProperties,
 ) {
@@ -55,6 +58,44 @@ class ContractAttachmentStorage(
             s3Key = s3Key,
             expiresAt = Instant.now().plus(ttl),
         )
+    }
+
+    /**
+     * AI Vision API 입력용 GET presigned URL.
+     *
+     * - OpenAI 가 이 URL 로 이미지 다운로드 (서버 base64 인코딩 회피)
+     * - TTL 짧게 (5분) — 호출 직후 OpenAI 가 즉시 fetch 하므로 충분
+     */
+    fun presignGet(s3Key: String): String {
+        val getRequest =
+            GetObjectRequest
+                .builder()
+                .bucket(props.bucket)
+                .key(s3Key)
+                .build()
+        val presignRequest =
+            GetObjectPresignRequest
+                .builder()
+                .signatureDuration(Duration.ofMinutes(props.presignedGetTtlMinutes))
+                .getObjectRequest(getRequest)
+                .build()
+        return s3Presigner.presignGetObject(presignRequest).url().toString()
+    }
+
+    /**
+     * S3 객체 삭제 — 첨부 단일 삭제 endpoint 에서 사용.
+     *
+     * - DB row 삭제 후 호출 (orphan S3 가 broken DB 참조보다 안전)
+     * - 객체 없어도 성공 (S3 idempotent)
+     */
+    fun delete(s3Key: String) {
+        val request =
+            software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+                .builder()
+                .bucket(props.bucket)
+                .key(s3Key)
+                .build()
+        s3Client.deleteObject(request)
     }
 
     val bucket: String get() = props.bucket

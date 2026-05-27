@@ -16,5 +16,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class ContractStorageProperties(
     val bucket: String,
     val presignedUploadTtlMinutes: Long = 10,
-    val maxAttachmentSizeBytes: Long = 10 * 1024 * 1024L,
-)
+    val presignedGetTtlMinutes: Long = 5,
+    val maxAttachmentSizeBytes: Long = DEFAULT_MAX_ATTACHMENT_SIZE_BYTES,
+) {
+    companion object {
+        private const val DEFAULT_MAX_ATTACHMENT_SIZE_BYTES: Long = 10L * 1024 * 1024 // 10 MB
+    }
+}

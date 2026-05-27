@@ -37,31 +37,81 @@ internal object ContractExamples {
               }
           """
 
+    const val GUARDIAN_CONSENT_APPROVE_REQUEST = """
+                {
+                  "token": "V1StGXR8_Z5jdHi6B-myT",
+                  "guardianId": 42
+                }
+            """
+
+    const val GUARDIAN_CONSENT_APPROVE_RESPONSE = """
+                {
+                  "publicCode": "Vh7sK2x9Pq3R",
+                  "guardianConsentAt": "2026-05-20T11:00:00Z"
+                }
+            """
+
+    const val GUARDIAN_CONSENT_ALREADY = """
+                {
+                  "type": "about:blank",
+                  "title": "CONTRACT_409_GUARDIAN_ALREADY",
+                  "status": 409,
+                  "detail": "이미 보호자 동의가 완료된 계약입니다 (publicCode=Vh7sK2x9Pq3R)",
+                  "code": "CONTRACT_409_GUARDIAN_ALREADY",
+                  "timestamp": "2026-05-20T11:00:00Z"
+                }
+            """
+
+    const val GUARDIAN_CONSENT_LINK_INVALID = """
+                {
+                  "type": "about:blank",
+                  "title": "GUARDIAN_LINK_INVALID",
+                  "status": 410,
+                  "detail": "이미 사용되었거나 만료된 보호자 링크 토큰",
+                  "code": "GUARDIAN_LINK_INVALID",
+                  "timestamp": "2026-05-20T11:00:00Z"
+                }
+            """
+
+    const val GUARDIAN_CONSENT_INVALID_CONSENT_TYPE = """
+                {
+                  "type": "about:blank",
+                  "title": "CONTRACT_400_CONSENT_TYPE",
+                  "status": 400,
+                  "detail": "보호자 동의가 불필요한 계약입니다 (consentType=NOT_APPLICABLE)",
+                  "code": "CONTRACT_400_CONSENT_TYPE",
+                  "timestamp": "2026-05-20T11:00:00Z"
+                }
+            """
+
     // ───── DRAFT 생성 / 수정 / 삭제 ─────
 
     const val DRAFT_CREATE_REQUEST = """
-              {
-                "partyType": "SELLER",
-                "deliveryType": "DIRECT",
-                "consentType": "NOT_APPLICABLE"
-              }
-          """
+                {
+                  "creatorRole": "SELLER",
+                  "deliveryType": "DIRECT"
+                }
+            """
 
     const val DRAFT_CREATE_RESPONSE = """
-              {
-                "publicCode": "Vh7sK2x9Pq3R",
-                "status": "DRAFT",
-                "createdAt": "2026-05-20T10:00:00Z",
-                "presignedUploads": [
-                  {
-                    "sortOrder": 0,
-                    "uploadUrl": "https://trana-archive-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/attachments/...?X-Amz-...",
-                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc123.jpg",
-                    "expiresAt": "2026-05-20T10:10:00Z"
-                  }
-                ]
-              }
-          """
+                {
+                  "publicCode": "Vh7sK2x9Pq3R",
+                  "status": "DRAFT",
+                  "disputeState": "NONE",
+                  "deliveryType": "DIRECT",
+                  "consentType": "NOT_APPLICABLE",
+                  "title": null,
+                  "price": null,
+                  "conditionSummary": null,
+                  "conditionDetails": null,
+                  "warrantyPeriodDays": 3,
+                  "location": null,
+                  "guardianConsentAt": null,
+                  "version": 1,
+                  "createdAt": "2026-05-20T10:00:00Z",
+                  "updatedAt": "2026-05-20T10:00:00Z"
+                }
+            """
 
     const val DRAFT_UPDATE_REQUEST = """
               {
@@ -74,102 +124,129 @@ internal object ContractExamples {
               }
           """
 
+    // ───── 첨부 (presigned upload → register → list) ─────
+
+    const val ATTACHMENT_PRESIGN_REQUEST = """
+                {
+                  "contentType": "image/jpeg"
+                }
+            """
+
+    const val ATTACHMENT_PRESIGN_RESPONSE = """
+                {
+                  "uploadUrl": "https://trana-archive-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/attachments/abc-uuid?X-Amz-Algorithm=...&X-Amz-Signature=...",
+                  "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
+                  "expiresAt": "2026-05-20T10:10:00Z"
+                }
+            """
+
     // ───── 첨부 / AI 추출 ─────
 
     const val ATTACHMENT_REGISTER_REQUEST = """
-              {
-                "attachments": [
+                {
+                  "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
+                  "originalFilename": "screenshot-01.jpg",
+                  "contentType": "image/jpeg",
+                  "sizeBytes": 524288
+                }
+            """
+
+    const val ATTACHMENT_REGISTER_RESPONSE = """
+                {
+                  "id": 101,
+                  "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
+                  "originalFilename": "screenshot-01.jpg",
+                  "contentType": "image/jpeg",
+                  "sizeBytes": 524288,
+                  "sortOrder": 0,
+                  "uploadedAt": "2026-05-20T10:05:00Z"
+                }
+            """
+
+    const val ATTACHMENT_LIST_RESPONSE = """
+                [
                   {
-                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc123.jpg",
+                    "id": 101,
+                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc-uuid",
                     "originalFilename": "screenshot-01.jpg",
                     "contentType": "image/jpeg",
                     "sizeBytes": 524288,
-                    "sortOrder": 0
-                  }
-                ]
-              }
-          """
-
-    const val ATTACHMENT_REGISTER_RESPONSE = """
-              {
-                "attachments": [
-                  {
-                    "id": 101,
-                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc123.jpg",
                     "sortOrder": 0,
                     "uploadedAt": "2026-05-20T10:05:00Z"
+                  },
+                  {
+                    "id": 103,
+                    "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/def-uuid",
+                    "originalFilename": "screenshot-02.jpg",
+                    "contentType": "image/jpeg",
+                    "sizeBytes": 612345,
+                    "sortOrder": 1,
+                    "uploadedAt": "2026-05-20T10:05:30Z"
                   }
                 ]
-              }
-          """
+            """
 
     const val AI_EXTRACT_REQUEST = """
-              {
-                "attachmentIds": [101, 102, 103],
-                "consentTextVersion": "v1",
-                "consentedAt": "2026-05-20T10:07:00Z"
-              }
-          """
+                {
+                  "attachmentIds": [101, 103],
+                  "consentedAt": "2026-05-20T10:07:00Z"
+                }
+            """
 
     const val AI_EXTRACT_RESPONSE = """
-              {
-                "extractionId": 9001,
-                "model": "gpt-4o-mini",
-                "promptVersion": "v1",
-                "extractedAt": "2026-05-20T10:07:15Z",
-                "prefill": {
-                  "product_name": "에어팟 프로 2세대",
-                  "price": 180000,
-                  "condition_summary": "사용감 적음",
-                  "condition_details": "1년 사용, 케이스 미세 흠집 외 기능 정상",
-                  "location": "서울 강남구"
+                {
+                  "extractionId": 9001,
+                  "model": "gpt-4o-mini",
+                  "promptVersion": "v1",
+                  "extractedAt": "2026-05-20T10:07:15Z",
+                  "latencyMs": 1842,
+                  "usage": {
+                    "prompt_tokens": 1250,
+                    "completion_tokens": 84,
+                    "total_tokens": 1334
+                  },
+                  "prefill": {
+                    "product_name": "에어팟 프로 2세대",
+                    "price": 180000,
+                    "condition_summary": "사용감 적음",
+                    "condition_details": "1년 사용, 케이스 미세 흠집 외 기능 정상"
+                  }
                 }
-              }
-          """
+            """
 
     // ───── 상세 / 목록 ─────
 
     const val DETAIL_RESPONSE = """
-              {
-                "publicCode": "Vh7sK2x9Pq3R",
-                "status": "DRAFT",
-                "disputeState": "NONE",
-                "partyType": "SELLER",
-                "deliveryType": "DIRECT",
-                "title": "에어팟 프로 2세대",
-                "price": 180000,
-                "conditionSummary": "사용감 적음",
-                "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
-                "warrantyPeriodDays": 3,
-                "location": "서울 강남구",
-                "consentType": "NOT_APPLICABLE",
-                "guardianConsentAt": null,
-                "attachments": [
-                  { "id": 101, "s3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc123.jpg", "sortOrder": 0 }
-                ],
-                "actions": ["EDIT", "DELETE", "REQUEST_SIGNATURE"],
-                "createdAt": "2026-05-20T10:00:00Z",
-                "updatedAt": "2026-05-20T10:07:00Z"
-              }
-          """
+                {
+                  "publicCode": "Vh7sK2x9Pq3R",
+                  "status": "DRAFT",
+                  "disputeState": "NONE",
+                  "deliveryType": "DIRECT",
+                  "consentType": "NOT_APPLICABLE",
+                  "title": "에어팟 프로 2세대",
+                  "price": 180000,
+                  "conditionSummary": "사용감 적음",
+                  "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
+                  "warrantyPeriodDays": 3,
+                  "location": "서울 강남구",
+                  "guardianConsentAt": null,
+                  "version": 1,
+                  "createdAt": "2026-05-20T10:00:00Z",
+                  "updatedAt": "2026-05-20T10:07:00Z"
+                }
+            """
 
     const val LIST_RESPONSE = """
-              {
-                "items": [
+                [
                   {
                     "publicCode": "Vh7sK2x9Pq3R",
                     "status": "DRAFT",
-                    "disputeState": "NONE",
                     "title": "에어팟 프로 2세대",
                     "price": 180000,
-                    "partyType": "SELLER",
-                    "thumbnailS3Key": "contracts/Vh7sK2x9Pq3R/attachments/abc123.jpg",
                     "updatedAt": "2026-05-20T10:07:00Z"
                   }
-                ],
-                "nextCursor": null
-              }
-          """
+                ]
+            """
 
     // ───── 에러 (ProblemDetail) ─────
 
@@ -246,6 +323,17 @@ internal object ContractExamples {
                 "status": 502,
                 "detail": "AI 추출 호출에 실패했습니다",
                 "code": "CONTRACT_502_AI",
+                "timestamp": "2026-05-20T10:00:00Z"
+              }
+          """
+
+    const val AI_IMAGE_COUNT_INVALID = """
+              {
+                "type": "about:blank",
+                "title": "CONTRACT_400_AI_IMAGE_COUNT",
+                "status": 400,
+                "detail": "AI 분석 입력 사진 개수 위반 (requested=5, allowed=1~2)",
+                "code": "CONTRACT_400_AI_IMAGE_COUNT",
                 "timestamp": "2026-05-20T10:00:00Z"
               }
           """

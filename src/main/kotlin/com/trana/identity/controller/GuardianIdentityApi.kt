@@ -124,14 +124,14 @@ trana-web-guardian에서 호출. 미성년자가 발급한 token 기반 진입.
         operationId = "kycGuardianPreviewIdCard",
         summary = "보호자 신분증 OCR 이미지 프리뷰",
         description = """
-  보호자가 OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
+보호자가 OCR 완료한 신분증 사진을 다시 확인하는 step (Verify 호출 전).
 
-  흐름:
-  - 사전 조건: OCR 완료 (requestId + token 보유)
-  - 응답: 신분증 사진 byte stream (image/jpeg 또는 image/png)
-  - 마스킹 없음 — 개발 단계, 추후 도입 예정
+흐름:
+- 사전 조건: OCR 완료 (requestId + token 보유)
+- 응답: 신분증 사진 byte stream (image/jpeg 또는 image/png)
+- 마스킹 없음 — 개발 단계, 추후 도입 예정
 
-  세션 만료(10분 초과) 시 410. token 불일치 시 410.
+세션 만료(10분 초과) 시 410. token 불일치 시 410.
       """,
     )
     @ApiResponses(

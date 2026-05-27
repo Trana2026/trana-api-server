@@ -51,44 +51,75 @@ class OpenApiConfig {
         }
 
     @Bean
-    fun pathOrderCustomizer(): OpenApiCustomizer =
+    fun sortingCustomizer(): OpenApiCustomizer =
         OpenApiCustomizer { openApi ->
-            val explicitOrder =
-                listOf(
-                    // Identity (성인 KYC 5-step)
-                    "/v1/identity/id-card",
-                    "/v1/identity/id-card/image",
-                    "/v1/identity/verify-id-card",
-                    "/v1/identity/phone",
-                    "/v1/identity/face-compare",
-                    // Guardian KYC (4-step)
-                    "/v1/identity/guardian/id-card",
-                    "/v1/identity/guardian/id-card/image",
-                    "/v1/identity/guardian/verify-id-card",
-                    "/v1/identity/guardian/face-compare",
-                )
-            val originalPaths = openApi.paths ?: return@OpenApiCustomizer
-            val sorted = Paths()
-            explicitOrder.forEach { path ->
-                originalPaths[path]?.let { sorted.addPathItem(path, it) }
-            }
-            originalPaths.forEach { (path, item) ->
-                if (path !in explicitOrder) sorted.addPathItem(path, item)
-            }
-            openApi.paths(sorted)
+            sortTags(openApi)
+            sortPaths(openApi)
         }
 
+    private fun sortTags(openApi: io.swagger.v3.oas.models.OpenAPI) {
+        val order =
+            listOf(
+                "Terms",
+                "Consent",
+                "Auth",
+                "Identity",
+                "Guardian Identity",
+                "Guardian",
+                "User",
+                "Contract Draft",
+                "Contract Attachment",
+                "Contract AI Extraction",
+                "Contract Guardian Consent",
+                "Dev",
+            )
+        val originalTags = openApi.tags?.toList().orEmpty()
+        val sorted = mutableListOf<io.swagger.v3.oas.models.tags.Tag>()
+        order.forEach { name -> originalTags.find { it.name == name }?.let { sorted.add(it) } }
+        originalTags.forEach { if (it.name !in order) sorted.add(it) }
+        openApi.tags = sorted
+    }
+
+    private fun sortPaths(openApi: io.swagger.v3.oas.models.OpenAPI) {
+        val order =
+            listOf(
+                // 성인 KYC (5-step)
+                "/v1/identity/id-card",
+                "/v1/identity/id-card/image",
+                "/v1/identity/verify-id-card",
+                "/v1/identity/phone",
+                "/v1/identity/face-compare",
+                // 보호자 KYC (4-step)
+                "/v1/identity/guardian/id-card",
+                "/v1/identity/guardian/id-card/image",
+                "/v1/identity/guardian/verify-id-card",
+                "/v1/identity/guardian/face-compare",
+                // 계약 첨부 (presign → register → delete)
+                "/v1/contracts/{publicCode}/attachments/presign",
+                "/v1/contracts/{publicCode}/attachments",
+                "/v1/contracts/{publicCode}/attachments/{attachmentId}",
+                // 계약 보호자 동의 (request → approve)
+                "/v1/contracts/{publicCode}/guardian-consent",
+                "/v1/contracts/guardian-consent/approve",
+            )
+        val originalPaths = openApi.paths ?: return
+        val sorted = Paths()
+        order.forEach { path -> originalPaths[path]?.let { sorted.addPathItem(path, it) } }
+        originalPaths.forEach { (path, item) -> if (path !in order) sorted.addPathItem(path, item) }
+        openApi.paths(sorted)
+    }
+
     @Bean
-    fun defaultGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
+    fun defaultGroup(sortingCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("전체")
             .pathsToMatch("/v1/**")
-            .addOpenApiCustomizer(pathOrderCustomizer)
+            .addOpenApiCustomizer(sortingCustomizer)
             .build()
 
     @Bean
-    fun adultGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
+    fun adultGroup(sortingCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("성인")
@@ -98,12 +129,16 @@ class OpenApiConfig {
                 "/v1/identity/**",
                 "/v1/users/**",
                 "/v1/auth/refresh",
-            ).pathsToExclude("/v1/identity/guardian/**")
-            .addOpenApiCustomizer(pathOrderCustomizer)
+                "/v1/contracts/**",
+            ).pathsToExclude(
+                "/v1/identity/guardian/**",
+                "/v1/contracts/*/guardian-consent",
+                "/v1/contracts/guardian-consent/**",
+            ).addOpenApiCustomizer(sortingCustomizer)
             .build()
 
     @Bean
-    fun minorGroup(pathOrderCustomizer: OpenApiCustomizer): GroupedOpenApi =
+    fun minorGroup(sortingCustomizer: OpenApiCustomizer): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("미성년자")
@@ -113,6 +148,7 @@ class OpenApiConfig {
                 "/v1/guardian/**",
                 "/v1/identity/guardian/**",
                 "/v1/users/**",
-            ).addOpenApiCustomizer(pathOrderCustomizer)
+                "/v1/contracts/**",
+            ).addOpenApiCustomizer(sortingCustomizer)
             .build()
 }

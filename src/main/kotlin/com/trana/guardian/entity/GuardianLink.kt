@@ -2,17 +2,27 @@ package com.trana.guardian.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
 
 /**
- * 미성년자→보호자 일회용 토큰 (jnanoid 21자, TTL 3일).
+ * 미성년자 → 보호자 일회용 토큰 (jnanoid 21자, TTL 3일).
+ *
+ * 용도 (purpose):
+ * - SIGNUP: 미성년 가입 시 보호자 KYC 연결 (기존)
+ * - CONTRACT_CONSENT: 미성년자가 작성한 계약의 보호자 동의 (W4+)
+ *
+ * 불변식 (DB CHECK 제약과 일치):
+ * - SIGNUP → contractId 반드시 null
+ * - CONTRACT_CONSENT → contractId 반드시 non-null
  *
  * 흐름:
- * - 미성년자가 POST /v1/guardian/links → token 발급 (TTL 3일)
- * - 보호자가 trana-web에서 토큰 링크 접근 → Phase 6 보호자 KYC 호출
+ * - 미성년자가 link 발급 → token 보호자에게 공유
+ * - 보호자가 trana-web 에서 토큰 링크 접근 → 보호자 KYC
  * - Compare SUCCESS 시 markUsed() — 재사용 차단
  */
 @Entity
@@ -25,7 +35,24 @@ class GuardianLink(
     val userId: Long,
     @Column(name = "expires_at", nullable = false)
     val expiresAt: Instant,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false, length = 30)
+    val purpose: LinkPurpose = LinkPurpose.SIGNUP,
+    @Column(name = "contract_id")
+    val contractId: Long? = null,
 ) {
+    init {
+        when (purpose) {
+            LinkPurpose.SIGNUP -> {
+                require(contractId == null) { "SIGNUP 링크는 contractId 가 null 이어야 합니다" }
+            }
+
+            LinkPurpose.CONTRACT_CONSENT -> {
+                require(contractId != null) { "CONTRACT_CONSENT 링크는 contractId 가 필수입니다" }
+            }
+        }
+    }
+
     @Column(name = "used_at")
     var usedAt: Instant? = null
         protected set
@@ -44,3 +71,5 @@ class GuardianLink(
         usedAt = Instant.now()
     }
 }
+
+enum class LinkPurpose { SIGNUP, CONTRACT_CONSENT }

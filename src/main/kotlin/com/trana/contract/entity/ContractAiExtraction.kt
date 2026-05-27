@@ -41,6 +41,14 @@ class ContractAiExtraction(
     val attachmentIds: List<Long>,
     @Column(name = "extracted_json", nullable = false, columnDefinition = "text")
     val extractedJson: String,
+    @Column(name = "prompt_tokens", nullable = false)
+    val promptTokens: Int,
+    @Column(name = "completion_tokens", nullable = false)
+    val completionTokens: Int,
+    @Column(name = "total_tokens", nullable = false)
+    val totalTokens: Int,
+    @Column(name = "latency_ms", nullable = false)
+    val latencyMs: Long,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,6 +67,10 @@ class ContractAiExtraction(
             consentedAt: Instant,
             attachmentIds: List<Long>,
             extractedJson: String,
+            promptTokens: Int,
+            completionTokens: Int,
+            totalTokens: Int,
+            latencyMs: Long,
         ): ContractAiExtraction =
             ContractAiExtraction(
                 contractId = contractId,
@@ -68,6 +80,10 @@ class ContractAiExtraction(
                 consentedAt = consentedAt,
                 attachmentIds = attachmentIds,
                 extractedJson = extractedJson,
+                promptTokens = promptTokens,
+                completionTokens = completionTokens,
+                totalTokens = totalTokens,
+                latencyMs = latencyMs,
             )
     }
 }

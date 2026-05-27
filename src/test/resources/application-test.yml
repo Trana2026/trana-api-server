@@ -49,3 +49,12 @@ trana:
       bucket: test-archive-bucket
       presigned-upload-ttl-minutes: 10
       max-attachment-size-bytes: 10485760
+      presigned-get-ttl-minutes: 5
+    openai:
+      api-key: test-openai-key
+      base-url: https://test.openai.local/v1
+      model: gpt-4o-mini
+      prompt-version: v1
+      consent-text-version: v1
+      image-url-ttl-minutes: 5
+      timeout-seconds: 60
