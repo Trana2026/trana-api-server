@@ -30,7 +30,7 @@ import java.time.Instant
  * - markReady 는 pdfS3Key + sha256 필수 (READY 는 항상 PDF 존재)
  * - revert 시 pdfS3Key/contentHash/pdfGeneratedAt 클리어 (S3 옛 버전은 Versioning 보존)
  * - GUARDIAN_REQUIRED 인데 guardianConsentAt=null 이면 READY 진입 금지
- * - SIGN_REQUESTED 진입 후 본문 변경 불가 (W5)
+ * - SHARED 진입 후 본문 변경 불가 (W6 — 공유 후 수정 불가 정책)
  */
 @Entity
 @Table(name = "contracts")
@@ -157,6 +157,12 @@ class Contract(
         this.pdfGeneratedAt = Instant.now()
     }
 
+    fun markShared() {
+        check(status == ContractStatus.READY) { "READY 상태에서만 SHARED 전이 가능 (current=$status)" }
+        check(deletedAt == null) { "삭제된 계약은 공유 불가" }
+        this.status = ContractStatus.SHARED
+    }
+
     fun markRevertToDraft() {
         check(status == ContractStatus.READY) { "READY 상태에서만 DRAFT 되돌리기 가능 (current=$status)" }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
@@ -190,7 +196,7 @@ class Contract(
     }
 }
 
-enum class ContractStatus { DRAFT, READY, SIGN_REQUESTED, REVISION_REQUESTED, SIGNED, COMPLETED, CANCELLED }
+enum class ContractStatus { DRAFT, READY, SHARED, RECEIVER_SIGNED, SIGNED, COMPLETED, CANCELLED }
 
 enum class DisputeState { NONE, REPORTED, RESOLVED, DISMISSED }
 
