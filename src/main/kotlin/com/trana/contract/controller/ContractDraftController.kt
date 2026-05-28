@@ -5,6 +5,7 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/v1/contracts")
+@Suppress("TooManyFunctions")
 class ContractDraftController(
     private val service: ContractDraftService,
     private val statusService: ContractStatusService,
@@ -94,6 +96,21 @@ class ContractDraftController(
                 userId = userId,
                 receiverName = request.receiverName,
                 receiverPhone = request.receiverPhone,
+            ).toResponse()
+
+    override fun requestRevision(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable token: String,
+        @RequestBody @Valid request: RequestRevisionRequest,
+    ): ContractResponse =
+        statusService
+            .requestRevision(
+                token = token,
+                requesterUserId = userId,
+                titleReason = request.titleReason,
+                priceReason = request.priceReason,
+                conditionSummaryReason = request.conditionSummaryReason,
+                conditionDetailsReason = request.conditionDetailsReason,
             ).toResponse()
 
     override fun revertToDraft(

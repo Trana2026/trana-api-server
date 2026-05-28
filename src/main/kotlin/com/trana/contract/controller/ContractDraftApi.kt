@@ -7,6 +7,7 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.ContractStatus
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 
 @Tag(name = "Contract Draft", description = "전자계약 DRAFT 단계 (생성/조회/수정/삭제/목록)")
 @SecurityRequirement(name = "bearerAuth")
+@Suppress("LargeClass", "TooManyFunctions")
 interface ContractDraftApi {
     @Operation(
         operationId = "contractCreateDraft",
@@ -391,6 +393,115 @@ status 파라미터로 필터링 가능 (생략 시 전체).
         @Parameter(hidden = true) userId: Long,
         @PathVariable publicCode: String,
         @RequestBody @Valid request: ShareContractRequest,
+    ): ContractResponse
+
+    @Operation(
+        operationId = "contractRequestRevision",
+        summary = "수신자 수정 요청 — SHARED → REVISION_REQUESTED",
+        description = """
+SHARED 상태 계약에 대해 수신자가 필드별 수정 이유 입력 → 생성자 알림톡 발송 + status REVISION_REQUESTED 전이.
+
+조건:
+- 인증된 user (수신자) — 가입+본인인증 완료 상태
+- 유효 invitation token (미만료 + 미사용)
+- 계약 status 가 SHARED 여야 함 (이미 REVISION_REQUESTED 또는 RECEIVER_SIGNED 면 409)
+- 최소 1개 필드의 reason 필수 (Bean Validation)
+
+효과:
+- contract_revision_requests row INSERT (필드별 reason audit)
+- contracts.status = REVISION_REQUESTED
+- contract_status_logs (SHARED → REVISION_REQUESTED) row INSERT (WORM)
+- 생성자에게 카카오톡 알림톡 4번 템플릿 `[Trana] 수정 요청 도착`
+
+후속:
+- 생성자가 알림 보고 "계약서 수정하기" 누름 → POST /v1/contracts/{publicCode}/revert (REVISION_REQUESTED → DRAFT)
+- 수정 후 markReady → share 재호출 (재 알림톡)
+          """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "수정 요청 성공 (status=REVISION_REQUESTED)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "revisionRequested",
+                                value = ContractExamples.REVISION_REQUESTED_RESPONSE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "reason 미입력 (최소 1개 필수)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "noReason",
+                                value = ContractExamples.REVISION_NO_REASON,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "초대 토큰 못 찾음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "invitationNotFound",
+                                value = ContractExamples.INVITATION_NOT_FOUND,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "SHARED 상태가 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "notShared",
+                                value = ContractExamples.NOT_IN_SHARED_STATE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "초대 토큰 만료/사용됨",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "invitationExpired",
+                                value = ContractExamples.INVITATION_EXPIRED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/invitations/{token}/revisions")
+    fun requestRevision(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable token: String,
+        @RequestBody @Valid request: RequestRevisionRequest,
     ): ContractResponse
 
     @Operation(

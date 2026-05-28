@@ -7,10 +7,11 @@ package com.trana.contract.adapter.kakao
  * - W6 진입 시점에는 [MockKakaoAlimtalkClient] 만 wire (local/dev/test/prod 모두)
  * - 카카오 BSP 심사 (1~2주) 완료 후 LiveKakaoAlimtalkClient 추가 + prod profile 교체
  *
- * 템플릿 3종 (모두 사전 등록 + 심사 필수):
+ * 템플릿 4종 (모두 사전 등록 + 심사 필수):
  * - [NewContractMessage] : SHARED 전이 시 → 수신자
  * - [ReceiverSignedMessage] : RECEIVER_SIGNED 전이 시 → 생성자
  * - [ContractCompletedMessage] : SIGNED 전이 시 → 양측 각각
+ * - [RevisionRequestedMessage] : REVISION_REQUESTED 전이 시 → 생성자
  */
 interface KakaoAlimtalkClient {
     /** SHARED 전이 시 수신자에게 — `[Trana] 새 계약서 도착` 템플릿 */
@@ -18,6 +19,9 @@ interface KakaoAlimtalkClient {
 
     /** RECEIVER_SIGNED 전이 시 생성자에게 — `[Trana] 수신자 서명 완료, 최종 확인 필요` 템플릿 */
     fun sendReceiverSigned(message: ReceiverSignedMessage)
+
+    /** REVISION_REQUESTED 전이 시 생성자에게 — `[Trana] 수정 요청 도착` 템플릿 */
+    fun sendRevisionRequested(message: RevisionRequestedMessage)
 
     /** SIGNED 전이 시 양측 각각에게 — `[Trana] 계약 체결 완료` 템플릿 */
     fun sendCompleted(message: ContractCompletedMessage)
@@ -59,4 +63,17 @@ data class ContractCompletedMessage(
     val recipientName: String,
     val contractTitle: String,
     val downloadUrl: String,
+)
+
+/**
+ * 수신자 수정 요청 발생 시 생성자에게 — 수정 모드 진입 유도.
+ *
+ * @param reviewUrl 생성자가 수정 요청 화면 진입할 URL
+ */
+data class RevisionRequestedMessage(
+    val creatorPhone: String,
+    val creatorName: String,
+    val contractTitle: String,
+    val requesterName: String,
+    val reviewUrl: String,
 )

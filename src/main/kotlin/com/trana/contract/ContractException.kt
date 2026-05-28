@@ -141,4 +141,34 @@ sealed class ContractException(
             ErrorCode.CONTRACT_AI_EXTRACTION_NOT_FOUND,
             "AI 추출 결과를 찾을 수 없습니다 (extractionId=$extractionId)",
         )
+
+    class InvitationNotFound(
+        token: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_INVITATION_NOT_FOUND,
+            "초대 토큰을 찾을 수 없습니다 (token=$token)",
+        )
+
+    class InvitationExpired(
+        token: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_INVITATION_EXPIRED,
+            "이미 사용되었거나 만료된 초대 토큰입니다 (token=$token)",
+        )
+
+    class NotInSharedState(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_IN_SHARED_STATE,
+            "현재 SHARED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
+
+    class NotInRevisionRequestedState(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_IN_REVISION_REQUESTED_STATE,
+            "현재 REVISION_REQUESTED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
 }

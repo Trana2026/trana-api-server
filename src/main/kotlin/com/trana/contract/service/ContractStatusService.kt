@@ -4,12 +4,16 @@ import com.trana.common.util.ContractInvitationTokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
+import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
+import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.repository.ContractInvitationRepository
+import com.trana.contract.repository.ContractRepository
+import com.trana.contract.repository.ContractRevisionRequestRepository
 import com.trana.contract.repository.ContractStatusLogRepository
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -38,6 +42,8 @@ class ContractStatusService(
     private val statusLogRepository: ContractStatusLogRepository,
     private val invitationRepository: ContractInvitationRepository,
     private val invitationTokenGenerator: ContractInvitationTokenGenerator,
+    private val contractRepository: ContractRepository,
+    private val revisionRequestRepository: ContractRevisionRequestRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val userRepository: UserRepository,
     private val pdfRenderer: ContractPdfRenderer,
@@ -68,12 +74,17 @@ class ContractStatusService(
         userId: Long,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
-        if (contract.status != ContractStatus.READY) {
+        if (contract.status != ContractStatus.READY && contract.status != ContractStatus.REVISION_REQUESTED) {
             throw ContractException.NotInReadyState(publicCode, contract.status.name)
         }
         val from = contract.status
         contract.markRevertToDraft()
-        publishStatusChanged(contract, from, userId, null)
+        val reason =
+            when (from) {
+                ContractStatus.REVISION_REQUESTED -> "수신자 수정 요청 → 수정 모드 진입"
+                else -> null
+            }
+        publishStatusChanged(contract, from, userId, reason)
         return contract
     }
 
@@ -102,6 +113,48 @@ class ContractStatusService(
         publishStatusChanged(contract, from, userId, null)
 
         sendNewContractAlimtalk(contract, userId, invitation)
+        return contract
+    }
+
+    @Suppress("ThrowsCount")
+    fun requestRevision(
+        token: String,
+        requesterUserId: Long,
+        titleReason: String? = null,
+        priceReason: String? = null,
+        conditionSummaryReason: String? = null,
+        conditionDetailsReason: String? = null,
+    ): Contract {
+        val invitation =
+            invitationRepository.findByToken(token)
+                ?: throw ContractException.InvitationNotFound(token)
+        if (!invitation.isActive()) {
+            throw ContractException.InvitationExpired(token)
+        }
+        val contract =
+            contractRepository.findById(invitation.contractId).orElseThrow {
+                ContractException.NotFound("contractId=${invitation.contractId}")
+            }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(contract.publicCode, contract.status.name)
+        }
+
+        val revisionRequest =
+            ContractRevisionRequest.create(
+                contractId = contract.id!!,
+                requesterUserId = requesterUserId,
+                titleReason = titleReason,
+                priceReason = priceReason,
+                conditionSummaryReason = conditionSummaryReason,
+                conditionDetailsReason = conditionDetailsReason,
+            )
+        revisionRequestRepository.save(revisionRequest)
+
+        val from = contract.status
+        contract.markRevisionRequested()
+        publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
+
+        sendRevisionRequestedAlimtalk(contract, invitation)
         return contract
     }
 
@@ -169,6 +222,28 @@ class ContractStatusService(
                 sellerName = sellerName,
                 contractTitle = contract.title ?: "(제목 없음)",
                 invitationUrl = invitationUrl,
+            ),
+        )
+    }
+
+    private fun sendRevisionRequestedAlimtalk(
+        contract: Contract,
+        invitation: ContractInvitation,
+    ) {
+        val creator =
+            userRepository.findById(contract.creatorUserId).orElseThrow {
+                IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
+            }
+        val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
+        val creatorPhone = creator.phone ?: "(unknown)"
+        val reviewUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}"
+        kakaoAlimtalkClient.sendRevisionRequested(
+            RevisionRequestedMessage(
+                creatorPhone = creatorPhone,
+                creatorName = creatorName,
+                contractTitle = contract.title ?: "(제목 없음)",
+                requesterName = invitation.receiverName,
+                reviewUrl = reviewUrl,
             ),
         )
     }

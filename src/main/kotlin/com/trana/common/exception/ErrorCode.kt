@@ -98,4 +98,24 @@ enum class ErrorCode(
         "CONTRACT_404_AI_EXTRACTION",
         "AI 추출 결과를 찾을 수 없습니다",
     ),
+    CONTRACT_INVITATION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CONTRACT_404_INVITATION",
+        "초대 토큰을 찾을 수 없습니다",
+    ),
+    CONTRACT_INVITATION_EXPIRED(
+        HttpStatus.GONE,
+        "CONTRACT_410_INVITATION_EXPIRED",
+        "이미 사용되었거나 만료된 초대 토큰입니다",
+    ),
+    CONTRACT_NOT_IN_SHARED_STATE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_NOT_SHARED",
+        "현재 SHARED 상태가 아닙니다",
+    ),
+    CONTRACT_NOT_IN_REVISION_REQUESTED_STATE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_NOT_REVISION_REQUESTED",
+        "현재 REVISION_REQUESTED 상태가 아닙니다",
+    ),
 }

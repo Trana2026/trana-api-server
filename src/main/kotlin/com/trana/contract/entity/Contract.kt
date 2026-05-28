@@ -21,10 +21,13 @@ import java.time.Instant
  *
  * 흐름 (W4~W6):
  * - createDraft → IN_PROGRESS 빈 row 생성 (delivery/consent 만 결정)
- * - updateDraft → 사진/AI 추출 후 필드 채움. 4 필드 (title/price/conditionSummary/conditionDetails) 완성 시 자동 DRAFT
- * , 비면 자동 IN_PROGRESS
+ * - updateDraft → 사진/AI 추출 후 필드 채움.
+ *   4 필드 (title/price/conditionSummary/conditionDetails) 완성 시 자동 DRAFT,
+ *   하나라도 비면 자동 IN_PROGRESS
  * - markReady → DRAFT → READY 전이 (PDF v1 생성, W5)
  * - markShared → READY → SHARED 전이 (수신자에게 알림톡 발송, W6)
+ * - markRevisionRequested → SHARED → REVISION_REQUESTED (수신자 수정 요청, W6)
+ * - markRevertToDraft → READY 또는 REVISION_REQUESTED → DRAFT (PDF 폐기 + 수정 모드, W6)
  * - softDelete → IN_PROGRESS / DRAFT 만 가능
  *
  * 불변식:
@@ -174,8 +177,18 @@ class Contract(
         this.status = ContractStatus.SHARED
     }
 
+    fun markRevisionRequested() {
+        check(status == ContractStatus.SHARED) {
+            "SHARED 상태에서만 수정 요청 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        this.status = ContractStatus.REVISION_REQUESTED
+    }
+
     fun markRevertToDraft() {
-        check(status == ContractStatus.READY) { "READY 상태에서만 DRAFT 되돌리기 가능 (current=$status)" }
+        check(status == ContractStatus.READY || status == ContractStatus.REVISION_REQUESTED) {
+            "READY 또는 REVISION_REQUESTED 상태에서만 DRAFT 되돌리기 가능 (current=$status)"
+        }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.DRAFT
         this.pdfS3Key = null

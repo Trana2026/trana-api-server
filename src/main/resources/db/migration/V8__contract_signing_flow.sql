@@ -116,3 +116,38 @@ CREATE INDEX idx_contract_consents_contract_user ON contract_consents (contract_
 COMMENT ON TABLE contract_consents IS '계약 도메인 약관 동의 audit (4 + 1). 양측이 각자 서명 직전 동의 — user_consents 와 별도';
 COMMENT ON COLUMN contract_consents.term_id IS 'terms 테이블 FK (논리)';
 COMMENT ON COLUMN contract_consents.term_version IS '동의 시점 term version (snapshot)';
+
+-- ============================================================
+-- contract_revision_requests
+-- W6: 수신자가 SHARED 상태에서 필드별 수정 이유 입력 → REVISION_REQUESTED 전이
+-- WORM (insert-only). 한 계약에 여러 revision 가능 (재요청 시 새 row)
+-- ============================================================
+CREATE TABLE contract_revision_requests
+(
+    id                       BIGSERIAL PRIMARY KEY,
+    contract_id              BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE RESTRICT,
+    requester_user_id        BIGINT      NOT NULL,
+    title_reason             TEXT,
+    price_reason             TEXT,
+    condition_summary_reason TEXT,
+    condition_details_reason TEXT,
+    requested_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT chk_contract_revision_at_least_one_reason
+        CHECK (
+            title_reason IS NOT NULL
+                OR price_reason IS NOT NULL
+                OR condition_summary_reason IS NOT NULL
+                OR condition_details_reason IS NOT NULL
+            )
+);
+
+CREATE INDEX idx_contract_revision_requests_contract
+    ON contract_revision_requests (contract_id, requested_at DESC);
+
+COMMENT ON TABLE contract_revision_requests IS '수신자 수정 요청 audit (WORM). 한 계약에 여러 row 가능 (재요청)';
+COMMENT ON COLUMN contract_revision_requests.requester_user_id IS '수정 요청한 수신자 user (논리 FK)';
+COMMENT ON COLUMN contract_revision_requests.title_reason IS '거래 물품명 수정 이유 (nullable — 해당 필드 수정 안 원하면 NULL)';
+COMMENT ON COLUMN contract_revision_requests.price_reason IS '거래 금액 수정 이유';
+COMMENT ON COLUMN contract_revision_requests.condition_summary_reason IS '상품 상태 수정 이유';
+COMMENT ON COLUMN contract_revision_requests.condition_details_reason IS '상품 상세 설명 수정 이유';

@@ -465,6 +465,80 @@ internal object ContractExamples {
                   }
               """
 
+    // ───── 수정 요청 (REVISION) ─────
+
+    const val REVISION_REQUEST_BODY = """
+                  {
+                    "titleReason": "상품명을 더 정확히 작성해주세요",
+                    "priceReason": "150,000원으로 조정 부탁드립니다"
+                  }
+              """
+
+    const val REVISION_REQUESTED_RESPONSE = """
+                    {
+                      "publicCode": "Vh7sK2x9Pq3R",
+                      "status": "REVISION_REQUESTED",
+                      "disputeState": "NONE",
+                      "deliveryType": "DIRECT",
+                      "consentType": "NOT_APPLICABLE",
+                      "title": "에어팟 프로 2세대",
+                      "price": 180000,
+                      "conditionSummary": "사용감 적음",
+                      "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
+                      "warrantyPeriodDays": 3,
+                      "location": "서울 강남구",
+                      "guardianConsentAt": null,
+                      "version": 1,
+                      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "createdAt": "2026-05-20T10:00:00Z",
+                      "updatedAt": "2026-05-28T15:30:00Z"
+                    }
+                """
+
+    const val REVISION_NO_REASON = """
+                  {
+                    "type": "about:blank",
+                    "title": "Bad Request",
+                    "status": 400,
+                    "detail": "최소 1개 필드의 reason 은 채워야 합니다",
+                    "code": "VALIDATION_FAILED",
+                    "timestamp": "2026-05-28T15:30:00Z"
+                  }
+              """
+
+    const val INVITATION_NOT_FOUND = """
+                  {
+                    "type": "about:blank",
+                    "title": "CONTRACT_404_INVITATION",
+                    "status": 404,
+                    "detail": "초대 토큰을 찾을 수 없습니다 (token=eZjPZrGyV7iBNPNHT5zqA)",
+                    "code": "CONTRACT_404_INVITATION",
+                    "timestamp": "2026-05-28T15:30:00Z"
+                  }
+              """
+
+    const val INVITATION_EXPIRED = """
+                  {
+                    "type": "about:blank",
+                    "title": "CONTRACT_410_INVITATION_EXPIRED",
+                    "status": 410,
+                    "detail": "이미 사용되었거나 만료된 초대 토큰입니다 (token=eZjPZrGyV7iBNPNHT5zqA)",
+                    "code": "CONTRACT_410_INVITATION_EXPIRED",
+                    "timestamp": "2026-05-28T15:30:00Z"
+                  }
+              """
+
+    const val NOT_IN_SHARED_STATE = """
+                  {
+                    "type": "about:blank",
+                    "title": "CONTRACT_409_NOT_SHARED",
+                    "status": 409,
+                    "detail": "현재 SHARED 상태가 아닙니다 (publicCode=Vh7sK2x9Pq3R, status=DRAFT)",
+                    "code": "CONTRACT_409_NOT_SHARED",
+                    "timestamp": "2026-05-28T15:30:00Z"
+                  }
+              """
+
     // ───── PDF ─────
 
     const val PDF_DOWNLOAD_RESPONSE = """

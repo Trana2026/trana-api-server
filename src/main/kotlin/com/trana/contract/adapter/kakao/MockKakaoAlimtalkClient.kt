@@ -38,6 +38,17 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
         )
     }
 
+    override fun sendRevisionRequested(message: RevisionRequestedMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendRevisionRequested → to={}({}), requester={}, contract={}, reviewUrl={}",
+            message.creatorName,
+            maskPhone(message.creatorPhone),
+            message.requesterName,
+            message.contractTitle,
+            message.reviewUrl,
+        )
+    }
+
     override fun sendCompleted(message: ContractCompletedMessage) {
         log.info(
             "[MOCK ALIMTALK] sendCompleted → to={}({}), contract={}, pdfUrl={}",

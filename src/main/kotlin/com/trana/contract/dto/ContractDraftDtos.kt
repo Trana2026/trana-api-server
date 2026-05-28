@@ -6,6 +6,7 @@ import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.DisputeState
 import com.trana.contract.entity.PartyType
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
@@ -129,7 +130,46 @@ data class ShareContractRequest(
     val receiverPhone: String,
 )
 
+@Schema(description = "수신자 수정 요청 — 필드별 reason (최소 1개 필수)")
+data class RequestRevisionRequest(
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "거래 물품명 수정 이유",
+        example = "상품명을 더 정확히 작성해주세요",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val titleReason: String? = null,
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "거래 금액 수정 이유",
+        example = "150,000원으로 조정 부탁드립니다",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val priceReason: String? = null,
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "상품 상태 수정 이유",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val conditionSummaryReason: String? = null,
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "상품 상세 설명 수정 이유",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val conditionDetailsReason: String? = null,
+) {
+    @AssertTrue(message = "최소 1개 필드의 reason 은 채워야 합니다")
+    @Schema(hidden = true)
+    fun isAtLeastOneReasonPresent(): Boolean =
+        !titleReason.isNullOrBlank() ||
+            !priceReason.isNullOrBlank() ||
+            !conditionSummaryReason.isNullOrBlank() ||
+            !conditionDetailsReason.isNullOrBlank()
+}
+
 private const val TITLE_MAX_LENGTH = 200
 private const val LOCATION_MAX_LENGTH = 100
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"
+private const val REVISION_REASON_MAX_LENGTH = 500
