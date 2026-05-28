@@ -81,7 +81,7 @@ class ContractDraftService(
             ContractStatusChangedEvent(
                 contractId = saved.id,
                 fromStatus = null,
-                toStatus = ContractStatus.DRAFT,
+                toStatus = ContractStatus.IN_PROGRESS,
                 actorUserId = creatorUserId,
                 reason = null,
             ),
@@ -107,7 +107,8 @@ class ContractDraftService(
         deliveryType: DeliveryType? = null,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
-        accessGuard.ensureDraft(contract)
+        accessGuard.ensureEditable(contract)
+        val fromStatus = contract.status
         contract.updateDraft(
             title = title,
             price = price,
@@ -116,6 +117,17 @@ class ContractDraftService(
             location = location,
             deliveryType = deliveryType,
         )
+        if (contract.status != fromStatus) {
+            eventPublisher.publishEvent(
+                ContractStatusChangedEvent(
+                    contractId = contract.id!!,
+                    fromStatus = fromStatus,
+                    toStatus = contract.status,
+                    actorUserId = userId,
+                    reason = null,
+                ),
+            )
+        }
         return contract
     }
 
@@ -124,7 +136,7 @@ class ContractDraftService(
         userId: Long,
     ) {
         val contract = accessGuard.loadOwned(publicCode, userId)
-        accessGuard.ensureDraft(contract)
+        accessGuard.ensureEditable(contract)
         contract.softDelete()
     }
 

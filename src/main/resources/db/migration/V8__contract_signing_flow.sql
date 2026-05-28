@@ -11,14 +11,19 @@ ALTER TABLE contracts
 
 ALTER TABLE contracts
     ADD CONSTRAINT chk_contracts_status
-        CHECK (status IN ('DRAFT', 'READY', 'SHARED', 'RECEIVER_SIGNED', 'SIGNED', 'COMPLETED', 'CANCELLED'));
+        CHECK (status IN ('IN_PROGRESS', 'DRAFT', 'READY', 'SHARED', 'REVISION_REQUESTED', 'RECEIVER_SIGNED', 'SIGNED',
+                          'COMPLETED', 'CANCELLED'));
+
 
 ALTER TABLE contract_status_logs
     DROP CONSTRAINT chk_contract_status_logs_to;
 
 ALTER TABLE contract_status_logs
     ADD CONSTRAINT chk_contract_status_logs_to
-        CHECK (to_status IN ('DRAFT', 'READY', 'SHARED', 'RECEIVER_SIGNED', 'SIGNED', 'COMPLETED', 'CANCELLED'));
+        CHECK (to_status IN
+               ('IN_PROGRESS', 'DRAFT', 'READY', 'SHARED', 'REVISION_REQUESTED', 'RECEIVER_SIGNED', 'SIGNED',
+                'COMPLETED', 'CANCELLED'));
+
 
 ALTER TABLE contract_status_logs
     DROP CONSTRAINT chk_contract_status_logs_from;
@@ -26,10 +31,10 @@ ALTER TABLE contract_status_logs
 ALTER TABLE contract_status_logs
     ADD CONSTRAINT chk_contract_status_logs_from
         CHECK (from_status IS NULL OR from_status IN
-                                      ('DRAFT', 'READY', 'SHARED', 'RECEIVER_SIGNED', 'SIGNED', 'COMPLETED',
-                                       'CANCELLED'));
+                                      ('IN_PROGRESS', 'DRAFT', 'READY', 'SHARED', 'REVISION_REQUESTED',
+                                       'RECEIVER_SIGNED', 'SIGNED', 'COMPLETED', 'CANCELLED'));
 
-COMMENT ON COLUMN contracts.status IS 'DRAFT | READY | SHARED | RECEIVER_SIGNED | SIGNED | COMPLETED | CANCELLED (W6 흐름)';
+COMMENT ON COLUMN contracts.status IS 'IN_PROGRESS | DRAFT | READY | SHARED | REVISION_REQUESTED | RECEIVER_SIGNED | SIGNED | COMPLETED | CANCELLED (W6 흐름)';
 
 -- ============================================================
 -- contract_invitations

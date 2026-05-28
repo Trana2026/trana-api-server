@@ -254,7 +254,12 @@ status 파라미터로 필터링 가능 (생략 시 전체).
     @GetMapping
     fun listMine(
         userId: Long,
-        @Parameter(description = "상태 필터 (DRAFT / READY / SHARED / RECEIVER_SIGNED / SIGNED / COMPLETED 등). 생략 시 전체")
+        @Parameter(
+            description =
+                "상태 필터 (IN_PROGRESS / DRAFT / READY / SHARED " +
+                    "/ REVISION_REQUESTED / RECEIVER_SIGNED " +
+                    "/ SIGNED / COMPLETED 등). 생략 시 전체",
+        )
         @RequestParam(required = false) status: ContractStatus?,
     ): List<ContractListItem>
 

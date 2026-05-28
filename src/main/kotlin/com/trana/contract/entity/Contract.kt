@@ -19,10 +19,13 @@ import java.time.Instant
  * - 상태: status × disputeState 직교 모델
  * - 미성년 분기: consentType + guardianConsentAt
  *
- * 흐름 (W4):
- * - createDraft → DRAFT 빈 row 생성 (delivery/consent 만 결정)
- * - updateDraft → 사진/AI 추출 후 필드 채움
- * - softDelete → DRAFT 만 가능
+ * 흐름 (W4~W6):
+ * - createDraft → IN_PROGRESS 빈 row 생성 (delivery/consent 만 결정)
+ * - updateDraft → 사진/AI 추출 후 필드 채움. 4 필드 (title/price/conditionSummary/conditionDetails) 완성 시 자동 DRAFT
+ * , 비면 자동 IN_PROGRESS
+ * - markReady → DRAFT → READY 전이 (PDF v1 생성, W5)
+ * - markShared → READY → SHARED 전이 (수신자에게 알림톡 발송, W6)
+ * - softDelete → IN_PROGRESS / DRAFT 만 가능
  *
  * 불변식:
  * - DRAFT 에서만 수정/삭제
@@ -65,7 +68,7 @@ class Contract(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
-    var status: ContractStatus = ContractStatus.DRAFT
+    var status: ContractStatus = ContractStatus.IN_PROGRESS
         protected set
 
     @Enumerated(EnumType.STRING)
@@ -119,7 +122,9 @@ class Contract(
         location: String? = null,
         deliveryType: DeliveryType? = null,
     ) {
-        check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 수정 가능" }
+        check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
+            "IN_PROGRESS / DRAFT 상태에서만 수정 가능 (current=$status)"
+        }
         check(deletedAt == null) { "삭제된 계약은 수정 불가" }
         title?.let { this.title = it }
         price?.let { this.price = it }
@@ -127,7 +132,11 @@ class Contract(
         conditionDetails?.let { this.conditionDetails = it }
         location?.let { this.location = it }
         deliveryType?.let { this.deliveryType = it }
+        this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
     }
+
+    private fun allRequiredFieldsFilled(): Boolean =
+        title != null && price != null && conditionSummary != null && conditionDetails != null
 
     fun markGuardianConsented(boundGuardianId: Long) {
         check(consentType == ConsentType.GUARDIAN_REQUIRED) {
@@ -142,7 +151,9 @@ class Contract(
         pdfS3Key: String,
         pdfSha256: String,
     ) {
-        check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 READY 전이 가능 (current=$status)" }
+        check(status == ContractStatus.DRAFT) {
+            "DRAFT (4 필드 완성) 상태에서만 READY 전이 가능 (current=$status)"
+        }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         check(title != null) { "title 미입력 — AI 추출 또는 수동 입력 필요" }
         check(price != null) { "price 미입력" }
@@ -173,7 +184,9 @@ class Contract(
     }
 
     fun softDelete() {
-        check(status == ContractStatus.DRAFT) { "DRAFT 상태에서만 삭제 가능" }
+        check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
+            "IN_PROGRESS / DRAFT 상태에서만 삭제 가능 (current=$status)"
+        }
         check(deletedAt == null) { "이미 삭제된 계약" }
         this.deletedAt = Instant.now()
     }
@@ -196,7 +209,17 @@ class Contract(
     }
 }
 
-enum class ContractStatus { DRAFT, READY, SHARED, RECEIVER_SIGNED, SIGNED, COMPLETED, CANCELLED }
+enum class ContractStatus {
+    IN_PROGRESS,
+    DRAFT,
+    READY,
+    SHARED,
+    REVISION_REQUESTED,
+    RECEIVER_SIGNED,
+    SIGNED,
+    COMPLETED,
+    CANCELLED,
+}
 
 enum class DisputeState { NONE, REPORTED, RESOLVED, DISMISSED }
 

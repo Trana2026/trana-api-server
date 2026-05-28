@@ -32,9 +32,16 @@ class ContractAccessGuard(
         return contract
     }
 
-    /** DRAFT 상태 검증 (수정/삭제 가능 시점) */
+    /** DRAFT 상태 검증 (markReady / previewPdf 진입 시 — 4 필드 완성 상태 확인) */
     fun ensureDraft(contract: Contract) {
         if (contract.status != ContractStatus.DRAFT) {
+            throw ContractException.NotDraft(contract.publicCode, contract.status.name)
+        }
+    }
+
+    /** 수정 가능 상태 검증 (IN_PROGRESS / DRAFT — updateDraft / softDelete 진입 시) */
+    fun ensureEditable(contract: Contract) {
+        if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(contract.publicCode, contract.status.name)
         }
     }

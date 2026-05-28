@@ -96,7 +96,7 @@ internal object ContractExamples {
     const val DRAFT_CREATE_RESPONSE = """
                 {
                   "publicCode": "Vh7sK2x9Pq3R",
-                  "status": "DRAFT",
+                  "status": "IN_PROGRESS",
                   "disputeState": "NONE",
                   "deliveryType": "DIRECT",
                   "consentType": "NOT_APPLICABLE",
