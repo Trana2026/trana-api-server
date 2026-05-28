@@ -7,6 +7,7 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.ContractStatus
 import io.swagger.v3.oas.annotations.Operation
@@ -253,7 +254,7 @@ status 파라미터로 필터링 가능 (생략 시 전체).
     @GetMapping
     fun listMine(
         userId: Long,
-        @Parameter(description = "상태 필터 (DRAFT / SIGN_REQUESTED / SIGNED / COMPLETED 등). 생략 시 전체")
+        @Parameter(description = "상태 필터 (DRAFT / READY / SHARED / RECEIVER_SIGNED / SIGNED / COMPLETED 등). 생략 시 전체")
         @RequestParam(required = false) status: ContractStatus?,
     ): List<ContractListItem>
 
@@ -273,7 +274,7 @@ status 파라미터로 필터링 가능 (생략 시 전체).
 - contract_status_logs 에 (DRAFT → READY) row INSERT (WORM audit)
 
 후속:
-- SIGN_REQUESTED 진입 (수신자 초대) 은 W5/W6
+- SHARED 진입 (공유하기 + 카카오톡 알림톡 발송) 은 W6
 - 다시 본문 수정하려면 /revert 로 DRAFT 되돌리기
                 """,
     )
@@ -324,13 +325,77 @@ status 파라미터로 필터링 가능 (생략 시 전체).
     ): ContractResponse
 
     @Operation(
+        operationId = "contractShare",
+        summary = "READY → SHARED 전이 + 카카오톡 알림톡 발송",
+        description = """
+계약을 수신자에게 공유합니다 — 백엔드가 카카오톡 알림톡 1번 템플릿 (`[Trana] 새 계약서 도착`) 으로 invitation URL 자동 발송.
+
+조건 (서버 검증):
+- READY 상태여야 함 (DRAFT 또는 SHARED 이상이면 409)
+- receiverName / receiverPhone 필수 (Bean Validation)
+
+효과:
+- contract_invitations row 생성 (token jnanoid 21자, TTL 7일, receiver_name/phone 저장)
+- 카카오톡 알림톡 자동 발송 (현재 BSP 미준비 — Mock 으로 log 만 출력)
+- contracts.status = SHARED
+- contract_status_logs 에 (READY → SHARED) row INSERT (WORM audit)
+
+후속:
+- 수신자가 카톡 링크 클릭 → 가입 + 본인인증 + 서명 → RECEIVER_SIGNED (W6 진행 중)
+- SHARED 이후 본문 수정 불가 (변경 필요 시 CANCELLED 후 신규 DRAFT)
+                  """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "공유 성공 (status=SHARED)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractResponse::class),
+                        examples = [ExampleObject(name = "shared", value = ContractExamples.SHARED_RESPONSE)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "이름/phone 검증 실패",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "validation", value = ContractExamples.SHARE_VALIDATION_FAILED),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "READY 상태가 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notReady", value = ContractExamples.NOT_IN_READY_STATE)],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/share")
+    fun share(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: ShareContractRequest,
+    ): ContractResponse
+
+    @Operation(
         operationId = "contractRevertToDraft",
         summary = "READY → DRAFT 되돌림",
         description = """
 READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재개).
 
 조건:
-- READY 상태여야 함 (DRAFT 면 409, SIGN_REQUESTED 이상이면 409 — 서명 단계 진입 후 본문 수정 차단)
+- READY 상태여야 함 (DRAFT 면 409, SHARED 이상이면 409 — 공유/서명 단계 진입 후 본문 수정 차단)
 
 효과:
 - contracts.status = DRAFT

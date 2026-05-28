@@ -1,0 +1,56 @@
+package com.trana.contract.service
+
+import com.trana.contract.ContractException
+import com.trana.contract.entity.ConsentType
+import com.trana.contract.entity.Contract
+import com.trana.contract.entity.ContractStatus
+import com.trana.contract.repository.ContractRepository
+import org.springframework.stereotype.Component
+
+/**
+ * 계약 접근/상태 검증 공유 helper.
+ *
+ * - ContractDraftService (createDraft / updateDraft / softDelete / preview)
+ *   와 ContractStatusService (transitionToReady / share / finalize / cancel) 양쪽에서 호출
+ * - 단일 진입점 = 권한/불변식 일관성 보장
+ */
+@Component
+class ContractAccessGuard(
+    private val contractRepository: ContractRepository,
+) {
+    /** publicCode 로 조회 + 본인(creator) 검증. 삭제된 계약은 NotFound */
+    fun loadOwned(
+        publicCode: String,
+        userId: Long,
+    ): Contract {
+        val contract =
+            contractRepository.findByPublicCodeAndDeletedAtIsNull(publicCode)
+                ?: throw ContractException.NotFound(publicCode)
+        if (contract.creatorUserId != userId) {
+            throw ContractException.NotOwner(publicCode, userId)
+        }
+        return contract
+    }
+
+    /** DRAFT 상태 검증 (수정/삭제 가능 시점) */
+    fun ensureDraft(contract: Contract) {
+        if (contract.status != ContractStatus.DRAFT) {
+            throw ContractException.NotDraft(contract.publicCode, contract.status.name)
+        }
+    }
+
+    /** READY 전이 가능 검증 (markReady / previewPdf 공통) */
+    fun validateReadyEligible(contract: Contract) {
+        val missing = mutableListOf<String>()
+        if (contract.title == null) missing.add("title")
+        if (contract.price == null) missing.add("price")
+        if (contract.conditionSummary == null) missing.add("conditionSummary")
+        if (contract.conditionDetails == null) missing.add("conditionDetails")
+        if (missing.isNotEmpty()) {
+            throw ContractException.NotReadyEligible(contract.publicCode, missing.joinToString(", "))
+        }
+        if (contract.consentType == ConsentType.GUARDIAN_REQUIRED && contract.guardianConsentAt == null) {
+            throw ContractException.GuardianConsentRequired(contract.publicCode)
+        }
+    }
+}

@@ -310,7 +310,7 @@ internal object ContractExamples {
                 "type": "about:blank",
                 "title": "CONTRACT_409_NOT_DRAFT",
                 "status": 409,
-                "detail": "DRAFT 상태에서만 수정/삭제할 수 있습니다 (publicCode=Vh7sK2x9Pq3R, status=SIGN_REQUESTED)",
+                "detail": "DRAFT 상태에서만 수정/삭제할 수 있습니다 (publicCode=Vh7sK2x9Pq3R, status=SHARED)",
                 "code": "CONTRACT_409_NOT_DRAFT",
                 "timestamp": "2026-05-20T10:00:00Z"
               }
@@ -425,6 +425,45 @@ internal object ContractExamples {
                   "timestamp": "2026-05-20T10:15:00Z"
                 }
             """
+
+    const val SHARE_REQUEST = """
+                  {
+                    "receiverName": "홍길동",
+                    "receiverPhone": "010-1234-5678"
+                  }
+              """
+
+    const val SHARED_RESPONSE = """
+                    {
+                      "publicCode": "Vh7sK2x9Pq3R",
+                      "status": "SHARED",
+                      "disputeState": "NONE",
+                      "deliveryType": "DIRECT",
+                      "consentType": "NOT_APPLICABLE",
+                      "title": "에어팟 프로 2세대",
+                      "price": 180000,
+                      "conditionSummary": "사용감 적음",
+                      "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
+                      "warrantyPeriodDays": 3,
+                      "location": "서울 강남구",
+                      "guardianConsentAt": null,
+                      "version": 1,
+                      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "createdAt": "2026-05-20T10:00:00Z",
+                      "updatedAt": "2026-05-28T10:30:00Z"
+                    }
+                """
+
+    const val SHARE_VALIDATION_FAILED = """
+                  {
+                    "type": "about:blank",
+                    "title": "Bad Request",
+                    "status": 400,
+                    "detail": "receiverPhone: 전화번호 형식이 올바르지 않습니다",
+                    "code": "VALIDATION_FAILED",
+                    "timestamp": "2026-05-28T10:30:00Z"
+                  }
+              """
 
     // ───── PDF ─────
 

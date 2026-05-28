@@ -6,7 +6,9 @@ import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.DisputeState
 import com.trana.contract.entity.PartyType
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
 import java.time.Instant
@@ -107,5 +109,27 @@ data class ContractPdfDownloadResponse(
     val sha256: String,
 )
 
+@Schema(description = "계약 공유 요청 — markReady(READY) → SHARED 전이 + 카카오톡 알림톡 발송")
+data class ShareContractRequest(
+    @field:NotBlank
+    @field:Size(max = RECEIVER_NAME_MAX_LENGTH)
+    @field:Schema(
+        description = "수신자 이름 (audit 기록)",
+        example = "홍길동",
+        maxLength = RECEIVER_NAME_MAX_LENGTH,
+    )
+    val receiverName: String,
+    @field:NotBlank
+    @field:Pattern(regexp = RECEIVER_PHONE_PATTERN)
+    @field:Schema(
+        description = "수신자 전화번호 — 한국 핸드폰 또는 E.164 (알림톡 발송 대상)",
+        example = "010-1234-5678",
+        pattern = RECEIVER_PHONE_PATTERN,
+    )
+    val receiverPhone: String,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val LOCATION_MAX_LENGTH = 100
+private const val RECEIVER_NAME_MAX_LENGTH = 50
+private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"

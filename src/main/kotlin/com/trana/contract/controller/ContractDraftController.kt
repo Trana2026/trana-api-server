@@ -5,13 +5,16 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
+import com.trana.contract.service.ContractStatusService
 import com.trana.contract.service.PdfDownloadView
 import io.swagger.v3.oas.annotations.Parameter
+import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/v1/contracts")
 class ContractDraftController(
     private val service: ContractDraftService,
+    private val statusService: ContractStatusService,
 ) : ContractDraftApi {
     override fun createDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -77,17 +81,30 @@ class ContractDraftController(
     override fun markReady(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): ContractResponse = service.transitionToReady(publicCode, userId).toResponse()
+    ): ContractResponse = statusService.transitionToReady(publicCode, userId).toResponse()
+
+    override fun share(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: ShareContractRequest,
+    ): ContractResponse =
+        statusService
+            .share(
+                publicCode = publicCode,
+                userId = userId,
+                receiverName = request.receiverName,
+                receiverPhone = request.receiverPhone,
+            ).toResponse()
 
     override fun revertToDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): ContractResponse = service.revertToDraft(publicCode, userId).toResponse()
+    ): ContractResponse = statusService.revertToDraft(publicCode, userId).toResponse()
 
     override fun statusLogs(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): List<ContractStatusLogResponse> = service.listStatusLogs(publicCode, userId).map { it.toResponse() }
+    ): List<ContractStatusLogResponse> = statusService.listStatusLogs(publicCode, userId).map { it.toResponse() }
 
     override fun previewPdf(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -104,7 +121,7 @@ class ContractDraftController(
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): ContractPdfDownloadResponse = service.getPdfDownload(publicCode, userId).toResponse()
+    ): ContractPdfDownloadResponse = statusService.getPdfDownload(publicCode, userId).toResponse()
 }
 
 private fun Contract.toResponse(): ContractResponse =
