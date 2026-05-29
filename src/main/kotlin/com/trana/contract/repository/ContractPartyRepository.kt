@@ -19,4 +19,15 @@ interface ContractPartyRepository : JpaRepository<ContractParty, Long> {
         contractId: Long,
         userId: Long,
     ): ContractParty?
+
+    /**
+     * 여러 계약에 대한 본인의 party 정보 일괄 조회 (목록 화면용).
+     *
+     * 사용: listMine — 본인이 관여한 contract 들의 partyType (myRole) 한 번에 조회.
+     * 빈 리스트면 빈 결과 반환 (IN () 빈 set 안전).
+     */
+    fun findAllByUserIdAndContractIdIn(
+        userId: Long,
+        contractIds: Collection<Long>,
+    ): List<ContractParty>
 }

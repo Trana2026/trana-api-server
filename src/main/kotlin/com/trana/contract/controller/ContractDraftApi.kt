@@ -233,8 +233,15 @@ DRAFT 상태에서만 수정 가능. null 인 필드는 변경 없음 (PATCH sem
         operationId = "contractListMine",
         summary = "본인 계약 목록",
         description = """
-본인이 creator 인 계약 목록 (soft-delete 제외, updated_at DESC).
-status 파라미터로 필터링 가능 (생략 시 전체).
+본인 계약 목록 — 본인이 생성자 OR 수신자인 모든 계약 (soft-delete 제외, updated_at DESC).
+  - status 파라미터로 상태 필터링 (생략 시 전체)
+  - query 파라미터로 물품명(title) 부분 검색 (대소문자 무시, 공백/생략 시 무효, title NULL 인 IN_PROGRESS contract 자동 제외)
+
+응답 필드:
+- myRole: 본인의 역할 (SELLER | BUYER) — 프론트가 (myRole, status) 조합으로 알림 메시지 매핑
+- attachmentCount: 첨부 사진 개수 (0~7)
+- firstAttachmentUrl: 첫 사진 (sortOrder=0) presigned GET URL (TTL 5분) — 리스트 thumbnail. 없으면 null.
+- 캐러셀 (모든 사진) 은 `GET /v1/contracts/{publicCode}/attachments` 별 호출
               """,
     )
     @ApiResponses(
@@ -264,6 +271,11 @@ status 파라미터로 필터링 가능 (생략 시 전체).
                     "/ SIGNED / COMPLETED 등). 생략 시 전체",
         )
         @RequestParam(required = false) status: ContractStatus?,
+        @Parameter(
+            description = "물품명(title) 부분 검색. 공백/생략 시 무효. 대소문자 무시.",
+            example = "에어팟",
+        )
+        @RequestParam(required = false) query: String?,
     ): List<ContractListItem>
 
     @Operation(

@@ -12,6 +12,7 @@ import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
+import com.trana.contract.service.ContractListView
 import com.trana.contract.service.ContractStatusService
 import com.trana.contract.service.PdfDownloadView
 import io.swagger.v3.oas.annotations.Parameter
@@ -78,7 +79,8 @@ class ContractDraftController(
     override fun listMine(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @RequestParam(required = false) status: ContractStatus?,
-    ): List<ContractListItem> = service.listMyContracts(userId, status).map { it.toListItem() }
+        @RequestParam(required = false) query: String?,
+    ): List<ContractListItem> = service.listMyContracts(userId, status, query).map { it.toListItem() }
 
     override fun markReady(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -166,13 +168,16 @@ private fun Contract.toResponse(): ContractResponse =
         updatedAt = requireNotNull(updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
     )
 
-private fun Contract.toListItem(): ContractListItem =
+private fun ContractListView.toListItem(): ContractListItem =
     ContractListItem(
-        publicCode = publicCode,
-        status = status,
-        title = title,
-        price = price,
-        updatedAt = requireNotNull(updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
+        publicCode = contract.publicCode,
+        status = contract.status,
+        title = contract.title,
+        price = contract.price,
+        myRole = myRole,
+        attachmentCount = attachmentCount,
+        firstAttachmentUrl = firstAttachmentUrl,
+        updatedAt = requireNotNull(contract.updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
     )
 
 private fun ContractStatusLog.toResponse(): ContractStatusLogResponse =

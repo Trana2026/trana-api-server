@@ -75,12 +75,26 @@ data class ContractResponse(
     val updatedAt: Instant,
 )
 
-@Schema(description = "본인 계약 목록 아이템")
+@Schema(description = "본인 계약 목록 아이템 — 본인이 만든 것 + 받은 것 모두 포함")
 data class ContractListItem(
     val publicCode: String,
     val status: ContractStatus,
     val title: String?,
     val price: Long?,
+    @field:Schema(
+        description =
+            "본인의 역할 — SELLER 또는 BUYER. 프론트가 (myRole, status) 조합으로 " +
+                "알림 메시지 매핑 (예: SELLER + REVISION_REQUESTED → \"수정 요청이 들어왔어요\")",
+        example = "BUYER",
+    )
+    val myRole: PartyType,
+    @field:Schema(description = "첨부 사진 개수 (0~7)", example = "3")
+    val attachmentCount: Int,
+    @field:Schema(
+        description = "첫 번째 사진 (sortOrder=0) presigned GET URL — 리스트 thumbnail 용. 없으면 null. TTL 5분",
+        example = "https://trana-contract-dev.s3.../attachments/.../0.jpg?...",
+    )
+    val firstAttachmentUrl: String?,
     val updatedAt: Instant,
 )
 

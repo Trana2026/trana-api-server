@@ -2,12 +2,14 @@ package com.trana.contract.service
 
 import com.trana.common.util.PublicCodeGenerator
 import com.trana.contract.ContractException
+import com.trana.contract.adapter.storage.ContractAttachmentStorage
 import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.PartyType
+import com.trana.contract.repository.ContractAttachmentRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.user.entity.AgeGroup
@@ -42,6 +44,8 @@ class ContractDraftService(
     private val eventPublisher: ApplicationEventPublisher,
     private val pdfRenderer: ContractPdfRenderer,
     private val accessGuard: ContractAccessGuard,
+    private val contractAttachmentRepository: ContractAttachmentRepository,
+    private val attachmentStorage: ContractAttachmentStorage,
 ) {
     fun createDraft(
         creatorUserId: Long,
@@ -144,7 +148,35 @@ class ContractDraftService(
     fun listMyContracts(
         userId: Long,
         status: ContractStatus? = null,
-    ): List<Contract> = contractRepository.findAllByCreator(userId, status)
+        query: String? = null,
+    ): List<ContractListView> {
+        val normalizedQuery = query?.takeIf { it.isNotBlank() }?.trim()
+        val contracts = contractRepository.findAllByPartyUserId(userId, status, normalizedQuery)
+        if (contracts.isEmpty()) return emptyList()
+
+        val contractIds = contracts.mapNotNull { it.id }
+        val myParties =
+            contractPartyRepository
+                .findAllByUserIdAndContractIdIn(userId, contractIds)
+                .associateBy { it.contractId }
+        val attachmentsByContractId =
+            contractAttachmentRepository
+                .findAllByContractIdIn(contractIds)
+                .groupBy { it.contractId }
+
+        return contracts.map { contract ->
+            val contractId = contract.id!!
+            val party = myParties[contractId] ?: error("party 없음 (contractId=$contractId, userId=$userId)")
+            val attachments = attachmentsByContractId[contractId].orEmpty()
+            val first = attachments.minByOrNull { it.sortOrder }
+            ContractListView(
+                contract = contract,
+                myRole = party.partyType,
+                attachmentCount = attachments.size,
+                firstAttachmentUrl = first?.let { attachmentStorage.presignGet(it.s3Key) },
+            )
+        }
+    }
 
     @Transactional(readOnly = true)
     fun previewPdf(
@@ -162,4 +194,11 @@ data class PdfDownloadView(
     val downloadUrl: String,
     val expiresInSeconds: Long,
     val sha256: String,
+)
+
+data class ContractListView(
+    val contract: Contract,
+    val myRole: PartyType,
+    val attachmentCount: Int,
+    val firstAttachmentUrl: String?,
 )

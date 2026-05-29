@@ -12,4 +12,7 @@ interface ContractAttachmentRepository : JpaRepository<ContractAttachment, Long>
 
     /** 목록 화면 thumbnail — sort_order 가장 작은 1장. */
     fun findFirstByContractIdOrderBySortOrderAsc(contractId: Long): ContractAttachment?
+
+    /** 본인 계약 목록 — 한 번에 모든 첨부 조회 (group by contractId 용). */
+    fun findAllByContractIdIn(contractIds: Collection<Long>): List<ContractAttachment>
 }
