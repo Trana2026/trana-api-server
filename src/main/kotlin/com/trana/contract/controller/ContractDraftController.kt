@@ -113,6 +113,11 @@ class ContractDraftController(
                 conditionDetailsReason = request.conditionDetailsReason,
             ).toResponse()
 
+    override fun acceptInvitation(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable token: String,
+    ): ContractResponse = statusService.acceptInvitation(token, userId).toResponse()
+
     override fun revertToDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,

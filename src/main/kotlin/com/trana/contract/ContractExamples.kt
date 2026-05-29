@@ -539,6 +539,17 @@ internal object ContractExamples {
                   }
               """
 
+    const val USER_NOT_READY = """
+                    {
+                      "type": "about:blank",
+                      "title": "CONTRACT_403_USER_NOT_READY",
+                      "status": 403,
+                      "detail": "가입이 완료되지 않은 사용자입니다 (userId=42, 미성년 보호자 검증 미완료)",
+                      "code": "CONTRACT_403_USER_NOT_READY",
+                      "timestamp": "2026-05-28T15:30:00Z"
+                    }
+                """
+
     // ───── PDF ─────
 
     const val PDF_DOWNLOAD_RESPONSE = """

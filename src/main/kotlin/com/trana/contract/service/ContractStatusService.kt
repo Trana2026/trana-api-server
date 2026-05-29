@@ -8,13 +8,18 @@ import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
+import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
+import com.trana.contract.entity.PartyType
 import com.trana.contract.repository.ContractInvitationRepository
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.contract.repository.ContractRevisionRequestRepository
 import com.trana.contract.repository.ContractStatusLogRepository
+import com.trana.user.entity.AgeGroup
+import com.trana.user.entity.UserStatus
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -36,7 +41,7 @@ import java.security.MessageDigest
  */
 @Service
 @Transactional
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "TooManyFunctions")
 class ContractStatusService(
     private val accessGuard: ContractAccessGuard,
     private val statusLogRepository: ContractStatusLogRepository,
@@ -46,6 +51,7 @@ class ContractStatusService(
     private val revisionRequestRepository: ContractRevisionRequestRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val userRepository: UserRepository,
+    private val contractPartyRepository: ContractPartyRepository,
     private val pdfRenderer: ContractPdfRenderer,
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val eventPublisher: ApplicationEventPublisher,
@@ -116,7 +122,6 @@ class ContractStatusService(
         return contract
     }
 
-    @Suppress("ThrowsCount")
     fun requestRevision(
         token: String,
         requesterUserId: Long,
@@ -125,19 +130,7 @@ class ContractStatusService(
         conditionSummaryReason: String? = null,
         conditionDetailsReason: String? = null,
     ): Contract {
-        val invitation =
-            invitationRepository.findByToken(token)
-                ?: throw ContractException.InvitationNotFound(token)
-        if (!invitation.isActive()) {
-            throw ContractException.InvitationExpired(token)
-        }
-        val contract =
-            contractRepository.findById(invitation.contractId).orElseThrow {
-                ContractException.NotFound("contractId=${invitation.contractId}")
-            }
-        if (contract.status != ContractStatus.SHARED) {
-            throw ContractException.NotInSharedState(contract.publicCode, contract.status.name)
-        }
+        val (invitation, contract) = loadActiveInvitationOnSharedContract(token)
 
         val revisionRequest =
             ContractRevisionRequest.create(
@@ -155,6 +148,42 @@ class ContractStatusService(
         publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
 
         sendRevisionRequestedAlimtalk(contract, invitation)
+        return contract
+    }
+
+    @Suppress("ThrowsCount")
+    fun acceptInvitation(
+        token: String,
+        userId: Long,
+    ): Contract {
+        val (invitation, contract) = loadActiveInvitationOnSharedContract(token)
+
+        validateUserReady(userId)
+
+        val existing = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+        if (existing != null) {
+            return contract
+        }
+
+        val creatorParty =
+            contractPartyRepository.findFirstByContractIdAndUserId(contract.id, contract.creatorUserId)
+                ?: error("creator party 없음 — 데이터 무결성 위반 (contractId=${contract.id})")
+        val receiverPartyType =
+            when (creatorParty.partyType) {
+                PartyType.SELLER -> PartyType.BUYER
+                PartyType.BUYER -> PartyType.SELLER
+            }
+
+        val party =
+            ContractParty.create(
+                contractId = contract.id,
+                userId = userId,
+                partyType = receiverPartyType,
+            )
+        party.markValidated()
+        contractPartyRepository.save(party)
+
+        invitation.markUsed(userId)
         return contract
     }
 
@@ -247,6 +276,42 @@ class ContractStatusService(
             ),
         )
     }
+
+    @Suppress("ThrowsCount")
+    private fun loadActiveInvitationOnSharedContract(token: String): ActiveInvitationContext {
+        val invitation =
+            invitationRepository.findByToken(token)
+                ?: throw ContractException.InvitationNotFound(token)
+        if (!invitation.isActive()) {
+            throw ContractException.InvitationExpired(token)
+        }
+        val contract =
+            contractRepository.findById(invitation.contractId).orElseThrow {
+                ContractException.NotFound("contractId=${invitation.contractId}")
+            }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(contract.publicCode, contract.status.name)
+        }
+        return ActiveInvitationContext(invitation, contract)
+    }
+
+    private fun validateUserReady(userId: Long) {
+        val user =
+            userRepository.findById(userId).orElseThrow {
+                IllegalStateException("user 조회 실패 (userId=$userId)")
+            }
+        if (user.status != UserStatus.ACTIVE) {
+            throw ContractException.UserNotReady(userId, "user.status=${user.status}")
+        }
+        if (user.ageGroup == AgeGroup.MINOR && user.guardianVerifiedAt == null) {
+            throw ContractException.UserNotReady(userId, "미성년 보호자 검증 미완료")
+        }
+    }
+
+    private data class ActiveInvitationContext(
+        val invitation: ContractInvitation,
+        val contract: Contract,
+    )
 
     private fun sha256Hex(bytes: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes)

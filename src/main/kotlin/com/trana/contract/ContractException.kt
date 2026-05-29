@@ -18,6 +18,7 @@ import com.trana.common.exception.ErrorCode
  * - AiExtractionFailed: OpenAI 호출 실패 (5xx / timeout)
  * - AiResponseInvalid: OpenAI 응답 JSON 파싱 / schema 검증 실패
  * - PdfNotGenerated: PDF 다운로드 요청 시 markReady 가 선행되지 않음
+ * - UserNotReady: invitation accept 시 user 가입 미완료 (status != ACTIVE 또는 미성년 보호자 미검증)
  */
 sealed class ContractException(
     errorCode: ErrorCode,
@@ -170,5 +171,13 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_NOT_IN_REVISION_REQUESTED_STATE,
             "현재 REVISION_REQUESTED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
+
+    class UserNotReady(
+        userId: Long,
+        reason: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_USER_NOT_READY,
+            "가입이 완료되지 않은 사용자입니다 (userId=$userId, $reason)",
         )
 }

@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -502,6 +503,122 @@ SHARED 상태 계약에 대해 수신자가 필드별 수정 이유 입력 → �
         @Parameter(hidden = true) userId: Long,
         @PathVariable token: String,
         @RequestBody @Valid request: RequestRevisionRequest,
+    ): ContractResponse
+
+    @Operation(
+        operationId = "contractAcceptInvitation",
+        summary = "수신자 invitation 수락 (계약 당사자 연결)",
+        description = """
+카카오톡 알림톡 링크로 진입한 수신자가 가입/로그인 완료 후 호출 — 자신을 계약의 BUYER (또는 SELLER) 로 정식 연결합니다.
+
+전제:
+- 사용자 가입 완료 (성인: KYC SUCCESS → UserStatus.ACTIVE / 미성년: 보호자 검증 완료 → guardianVerifiedAt != null)
+- contract.status = SHARED
+- invitation 미사용 + 미만료
+
+처리:
+- 기존 ContractParty 매핑이 있으면 idempotent — 재호출 시 그대로 ContractResponse 반환
+- 신규면 creator partyType 의 반대편 (SELLER ↔ BUYER) 으로 ContractParty INSERT + validated=true
+- invitation.markUsed(userId) — 토큰 1회 소비
+
+이후 단계:
+- 수신자는 PDF v1 미리보기 → 약관 동의 + 서명 (#31) 또는 수정 요청 (#37, 이미 구현됨)
+
+에러:
+- 404 CONTRACT_INVITATION_NOT_FOUND : 토큰 없음
+- 410 CONTRACT_INVITATION_EXPIRED   : 이미 사용 또는 만료
+- 403 CONTRACT_USER_NOT_READY       : 가입 미완료 (보호자 검증 미완료 / withdrawn 등)
+- 409 CONTRACT_NOT_IN_SHARED_STATE  : 계약이 SHARED 상태 아님
+  """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "당사자 연결 완료 (idempotent)",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = Schema(implementation = ContractResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "SHARED 상태 그대로 (수신자 BUYER 연결)",
+                                value = ContractExamples.SHARED_RESPONSE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "가입 완료되지 않은 사용자",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "user.status != ACTIVE 또는 미성년 보호자 미검증",
+                                value = ContractExamples.USER_NOT_READY,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "토큰 없음",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "토큰 없음",
+                                value = ContractExamples.INVITATION_NOT_FOUND,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "현재 SHARED 상태 아님",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "RECEIVER_SIGNED / REVISION_REQUESTED / CANCELLED 등",
+                                value = ContractExamples.NOT_IN_SHARED_STATE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "410",
+                description = "이미 사용 또는 만료된 토큰",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "만료된 토큰",
+                                value = ContractExamples.INVITATION_EXPIRED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/invitations/{token}/accept")
+    fun acceptInvitation(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable token: String,
     ): ContractResponse
 
     @Operation(

@@ -118,4 +118,9 @@ enum class ErrorCode(
         "CONTRACT_409_NOT_REVISION_REQUESTED",
         "현재 REVISION_REQUESTED 상태가 아닙니다",
     ),
+    CONTRACT_USER_NOT_READY(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_USER_NOT_READY",
+        "가입이 완료되지 않은 사용자입니다",
+    ),
 }
