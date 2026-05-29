@@ -705,15 +705,23 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         description = """
 계약 본문 PDF 의 presigned GET URL 발급. TTL 10분.
 
-조건:
-- markReady 완료된 계약 (READY 이상). DRAFT 면 409
-- 본인 계약만 (403)
+  권한:
+  - 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 만 접근
+  - 그 외 user 는 403 NOT_ACCESSIBLE
 
-응답 사용:
-- 즉시 GET 으로 다운로드
-- 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
+  상태별 정책:
+  - IN_PROGRESS / DRAFT : PDF 없음 → 409 (DRAFT 미리보기는 `/preview` 별도 endpoint 사용)
+  - READY              : 생성자만 (수신자 아직 없음), inline 렌더링
+  - SHARED ~ SIGNED    : 양측 inline 렌더링 (앱/브라우저 내 미리보기)
+  - COMPLETED          : 양측 attachment 다운로드 (거래 완료 후 보존본)
+  - CANCELLED          : 양측 inline 접근 가능 (audit)
 
-S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
+  응답 사용:
+  - inline : 즉시 GET → 앱 PDF 뷰어 또는 브라우저 inline 렌더링
+  - attachment : 즉시 GET → 다운로드 다이얼로그
+  - 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
+
+  S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
                 """,
     )
     @ApiResponses(
@@ -725,6 +733,18 @@ S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 
                     Content(
                         schema = Schema(implementation = ContractPdfDownloadResponse::class),
                         examples = [ExampleObject(name = "url", value = ContractExamples.PDF_DOWNLOAD_RESPONSE)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "접근 권한 없음 (creator 도 아니고 party 도 아님)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notAccessible", value = ContractExamples.NOT_ACCESSIBLE),
+                        ],
                     ),
                 ],
             ),

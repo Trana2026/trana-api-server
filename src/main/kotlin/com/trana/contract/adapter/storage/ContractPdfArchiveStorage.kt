@@ -57,13 +57,36 @@ class ContractPdfArchiveStorage(
      * 사용자 PDF 다운로드용 presigned GET URL.
      *
      * TTL 짧게 (기본 10분) — 사용자가 즉시 다운로드.
+     *
+     * disposition:
+     * - [Disposition.INLINE] : 앱/브라우저 내 inline 렌더링 (SHARED ~ SIGNED — 미리보기만)
+     * - [Disposition.ATTACHMENT] : 파일 다운로드 다이얼로그 (COMPLETED 이후 — 거래 완료 후 보존본)
+     * - filename 은 ATTACHMENT 일 때만 의미 있음 (브라우저 저장 시 표시될 이름)
+     *
+     * S3 의 `response-content-disposition` 응답 헤더 override 사용 → 같은 객체에서 단계별 분기.
      */
-    fun presignGet(s3Key: String): String {
+    fun presignGet(
+        s3Key: String,
+        disposition: Disposition = Disposition.INLINE,
+        filename: String? = null,
+    ): String {
+        val responseContentDisposition =
+            when (disposition) {
+                Disposition.INLINE -> {
+                    "inline"
+                }
+
+                Disposition.ATTACHMENT -> {
+                    val safeName = filename ?: "contract.pdf"
+                    """attachment; filename="$safeName""""
+                }
+            }
         val getRequest =
             GetObjectRequest
                 .builder()
                 .bucket(props.bucket)
                 .key(s3Key)
+                .responseContentDisposition(responseContentDisposition)
                 .build()
         val presignRequest =
             GetObjectPresignRequest
@@ -73,6 +96,8 @@ class ContractPdfArchiveStorage(
                 .build()
         return s3Presigner.presignGetObject(presignRequest).url().toString()
     }
+
+    enum class Disposition { INLINE, ATTACHMENT }
 
     val bucket: String get() = props.bucket
 

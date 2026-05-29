@@ -305,6 +305,17 @@ internal object ContractExamples {
               }
           """
 
+    const val NOT_ACCESSIBLE = """
+                {
+                  "type": "about:blank",
+                  "title": "CONTRACT_403_NOT_ACCESSIBLE",
+                  "status": 403,
+                  "detail": "이 계약에 접근할 권한이 없습니다 (publicCode=Vh7sK2x9Pq3R, userId=99)",
+                  "code": "CONTRACT_403_NOT_ACCESSIBLE",
+                  "timestamp": "2026-05-29T10:00:00Z"
+                }
+            """
+
     const val NOT_DRAFT = """
               {
                 "type": "about:blank",

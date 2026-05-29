@@ -4,6 +4,7 @@ import com.trana.contract.ContractException
 import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import org.springframework.stereotype.Component
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component
 @Component
 class ContractAccessGuard(
     private val contractRepository: ContractRepository,
+    private val contractPartyRepository: ContractPartyRepository,
 ) {
     /** publicCode 로 조회 + 본인(creator) 검증. 삭제된 계약은 NotFound */
     fun loadOwned(
@@ -30,6 +32,24 @@ class ContractAccessGuard(
             throw ContractException.NotOwner(publicCode, userId)
         }
         return contract
+    }
+
+    /** publicCode 로 조회 + 접근 권한 검증 (creator OR contract_parties 멤버). 삭제된 계약은 NotFound */
+    fun loadAccessible(
+        publicCode: String,
+        userId: Long,
+    ): Contract {
+        val contract =
+            contractRepository.findByPublicCodeAndDeletedAtIsNull(publicCode)
+                ?: throw ContractException.NotFound(publicCode)
+        if (contract.creatorUserId == userId) {
+            return contract
+        }
+        val party = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+        if (party != null) {
+            return contract
+        }
+        throw ContractException.NotAccessible(publicCode, userId)
     }
 
     /** DRAFT 상태 검증 (markReady / previewPdf 진입 시 — 4 필드 완성 상태 확인) */

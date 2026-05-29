@@ -201,7 +201,7 @@ class ContractStatusService(
         publicCode: String,
         userId: Long,
     ): PdfDownloadView {
-        val contract = accessGuard.loadOwned(publicCode, userId)
+        val contract = accessGuard.loadAccessible(publicCode, userId)
         val s3Key =
             contract.pdfS3Key
                 ?: throw ContractException.PdfNotGenerated(publicCode, contract.status.name)
@@ -209,8 +209,14 @@ class ContractStatusService(
             requireNotNull(contract.contentHash) {
                 "pdf_s3_key 가 있는데 content_hash 가 null — DB 불변식 위반"
             }
+        val disposition =
+            when (contract.status) {
+                ContractStatus.COMPLETED -> ContractPdfArchiveStorage.Disposition.ATTACHMENT
+                else -> ContractPdfArchiveStorage.Disposition.INLINE
+            }
+        val filename = "contract-$publicCode.pdf"
         return PdfDownloadView(
-            downloadUrl = pdfArchiveStorage.presignGet(s3Key),
+            downloadUrl = pdfArchiveStorage.presignGet(s3Key, disposition, filename),
             expiresInSeconds = pdfArchiveStorage.presignedGetTtlSeconds,
             sha256 = sha256,
         )

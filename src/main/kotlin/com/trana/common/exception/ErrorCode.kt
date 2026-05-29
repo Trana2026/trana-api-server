@@ -123,4 +123,9 @@ enum class ErrorCode(
         "CONTRACT_403_USER_NOT_READY",
         "가입이 완료되지 않은 사용자입니다",
     ),
+    CONTRACT_NOT_ACCESSIBLE(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_NOT_ACCESSIBLE",
+        "이 계약에 접근할 권한이 없습니다",
+    ),
 }
