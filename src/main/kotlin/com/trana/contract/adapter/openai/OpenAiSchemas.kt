@@ -4,7 +4,6 @@ package com.trana.contract.adapter.openai
  * OpenAI Structured Outputs용 JSON Schema 정의.
  *
  * - strict: true 모드에서 사용 (모든 필드 required + additionalProperties: false 강제)
- * - location 은 nullable (type: ["string", "null"])
  * - ExtractedPrefill 과 1:1 매칭 (필드 변경 시 schema/DTO 같이 갱신)
  */
 internal object OpenAiSchemas {

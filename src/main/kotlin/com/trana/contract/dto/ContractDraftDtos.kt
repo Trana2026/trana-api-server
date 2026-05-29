@@ -36,9 +36,6 @@ data class UpdateContractDraftRequest(
     val conditionSummary: String? = null,
     @field:Schema(description = "상태/하자/포함품 상세", example = "박스 미개봉, 정품 보증서 포함, 액정 보호필름 별도")
     val conditionDetails: String? = null,
-    @field:Size(max = LOCATION_MAX_LENGTH)
-    @field:Schema(description = "거래 희망 지역", example = "서울 강남구", maxLength = LOCATION_MAX_LENGTH)
-    val location: String? = null,
     @field:Schema(description = "거래 방식 변경", example = "SHIPPING")
     val deliveryType: DeliveryType? = null,
 )
@@ -61,7 +58,6 @@ data class ContractResponse(
     val conditionDetails: String?,
     @field:Schema(description = "보증 기간 (일)", example = "3")
     val warrantyPeriodDays: Int,
-    val location: String?,
     @field:Schema(description = "보호자 동의 완료 시각 (미성년 계약 + 동의 완료 시에만 채워짐)")
     val guardianConsentAt: Instant?,
     @field:Schema(description = "리비전 버전 (W5+)", example = "1")
@@ -183,7 +179,6 @@ data class RequestRevisionRequest(
 }
 
 private const val TITLE_MAX_LENGTH = 200
-private const val LOCATION_MAX_LENGTH = 100
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"
 private const val REVISION_REASON_MAX_LENGTH = 500

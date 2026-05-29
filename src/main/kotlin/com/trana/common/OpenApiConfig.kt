@@ -71,6 +71,9 @@ class OpenApiConfig {
                 "Contract Attachment",
                 "Contract AI Extraction",
                 "Contract Guardian Consent",
+                "Contract Lifecycle",
+                "Contract PDF",
+                "Contract Invitation",
                 "Dev",
             )
         val originalTags = openApi.tags?.toList().orEmpty()

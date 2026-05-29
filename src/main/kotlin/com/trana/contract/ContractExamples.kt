@@ -105,7 +105,6 @@ internal object ContractExamples {
                   "conditionSummary": null,
                   "conditionDetails": null,
                   "warrantyPeriodDays": 3,
-                  "location": null,
                   "guardianConsentAt": null,
                   "version": 1,
                   "createdAt": "2026-05-20T10:00:00Z",
@@ -120,7 +119,6 @@ internal object ContractExamples {
                 "conditionSummary": "사용감 적음",
                 "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                 "deliveryType": "SHIPPING",
-                "location": "서울 강남구"
               }
           """
 
@@ -261,7 +259,6 @@ internal object ContractExamples {
                   "conditionSummary": "사용감 적음",
                   "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                   "warrantyPeriodDays": 3,
-                  "location": "서울 강남구",
                   "guardianConsentAt": null,
                   "version": 1,
                   "createdAt": "2026-05-20T10:00:00Z",
@@ -408,7 +405,6 @@ internal object ContractExamples {
                     "conditionSummary": "사용감 적음",
                     "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                     "warrantyPeriodDays": 3,
-                    "location": "서울 강남구",
                     "guardianConsentAt": null,
                     "version": 1,
                     "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -479,7 +475,6 @@ internal object ContractExamples {
                       "conditionSummary": "사용감 적음",
                       "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                       "warrantyPeriodDays": 3,
-                      "location": "서울 강남구",
                       "guardianConsentAt": null,
                       "version": 1,
                       "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -520,7 +515,6 @@ internal object ContractExamples {
                       "conditionSummary": "사용감 적음",
                       "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                       "warrantyPeriodDays": 3,
-                      "location": "서울 강남구",
                       "guardianConsentAt": null,
                       "version": 1,
                       "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

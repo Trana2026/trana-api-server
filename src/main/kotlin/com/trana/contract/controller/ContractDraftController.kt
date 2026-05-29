@@ -65,7 +65,6 @@ class ContractDraftController(
                 price = request.price,
                 conditionSummary = request.conditionSummary,
                 conditionDetails = request.conditionDetails,
-                location = request.location,
                 deliveryType = request.deliveryType,
             ).toResponse()
 
@@ -160,7 +159,6 @@ private fun Contract.toResponse(): ContractResponse =
         conditionSummary = conditionSummary,
         conditionDetails = conditionDetails,
         warrantyPeriodDays = warrantyPeriodDays,
-        location = location,
         guardianConsentAt = guardianConsentAt,
         version = version,
         contentHash = contentHash,

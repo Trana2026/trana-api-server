@@ -21,6 +21,5 @@ internal object OpenAiPromptTemplates {
   2. price: '원'이나 콤마(,)를 제외한 숫자만 추출해 (정수형).
   3. condition_summary: 플랫폼에서 지정한 상태 키워드(예: 사용감 적음, 미개봉 등)를 추출해.
   4. condition_details: 상세 설명 글에서 언급된 하자(찍힘, 스크래치 등)나 사용 기간, 작동 여부 등을 핵심만 요약해.
-  5. location: 판매 지역 정보가 있다면 추출하고, 없으면 null로 표시해.
   """
 }

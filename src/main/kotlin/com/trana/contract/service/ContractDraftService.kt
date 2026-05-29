@@ -107,7 +107,6 @@ class ContractDraftService(
         price: Long? = null,
         conditionSummary: String? = null,
         conditionDetails: String? = null,
-        location: String? = null,
         deliveryType: DeliveryType? = null,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
@@ -118,7 +117,6 @@ class ContractDraftService(
             price = price,
             conditionSummary = conditionSummary,
             conditionDetails = conditionDetails,
-            location = location,
             deliveryType = deliveryType,
         )
         if (contract.status != fromStatus) {

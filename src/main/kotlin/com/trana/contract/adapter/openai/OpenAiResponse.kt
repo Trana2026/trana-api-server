@@ -57,7 +57,7 @@ data class OpenAiUsage(
  *
  * - OpenAiResponseMessage.content (JSON string) → ObjectMapper 로 이 객체로 파싱
  * - OpenAiSchemas.AI_EXTRACTION_SCHEMA_V1 와 1:1 매핑
- * - strict: true 가 모든 required 필드를 강제하므로 location 만 nullable
+ * - strict: true 가 모든 required 필드를 강제 (모든 필드 non-null)
  *
  * Adapter 가 OpenAiVisionAdapter.extract() 의 일부로 반환하여
  * Service 는 raw JSON 과 ExtractedPrefill 둘 다 받아 row INSERT.

@@ -23,7 +23,6 @@ CREATE TABLE contracts
     condition_summary          TEXT,
     condition_details          TEXT,
     warranty_period_days       INT         NOT NULL DEFAULT 3,
-    location                   VARCHAR(100),
 
     -- 미성년 분기
     consent_type               VARCHAR(30) NOT NULL,
@@ -69,7 +68,6 @@ COMMENT ON COLUMN contracts.dispute_state IS 'NONE | REPORTED | RESOLVED | DISMI
 COMMENT ON COLUMN contracts.delivery_type IS 'DIRECT | SHIPPING';
 COMMENT ON COLUMN contracts.price IS '원 단위 정수';
 COMMENT ON COLUMN contracts.warranty_period_days IS '보증 기간 일수 (현재 3일 고정)';
-COMMENT ON COLUMN contracts.location IS 'AI 추출 결과 (nullable)';
 COMMENT ON COLUMN contracts.consent_type IS 'GUARDIAN_REQUIRED | NONE | NOT_APPLICABLE';
 COMMENT ON COLUMN contracts.guardian_id IS 'CONTRACT_CONSENT 보호자 KYC SUCCESS 시 guardians FK (논리)';
 COMMENT ON COLUMN contracts.pdf_s3_key IS 'trana-pdf-archive-{env} 버킷 키 — markReady 시 채워짐. Versioning 으로 히스토리';

@@ -62,8 +62,6 @@ class Contract(
     var conditionDetails: String? = null,
     @Column(name = "warranty_period_days", nullable = false)
     val warrantyPeriodDays: Int = WARRANTY_DEFAULT_DAYS,
-    @Column(name = "location", length = 100)
-    var location: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -122,7 +120,6 @@ class Contract(
         price: Long? = null,
         conditionSummary: String? = null,
         conditionDetails: String? = null,
-        location: String? = null,
         deliveryType: DeliveryType? = null,
     ) {
         check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
@@ -133,7 +130,6 @@ class Contract(
         price?.let { this.price = it }
         conditionSummary?.let { this.conditionSummary = it }
         conditionDetails?.let { this.conditionDetails = it }
-        location?.let { this.location = it }
         deliveryType?.let { this.deliveryType = it }
         this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
     }
