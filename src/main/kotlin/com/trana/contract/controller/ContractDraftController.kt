@@ -101,12 +101,12 @@ class ContractDraftController(
 
     override fun requestRevision(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
-        @PathVariable token: String,
+        @PathVariable publicCode: String,
         @RequestBody @Valid request: RequestRevisionRequest,
     ): ContractResponse =
         statusService
             .requestRevision(
-                token = token,
+                publicCode = publicCode,
                 requesterUserId = userId,
                 titleReason = request.titleReason,
                 priceReason = request.priceReason,

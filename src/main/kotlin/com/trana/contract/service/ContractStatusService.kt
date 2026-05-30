@@ -122,15 +122,22 @@ class ContractStatusService(
         return contract
     }
 
+    @Suppress("ThrowsCount")
     fun requestRevision(
-        token: String,
+        publicCode: String,
         requesterUserId: Long,
         titleReason: String? = null,
         priceReason: String? = null,
         conditionSummaryReason: String? = null,
         conditionDetailsReason: String? = null,
     ): Contract {
-        val (invitation, contract) = loadActiveInvitationOnSharedContract(token)
+        val contract = accessGuard.loadAccessible(publicCode, requesterUserId)
+        if (contract.creatorUserId == requesterUserId) {
+            throw ContractException.NotAccessible(publicCode, requesterUserId)
+        }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(publicCode, contract.status.name)
+        }
 
         val revisionRequest =
             ContractRevisionRequest.create(
@@ -147,7 +154,7 @@ class ContractStatusService(
         contract.markRevisionRequested()
         publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
 
-        sendRevisionRequestedAlimtalk(contract, invitation)
+        sendRevisionRequestedAlimtalk(contract, requesterUserId)
         return contract
     }
 
@@ -157,6 +164,10 @@ class ContractStatusService(
         userId: Long,
     ): Contract {
         val (invitation, contract) = loadActiveInvitationOnSharedContract(token)
+
+        if (contract.creatorUserId == userId) {
+            throw ContractException.NotAccessible(contract.publicCode, userId)
+        }
 
         validateUserReady(userId)
 
@@ -263,21 +274,26 @@ class ContractStatusService(
 
     private fun sendRevisionRequestedAlimtalk(
         contract: Contract,
-        invitation: ContractInvitation,
+        requesterUserId: Long,
     ) {
         val creator =
             userRepository.findById(contract.creatorUserId).orElseThrow {
                 IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
             }
+        val requester =
+            userRepository.findById(requesterUserId).orElseThrow {
+                IllegalStateException("수정 요청자 조회 실패 (userId=$requesterUserId)")
+            }
         val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
+        val requesterName = requester.name ?: requester.nickname ?: "Trana 사용자"
         val reviewUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}"
         kakaoAlimtalkClient.sendRevisionRequested(
             RevisionRequestedMessage(
                 creatorPhone = creatorPhone,
                 creatorName = creatorName,
                 contractTitle = contract.title ?: "(제목 없음)",
-                requesterName = invitation.receiverName,
+                requesterName = requesterName,
                 reviewUrl = reviewUrl,
             ),
         )
