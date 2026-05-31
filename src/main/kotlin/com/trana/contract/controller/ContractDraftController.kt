@@ -43,6 +43,7 @@ class ContractDraftController(
                 creatorUserId = userId,
                 deliveryType = request.deliveryType,
                 creatorRole = request.creatorRole,
+                requestedConsentType = request.consentType,
             )
         return contract.toResponse()
     }
@@ -66,6 +67,7 @@ class ContractDraftController(
                 conditionSummary = request.conditionSummary,
                 conditionDetails = request.conditionDetails,
                 deliveryType = request.deliveryType,
+                creatorRole = request.creatorRole,
             ).toResponse()
 
     override fun deleteDraft(

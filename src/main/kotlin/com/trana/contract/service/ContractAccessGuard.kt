@@ -73,6 +73,7 @@ class ContractAccessGuard(
         if (contract.price == null) missing.add("price")
         if (contract.conditionSummary == null) missing.add("conditionSummary")
         if (contract.conditionDetails == null) missing.add("conditionDetails")
+        if (contract.deliveryType == null) missing.add("deliveryType")
         if (missing.isNotEmpty()) {
             throw ContractException.NotReadyEligible(contract.publicCode, missing.joinToString(", "))
         }

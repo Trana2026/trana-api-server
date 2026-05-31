@@ -188,4 +188,18 @@ sealed class ContractException(
             ErrorCode.CONTRACT_NOT_ACCESSIBLE,
             "이 계약에 접근할 권한이 없습니다 (publicCode=$publicCode, userId=$userId)",
         )
+
+    class GuardianNotVerified(
+        userId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_GUARDIAN_NOT_VERIFIED,
+            "가입 보호자 인증이 완료되지 않은 미성년자입니다 (userId=$userId)",
+        )
+
+    class RoleAlreadySet(
+        publicCode: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_ROLE_ALREADY_SET,
+            "이미 역할이 설정된 계약입니다 (publicCode=$publicCode)",
+        )
 }

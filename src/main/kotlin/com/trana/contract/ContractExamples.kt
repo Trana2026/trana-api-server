@@ -86,12 +86,24 @@ internal object ContractExamples {
 
     // ───── DRAFT 생성 / 수정 / 삭제 ─────
 
-    const val DRAFT_CREATE_REQUEST = """
-                {
-                  "creatorRole": "SELLER",
-                  "deliveryType": "DIRECT"
-                }
-            """
+    const val DRAFT_CREATE_REQUEST_ADULT = """
+              {
+                "creatorRole": "SELLER",
+                "deliveryType": "DIRECT"
+              }
+          """
+
+    const val DRAFT_CREATE_REQUEST_MINOR_GUARDIAN = """
+              {
+                "consentType": "GUARDIAN_REQUIRED"
+              }
+          """
+
+    const val DRAFT_CREATE_REQUEST_MINOR_NO_CONSENT = """
+              {
+                "consentType": "NOT_APPLICABLE"
+              }
+          """
 
     const val DRAFT_CREATE_RESPONSE = """
                 {
@@ -112,6 +124,25 @@ internal object ContractExamples {
                 }
             """
 
+    const val DRAFT_CREATE_RESPONSE_MINOR_PLACEHOLDER = """
+              {
+                "publicCode": "Vh7sK2x9Pq3R",
+                "status": "IN_PROGRESS",
+                "disputeState": "NONE",
+                "deliveryType": null,
+                "consentType": "GUARDIAN_REQUIRED",
+                "title": null,
+                "price": null,
+                "conditionSummary": null,
+                "conditionDetails": null,
+                "warrantyPeriodDays": 3,
+                "guardianConsentAt": null,
+                "version": 1,
+                "createdAt": "2026-05-31T10:00:00Z",
+                "updatedAt": "2026-05-31T10:00:00Z"
+              }
+          """
+
     const val DRAFT_UPDATE_REQUEST = """
               {
                 "title": "에어팟 프로 2세대",
@@ -119,6 +150,12 @@ internal object ContractExamples {
                 "conditionSummary": "사용감 적음",
                 "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                 "deliveryType": "SHIPPING",
+              }
+          """
+
+    const val DRAFT_UPDATE_REQUEST_SET_ROLE = """
+              {
+                "creatorRole": "SELLER"
               }
           """
 
@@ -335,6 +372,28 @@ internal object ContractExamples {
                   "timestamp": "2026-05-29T10:00:00Z"
                 }
             """
+
+    const val GUARDIAN_NOT_VERIFIED = """
+          {
+              "status": 403,
+              "title": "CONTRACT_403_GUARDIAN_NOT_VERIFIED",
+              "code": "CONTRACT_403_GUARDIAN_NOT_VERIFIED",
+              "detail": "가입 보호자 인증이 완료되지 않은 미성년자입니다 (userId=3)",
+              "instance": "/v1/contracts",
+              "timestamp": "2026-05-31T10:00:00.000Z"
+          }
+      """
+
+    const val ROLE_ALREADY_SET = """
+          {
+              "status": 409,
+              "title": "CONTRACT_409_ROLE_ALREADY_SET",
+              "code": "CONTRACT_409_ROLE_ALREADY_SET",
+              "detail": "이미 역할이 설정된 계약입니다 (publicCode=Yx7Kp2qLm9Nz)",
+              "instance": "/v1/contracts/Yx7Kp2qLm9Nz",
+              "timestamp": "2026-05-31T10:00:00.000Z"
+          }
+      """
 
     const val NOT_DRAFT = """
               {

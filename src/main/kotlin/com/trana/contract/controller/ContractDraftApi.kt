@@ -42,16 +42,19 @@ interface ContractDraftApi {
         operationId = "contractCreateDraft",
         summary = "계약 DRAFT 생성",
         description = """
-본인을 SELLER 또는 BUYER 로 등록하면서 빈 DRAFT 계약을 생성합니다.
+계약 placeholder (IN_PROGRESS) 생성. 본인을 SELLER/BUYER 로 등록할 수도 있고 (성인 흐름), 역할/거래방식 없이 빈 IN_PROGRESS 만 만들 수도 있음 (미성년 임시저장 흐름).
 
 흐름:
 - JWT 인증 필요
-- consentType 은 user.ageGroup 으로 자동 결정 (ADULT → NOT_APPLICABLE, MINOR → GUARDIAN_REQUIRED)
-- 응답 publicCode 가 이후 모든 sub-endpoint 의 경로 파라미터
+- consentType 명시: 성인은 생략 또는 NOT_APPLICABLE. 미성년은 명시 필수 (GUARDIAN_REQUIRED / NOT_APPLICABLE)
+- 미성년이 GUARDIAN_REQUIRED → 이어서 /guardian-consent endpoint 로 보호자 토큰 발급 → 보호자 full eKYC + 약관 동의 → guardianConsentAt 채움 → 역할 선택 PATCH → 본문 PATCH → markReady
+- 미성년이 NOT_APPLICABLE → 바로 역할 선택 PATCH → 본문 PATCH → markReady
+- 성인 → 한 번에 deliveryType + creatorRole 같이 전송 (consentType 생략 가능) → 본문 PATCH → markReady
 
-주의:
-- title/price 등 본문은 빈 상태로 생성 → PATCH 로 채우거나 AI 추출 호출
-- 반대편 party 는 W5 (서명 요청) 단계에서 매핑
+검증:
+- 미성년 + guardianVerifiedAt=null → 403 (가입 보호자 eKYC 미완료, 계약 생성 자격 없음)
+- 성인 + consentType=GUARDIAN_REQUIRED → 400
+- 미성년 + consentType=null → 400 (명시 필수)
               """,
     )
     @ApiResponses(
@@ -68,13 +71,28 @@ interface ContractDraftApi {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "요청 본문 validation 실패",
+                description = "요청 본문 validation 실패 또는 consentType 부적합 (성인이 GUARDIAN_REQUIRED, 미성년이 null 등)",
                 content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
             ),
             ApiResponse(
                 responseCode = "401",
                 description = "JWT 인증 필요",
                 content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "미성년 가입 보호자 eKYC 미완료 (계약 생성 자격 없음)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "guardianNotVerified",
+                                value = ContractExamples.GUARDIAN_NOT_VERIFIED,
+                            ),
+                        ],
+                    ),
+                ],
             ),
         ],
     )
@@ -141,6 +159,7 @@ DRAFT 상태에서만 수정 가능. null 인 필드는 변경 없음 (PATCH sem
 덮어쓰기 주의:
 - AI 추출 호출 후 자동 반영된 prefill (title/price/conditionSummary/conditionDetails) 은 PATCH 로 사용자 수정 가능
 - 반대로 PATCH 후 AI 재추출 호출은 prefill 4필드를 다시 덮어씀
+- creatorRole 은 한 번만 설정 가능 — 이미 설정된 후 다시 보내면 409
               """,
     )
     @ApiResponses(
@@ -177,11 +196,14 @@ DRAFT 상태에서만 수정 가능. null 인 필드는 변경 없음 (PATCH sem
             ),
             ApiResponse(
                 responseCode = "409",
-                description = "DRAFT 상태가 아님",
+                description = "DRAFT/IN_PROGRESS 상태가 아니거나, creatorRole 이미 설정됨",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
-                        examples = [ExampleObject(name = "notDraft", value = ContractExamples.NOT_DRAFT)],
+                        examples = [
+                            ExampleObject(name = "notDraft", value = ContractExamples.NOT_DRAFT),
+                            ExampleObject(name = "roleAlreadySet", value = ContractExamples.ROLE_ALREADY_SET),
+                        ],
                     ),
                 ],
             ),

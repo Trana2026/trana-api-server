@@ -48,7 +48,7 @@ class Contract(
     val creatorUserId: Long,
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_type", nullable = false, length = 20)
-    var deliveryType: DeliveryType,
+    var deliveryType: DeliveryType? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "consent_type", nullable = false, length = 30)
     var consentType: ConsentType,
@@ -206,7 +206,7 @@ class Contract(
         fun createDraft(
             publicCode: String,
             creatorUserId: Long,
-            deliveryType: DeliveryType,
+            deliveryType: DeliveryType? = null,
             consentType: ConsentType,
         ): Contract =
             Contract(

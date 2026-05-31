@@ -43,7 +43,7 @@ class ContractGuardianConsentService(
         minorUserId: Long,
     ): GuardianLink {
         val contract = loadOwnedConsentRequired(publicCode, minorUserId)
-        if (contract.status != ContractStatus.DRAFT) {
+        if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(publicCode, contract.status.name)
         }
         if (contract.guardianConsentAt != null) {

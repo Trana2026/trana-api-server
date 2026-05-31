@@ -13,6 +13,7 @@ import com.trana.contract.repository.ContractAttachmentRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.user.entity.AgeGroup
+import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -49,20 +50,16 @@ class ContractDraftService(
 ) {
     fun createDraft(
         creatorUserId: Long,
-        deliveryType: DeliveryType,
-        creatorRole: PartyType,
+        deliveryType: DeliveryType?,
+        creatorRole: PartyType?,
+        requestedConsentType: ConsentType?,
     ): Contract {
         val user =
             userRepository.findById(creatorUserId).orElseThrow {
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$creatorUserId)")
             }
 
-        val consentType =
-            when (user.ageGroup) {
-                AgeGroup.MINOR -> ConsentType.GUARDIAN_REQUIRED
-                AgeGroup.ADULT -> ConsentType.NOT_APPLICABLE
-                null -> throw ContractException.InvalidConsentType("ageGroup 미설정 user 는 계약 생성 불가")
-            }
+        val consentType = resolveConsentType(user, requestedConsentType)
 
         val contract =
             Contract.createDraft(
@@ -73,17 +70,19 @@ class ContractDraftService(
             )
         val saved = contractRepository.save(contract)
 
-        val party =
-            ContractParty.create(
-                contractId = saved.id!!,
-                userId = creatorUserId,
-                partyType = creatorRole,
-            )
-        contractPartyRepository.save(party)
+        if (creatorRole != null) {
+            val party =
+                ContractParty.create(
+                    contractId = saved.id!!,
+                    userId = creatorUserId,
+                    partyType = creatorRole,
+                )
+            contractPartyRepository.save(party)
+        }
 
         eventPublisher.publishEvent(
             ContractStatusChangedEvent(
-                contractId = saved.id,
+                contractId = saved.id!!,
                 fromStatus = null,
                 toStatus = ContractStatus.IN_PROGRESS,
                 actorUserId = creatorUserId,
@@ -93,6 +92,35 @@ class ContractDraftService(
 
         return saved
     }
+
+    @Suppress("ThrowsCount")
+    private fun resolveConsentType(
+        user: User,
+        requested: ConsentType?,
+    ): ConsentType =
+        when (user.ageGroup) {
+            AgeGroup.ADULT -> {
+                if (requested != null && requested != ConsentType.NOT_APPLICABLE) {
+                    throw ContractException.InvalidConsentType(
+                        "성인은 NOT_APPLICABLE 만 가능합니다 (requested=$requested)",
+                    )
+                }
+                ConsentType.NOT_APPLICABLE
+            }
+
+            AgeGroup.MINOR -> {
+                if (user.guardianVerifiedAt == null) {
+                    throw ContractException.GuardianNotVerified(user.id!!)
+                }
+                requested ?: throw ContractException.InvalidConsentType(
+                    "미성년은 consentType 명시 필수 (GUARDIAN_REQUIRED / NOT_APPLICABLE)",
+                )
+            }
+
+            null -> {
+                throw ContractException.InvalidConsentType("ageGroup 미설정 user 는 계약 생성 불가")
+            }
+        }
 
     @Transactional(readOnly = true)
     fun getDraft(
@@ -108,9 +136,25 @@ class ContractDraftService(
         conditionSummary: String? = null,
         conditionDetails: String? = null,
         deliveryType: DeliveryType? = null,
+        creatorRole: PartyType? = null,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
         accessGuard.ensureEditable(contract)
+
+        if (creatorRole != null) {
+            val existing = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+            if (existing != null) {
+                throw ContractException.RoleAlreadySet(publicCode)
+            }
+            val party =
+                ContractParty.create(
+                    contractId = contract.id,
+                    userId = userId,
+                    partyType = creatorRole,
+                )
+            contractPartyRepository.save(party)
+        }
+
         val fromStatus = contract.status
         contract.updateDraft(
             title = title,
@@ -164,12 +208,12 @@ class ContractDraftService(
 
         return contracts.map { contract ->
             val contractId = contract.id!!
-            val party = myParties[contractId] ?: error("party 없음 (contractId=$contractId, userId=$userId)")
+            val party = myParties[contractId]
             val attachments = attachmentsByContractId[contractId].orEmpty()
             val first = attachments.minByOrNull { it.sortOrder }
             ContractListView(
                 contract = contract,
-                myRole = party.partyType,
+                myRole = party?.partyType,
                 attachmentCount = attachments.size,
                 firstAttachmentUrl = first?.let { attachmentStorage.presignGet(it.s3Key) },
             )
@@ -196,7 +240,7 @@ data class PdfDownloadView(
 
 data class ContractListView(
     val contract: Contract,
-    val myRole: PartyType,
+    val myRole: PartyType?,
     val attachmentCount: Int,
     val firstAttachmentUrl: String?,
 )

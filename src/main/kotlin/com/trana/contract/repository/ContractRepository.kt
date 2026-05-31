@@ -41,20 +41,23 @@ interface ContractRepository : JpaRepository<Contract, Long> {
      */
     @Query(
         """
-            SELECT c FROM Contract c
-            WHERE c.deletedAt IS NULL
-              AND (:status IS NULL OR c.status = :status)
-              AND (
-                :query IS NULL
-                OR (c.title IS NOT NULL AND LOWER(c.title) LIKE LOWER(CONCAT('%', :query, '%')))
-              )
-              AND EXISTS (
+          SELECT c FROM Contract c
+          WHERE c.deletedAt IS NULL
+            AND (:status IS NULL OR c.status = :status)
+            AND (
+              :query IS NULL
+              OR (c.title IS NOT NULL AND LOWER(c.title) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))
+            )
+            AND (
+              c.creatorUserId = :userId
+              OR EXISTS (
                 SELECT 1 FROM ContractParty p
                 WHERE p.contractId = c.id
                   AND p.userId = :userId
               )
-            ORDER BY c.updatedAt DESC
-            """,
+            )
+          ORDER BY c.updatedAt DESC
+          """,
     )
     fun findAllByPartyUserId(
         @Param("userId") userId: Long,

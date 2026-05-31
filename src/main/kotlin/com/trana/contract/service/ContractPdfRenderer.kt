@@ -36,7 +36,15 @@ class ContractPdfRenderer(
                 setVariable("price", contract.price)
                 setVariable("conditionSummary", contract.conditionSummary)
                 setVariable("conditionDetails", contract.conditionDetails)
-                setVariable("deliveryTypeLabel", deliveryLabel(contract.deliveryType))
+                setVariable(
+                    "deliveryTypeLabel",
+                    deliveryLabel(
+                        requireNotNull(contract.deliveryType) {
+                            "deliveryType null in PDF rendering" +
+                                " (publicCode=${contract.publicCode}) — validateReadyEligible 누락"
+                        },
+                    ),
+                )
             }
         val html = templateEngine.process(TEMPLATE_NAME, context)
 

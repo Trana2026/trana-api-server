@@ -128,4 +128,14 @@ enum class ErrorCode(
         "CONTRACT_403_NOT_ACCESSIBLE",
         "이 계약에 접근할 권한이 없습니다",
     ),
+    CONTRACT_GUARDIAN_NOT_VERIFIED(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_GUARDIAN_NOT_VERIFIED",
+        "가입 보호자 인증이 완료되지 않은 미성년자는 계약을 생성할 수 없습니다",
+    ),
+    CONTRACT_ROLE_ALREADY_SET(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_ROLE_ALREADY_SET",
+        "이미 역할(SELLER/BUYER)이 설정된 계약입니다",
+    ),
 }

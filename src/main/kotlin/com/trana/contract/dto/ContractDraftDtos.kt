@@ -8,20 +8,35 @@ import com.trana.contract.entity.PartyType
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
-@Schema(description = "계약 DRAFT 생성 요청")
+@Schema(
+    description = """
+계약 DRAFT 생성 요청 — 세 필드 모두 nullable (PATCH 로 채울 수 있음).
+
+흐름별 권장:
+- 성인: 한 번에 deliveryType + creatorRole 같이 전송 (consentType 생략 가능 → NOT_APPLICABLE 자동)
+- 미성년 (a 동의 요청): consentType=GUARDIAN_REQUIRED 만 먼저, role/deliveryType 은 보호자 동의 후 PATCH
+- 미성년 (b 동의 없이 진행): consentType=NOT_APPLICABLE 만 먼저, role/deliveryType 은 이어서 PATCH
+
+검증:
+- 성인이 consentType=GUARDIAN_REQUIRED 보내면 400
+- 미성년이 guardianVerifiedAt=null 이면 403 (가입 보호자 eKYC 미완료)
+  """,
+)
 data class CreateContractDraftRequest(
-    @field:NotNull
-    @field:Schema(description = "거래 방식 (대면 / 택배)", example = "DIRECT")
-    val deliveryType: DeliveryType,
-    @field:NotNull
-    @field:Schema(description = "작성자 본인의 역할 (SELLER / BUYER)", example = "SELLER")
-    val creatorRole: PartyType,
+    @field:Schema(description = "거래 방식 (대면 / 택배) — 생략 가능, 이후 PATCH 로 채움", example = "DIRECT")
+    val deliveryType: DeliveryType? = null,
+    @field:Schema(description = "작성자 본인의 역할 (SELLER / BUYER) — 생략 가능, 이후 PATCH 로 채움", example = "SELLER")
+    val creatorRole: PartyType? = null,
+    @field:Schema(
+        description = "보호자 동의 유형. 성인은 생략 또는 NOT_APPLICABLE. 미성년은 GUARDIAN_REQUIRED / NOT_APPLICABLE 명시.",
+        example = "GUARDIAN_REQUIRED",
+    )
+    val consentType: ConsentType? = null,
 )
 
 @Schema(description = "계약 DRAFT 부분 수정 요청 — null 인 필드는 변경 없음")
@@ -36,8 +51,16 @@ data class UpdateContractDraftRequest(
     val conditionSummary: String? = null,
     @field:Schema(description = "상태/하자/포함품 상세", example = "박스 미개봉, 정품 보증서 포함, 액정 보호필름 별도")
     val conditionDetails: String? = null,
-    @field:Schema(description = "거래 방식 변경", example = "SHIPPING")
-    val deliveryType: DeliveryType? = null,
+    @field:Schema(description = "거래 방식 (IN_PROGRESS 단계에서 미정 가능 — null). markReady 시점에 NOT NULL 강제.")
+    val deliveryType: DeliveryType?,
+    @field:Schema(
+        description = """
+작성자 본인의 역할 (SELLER / BUYER) — 한 번만 설정 가능, 이미 설정된 후 변경 시 409.
+미성년 (a) 흐름에서 보호자 동의 완료 후 "역할 선택" 단계에서 채움. 성인은 createDraft 시점에 채워졌으면 null.
+  """,
+        example = "SELLER",
+    )
+    val creatorRole: PartyType? = null,
 )
 
 @Schema(description = "계약 단건 응답")
@@ -48,8 +71,8 @@ data class ContractResponse(
     val status: ContractStatus,
     @field:Schema(description = "분쟁 상태 (W7+)")
     val disputeState: DisputeState,
-    @field:Schema(description = "거래 방식")
-    val deliveryType: DeliveryType,
+    @field:Schema(description = "거래 방식 (IN_PROGRESS 단계에서 미정 가능 — null). markReady 시점에 NOT NULL 강제.")
+    val deliveryType: DeliveryType?,
     @field:Schema(description = "보호자 동의 유형")
     val consentType: ConsentType,
     val title: String?,
@@ -80,10 +103,11 @@ data class ContractListItem(
     @field:Schema(
         description =
             "본인의 역할 — SELLER 또는 BUYER. 프론트가 (myRole, status) 조합으로 " +
-                "알림 메시지 매핑 (예: SELLER + REVISION_REQUESTED → \"수정 요청이 들어왔어요\")",
+                "알림 메시지 매핑. **null 인 경우** = 본인이 creator 지만 아직 role 미설정 " +
+                "(IN_PROGRESS 단계의 임시저장 — 미성년 (a) 흐름에서 보호자 동의 후 PATCH 로 채움)",
         example = "BUYER",
     )
-    val myRole: PartyType,
+    val myRole: PartyType?,
     @field:Schema(description = "첨부 사진 개수 (0~7)", example = "3")
     val attachmentCount: Int,
     @field:Schema(
