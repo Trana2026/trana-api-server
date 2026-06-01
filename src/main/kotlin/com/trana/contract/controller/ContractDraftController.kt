@@ -5,6 +5,8 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.ReceiverSignRequest
+import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
@@ -15,7 +17,9 @@ import com.trana.contract.service.ContractDraftService
 import com.trana.contract.service.ContractListView
 import com.trana.contract.service.ContractStatusService
 import com.trana.contract.service.PdfDownloadView
+import com.trana.contract.service.ReceiverSignView
 import io.swagger.v3.oas.annotations.Parameter
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -143,6 +147,22 @@ class ContractDraftController(
             .body(bytes)
     }
 
+    override fun receiverSign(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: ReceiverSignRequest,
+        httpRequest: HttpServletRequest,
+    ): ReceiverSignResponse =
+        statusService
+            .receiverSign(
+                publicCode = publicCode,
+                userId = userId,
+                signatureBase64 = request.signatureBase64,
+                agreedTermIds = request.agreedTermIds,
+                signerIp = httpRequest.remoteAddr,
+                signerUserAgent = httpRequest.getHeader("User-Agent"),
+            ).toResponse()
+
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
@@ -195,4 +215,12 @@ private fun PdfDownloadView.toResponse(): ContractPdfDownloadResponse =
         downloadUrl = downloadUrl,
         expiresInSeconds = expiresInSeconds,
         sha256 = sha256,
+    )
+
+private fun ReceiverSignView.toResponse(): ReceiverSignResponse =
+    ReceiverSignResponse(
+        publicCode = publicCode,
+        status = status,
+        pdfVersion = pdfVersion,
+        receiverSignedAt = receiverSignedAt,
     )

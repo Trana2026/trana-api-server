@@ -1,5 +1,6 @@
 package com.trana.contract
 
+@Suppress("LargeClass")
 internal object ContractExamples {
     // ───── 진입 (eligibility / 보호자 동의 링크) ─────
 
@@ -657,4 +658,55 @@ internal object ContractExamples {
                   "timestamp": "2026-05-20T10:15:00Z"
                 }
             """
+
+    // ───── 수신자 서명 (W6 #43) ─────
+
+    const val RECEIVER_SIGN_REQUEST = """
+            {
+              "signatureBase64": "iVBORw0KGgoAAAANSUhEUgAA...AAAFBT",
+              "agreedTermIds": [5, 6]
+            }
+        """
+
+    const val RECEIVER_SIGN_RESPONSE = """
+            {
+              "publicCode": "Yx7Kp2qLm9Nz",
+              "status": "RECEIVER_SIGNED",
+              "pdfVersion": 1,
+              "receiverSignedAt": "2026-06-01T12:34:56Z"
+            }
+        """
+
+    const val RECEIVER_SIGN_NOT_RECEIVER = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_403_NOT_RECEIVER",
+              "status": 403,
+              "detail": "수신자만 서명할 수 있습니다 (publicCode=Yx7Kp2qLm9Nz, userId=42)",
+              "code": "CONTRACT_403_NOT_RECEIVER",
+              "timestamp": "2026-06-01T12:34:56Z"
+            }
+        """
+
+    const val RECEIVER_SIGN_NOT_SHARED = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_409_NOT_SHARED",
+              "status": 409,
+              "detail": "현재 SHARED 상태가 아닙니다 (publicCode=Yx7Kp2qLm9Nz, status=RECEIVER_SIGNED)",
+              "code": "CONTRACT_409_NOT_SHARED",
+              "timestamp": "2026-06-01T12:34:56Z"
+            }
+        """
+
+    const val RECEIVER_SIGN_TERMS_MISMATCH = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_400_TERMS",
+              "status": 400,
+              "detail": "동의해야 할 약관 ID 가 일치하지 않습니다 (expected=CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개, actual=[5])",
+              "code": "CONTRACT_400_TERMS",
+              "timestamp": "2026-06-01T12:34:56Z"
+            }
+        """
 }

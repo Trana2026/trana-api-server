@@ -4,20 +4,28 @@ import com.trana.common.util.ContractInvitationTokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
+import com.trana.contract.adapter.kakao.ReceiverSignedMessage
 import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
+import com.trana.contract.entity.ContractConsent
 import com.trana.contract.entity.ContractInvitation
 import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractRevisionRequest
+import com.trana.contract.entity.ContractSignature
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.entity.PartyType
+import com.trana.contract.repository.ContractConsentRepository
 import com.trana.contract.repository.ContractInvitationRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.contract.repository.ContractRevisionRequestRepository
+import com.trana.contract.repository.ContractSignatureRepository
 import com.trana.contract.repository.ContractStatusLogRepository
+import com.trana.terms.entity.TermsType
+import com.trana.terms.entity.TermsVersion
+import com.trana.terms.repository.TermsVersionRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.UserStatus
 import com.trana.user.repository.UserRepository
@@ -25,6 +33,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
+import java.time.Instant
 
 /**
  * 계약 상태 전이 / 공유 / 서명 통합 서비스.
@@ -55,6 +64,9 @@ class ContractStatusService(
     private val pdfRenderer: ContractPdfRenderer,
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val eventPublisher: ApplicationEventPublisher,
+    private val contractSignatureRepository: ContractSignatureRepository,
+    private val contractConsentRepository: ContractConsentRepository,
+    private val termsVersionRepository: TermsVersionRepository,
 ) {
     fun transitionToReady(
         publicCode: String,
@@ -196,6 +208,129 @@ class ContractStatusService(
 
         invitation.markUsed(userId)
         return contract
+    }
+
+    @Suppress("ThrowsCount", "LongMethod", "LongParameterList")
+    fun receiverSign(
+        publicCode: String,
+        userId: Long,
+        signatureBase64: String,
+        agreedTermIds: List<Long>,
+        signerIp: String?,
+        signerUserAgent: String?,
+    ): ReceiverSignView {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        if (contract.creatorUserId == userId) {
+            throw ContractException.NotReceiver(publicCode, userId)
+        }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(publicCode, contract.status.name)
+        }
+        val contractId = contract.id!!
+
+        val myParty =
+            contractPartyRepository.findFirstByContractIdAndUserId(contractId, userId)
+                ?: throw ContractException.NotReceiver(publicCode, userId)
+
+        val expectedTerms = loadContractTerms()
+        val expectedIds = expectedTerms.map { it.id!! }.toSet()
+        if (agreedTermIds.toSet() != expectedIds) {
+            throw ContractException.TermsMismatch(
+                expected = expectedTerms.joinToString(", ") { "${it.type}(${it.version})" },
+                actual = agreedTermIds,
+            )
+        }
+
+        val receiver =
+            userRepository.findById(userId).orElseThrow {
+                IllegalStateException("수신자 user 조회 실패 (userId=$userId)")
+            }
+        val partyInfo =
+            PartyRenderInfo(
+                name = receiver.name ?: "(unknown)",
+                birthDate = receiver.birthDate ?: "(unknown)",
+                phone = receiver.phone ?: "(unknown)",
+                signatureBase64 = signatureBase64,
+            )
+        val renderInput =
+            ContractPdfRenderInput(
+                contract = contract,
+                seller = if (myParty.partyType == PartyType.SELLER) partyInfo else null,
+                buyer = if (myParty.partyType == PartyType.BUYER) partyInfo else null,
+            )
+        val pdfBytes = pdfRenderer.render(renderInput)
+        val pdfSha256 = sha256Hex(pdfBytes)
+        val pdfS3Key = buildPdfS3Key(publicCode)
+        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+
+        expectedTerms.forEach { term ->
+            contractConsentRepository.save(
+                ContractConsent.create(
+                    contractId = contractId,
+                    userId = userId,
+                    termId = term.id!!,
+                    termVersion = term.version,
+                    consenterIp = signerIp,
+                ),
+            )
+        }
+
+        val signature =
+            contractSignatureRepository.save(
+                ContractSignature.create(
+                    contractId = contractId,
+                    userId = userId,
+                    partyType = myParty.partyType,
+                    signatureData = signatureBase64,
+                    pdfVersionAtSign = contract.version,
+                    signerIp = signerIp,
+                    signerUserAgent = signerUserAgent,
+                ),
+            )
+
+        val from = contract.status
+        contract.markReceiverSigned(pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256)
+        publishStatusChanged(contract, from, userId, null)
+
+        sendReceiverSignedAlimtalk(contract)
+
+        return ReceiverSignView(
+            publicCode = contract.publicCode,
+            status = contract.status,
+            pdfVersion = contract.version,
+            receiverSignedAt = signature.signedAt ?: Instant.now(),
+        )
+    }
+
+    private fun loadContractTerms(): List<TermsVersion> {
+        val allEffective =
+            termsVersionRepository.findAllByEffectiveAtLessThanEqualOrderByEffectiveAtDesc(Instant.now())
+        val picked =
+            CONTRACT_TERM_TYPES.mapNotNull { type ->
+                allEffective.firstOrNull { it.type == type }
+            }
+        check(picked.size == CONTRACT_TERM_TYPES.size) {
+            "계약 도메인 약관 시드 누락 — V10 마이그레이션 확인 필요"
+        }
+        return picked
+    }
+
+    private fun sendReceiverSignedAlimtalk(contract: Contract) {
+        val creator =
+            userRepository.findById(contract.creatorUserId).orElseThrow {
+                IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
+            }
+        val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
+        val creatorPhone = creator.phone ?: "(unknown)"
+        val reviewUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}"
+        kakaoAlimtalkClient.sendReceiverSigned(
+            ReceiverSignedMessage(
+                creatorPhone = creatorPhone,
+                creatorName = creatorName,
+                contractTitle = contract.title ?: "(제목 없음)",
+                reviewUrl = reviewUrl,
+            ),
+        )
     }
 
     @Transactional(readOnly = true)
@@ -345,5 +480,13 @@ class ContractStatusService(
     companion object {
         // TODO(W6): ConfigurationProperties 로 분리 (dev/prod URL 분기, BSP 준비 시점)
         private const val INVITATION_BASE_URL = "https://trana.app"
+        private val CONTRACT_TERM_TYPES = listOf(TermsType.CONTRACT_AGREEMENT, TermsType.ELECTRONIC_SIGNATURE)
     }
 }
+
+data class ReceiverSignView(
+    val publicCode: String,
+    val status: ContractStatus,
+    val pdfVersion: Int,
+    val receiverSignedAt: Instant,
+)

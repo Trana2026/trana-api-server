@@ -9,7 +9,6 @@ import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.time.LocalDate
 import java.util.Locale
 
 /**
@@ -87,7 +86,7 @@ class ContractPdfRenderer(
         party: PartyRenderInfo?,
     ) {
         setVariable("${prefix}Name", party?.name ?: PLACEHOLDER)
-        setVariable("${prefix}BirthDate", party?.birthDate?.toString() ?: PLACEHOLDER)
+        setVariable("${prefix}BirthDate", party?.birthDate ?: PLACEHOLDER)
         setVariable("${prefix}Phone", party?.phone ?: PLACEHOLDER)
         setVariable("${prefix}SignatureBase64", party?.signatureBase64)
     }
@@ -113,7 +112,7 @@ data class ContractPdfRenderInput(
 
 data class PartyRenderInfo(
     val name: String,
-    val birthDate: LocalDate,
+    val birthDate: String,
     val phone: String,
     val signatureBase64: String? = null,
 )

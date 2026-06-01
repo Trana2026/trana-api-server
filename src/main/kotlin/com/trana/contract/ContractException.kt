@@ -19,6 +19,9 @@ import com.trana.common.exception.ErrorCode
  * - AiResponseInvalid: OpenAI 응답 JSON 파싱 / schema 검증 실패
  * - PdfNotGenerated: PDF 다운로드 요청 시 markReady 가 선행되지 않음
  * - UserNotReady: invitation accept 시 user 가입 미완료 (status != ACTIVE 또는 미성년 보호자 미검증)
+ * - RoleAlreadySet: creatorRole 이미 설정된 계약에 다시 PATCH 시도
+ * - NotReceiver: 수신자 전용 endpoint 에 생성자 본인 또는 외부 user 호출
+ * - TermsMismatch: 수신자 서명 시 agreedTermIds 가 contract domain term ID 와 불일치
  */
 sealed class ContractException(
     errorCode: ErrorCode,
@@ -201,5 +204,21 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_ROLE_ALREADY_SET,
             "이미 역할이 설정된 계약입니다 (publicCode=$publicCode)",
+        )
+
+    class NotReceiver(
+        publicCode: String,
+        userId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_RECEIVER,
+            "수신자만 서명할 수 있습니다 (publicCode=$publicCode, userId=$userId)",
+        )
+
+    class TermsMismatch(
+        expected: String,
+        actual: List<Long>,
+    ) : ContractException(
+            ErrorCode.CONTRACT_TERMS_MISMATCH,
+            "동의해야 할 약관 ID 가 일치하지 않습니다 (expected=$expected, actual=$actual)",
         )
 }

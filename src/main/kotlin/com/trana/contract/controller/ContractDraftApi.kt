@@ -7,6 +7,8 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.ReceiverSignRequest
+import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -539,6 +542,105 @@ SHARED 상태 계약에 대해 수신자(accept 한 BUYER party)가 필드별 �
         @PathVariable publicCode: String,
         @RequestBody @Valid request: RequestRevisionRequest,
     ): ContractResponse
+
+    @Tag(name = "Contract Invitation")
+    @Operation(
+        operationId = "contractReceiverSign",
+        summary = "수신자 서명 — SHARED → RECEIVER_SIGNED",
+        description = """
+SHARED 상태 계약에 수신자가 약관 동의 + 전자서명 → PDF v2 생성 + 생성자 알림톡 발송 + status RECEIVER_SIGNED 전이.
+
+전제:
+- invitation accept 가 선행되어야 함 — accept 시점에 수신자 party 등록됨
+- 권한: 본인이 contract_parties 멤버 (수신자) 여야 함. 생성자 본인이 호출하면 403
+- 계약 status 가 SHARED 여야 함 (이미 RECEIVER_SIGNED 또는 다른 상태면 409)
+- 동의 약관: CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개씩 정확히 2개 (V10 시드)
+- 전자서명: signature_pad PNG image 의 raw base64 (data URI prefix 없이)
+
+효과:
+- contract_consents row INSERT (계약 약관 + 전자서명 약관 각 1 row, audit)
+- contract_signatures row INSERT (서명자 IP/UA + pdfVersionAtSign snapshot, WORM)
+- PDF v2 렌더링 (수신자 박스 채움) + S3 업로드 (Versioning 으로 v1 보존)
+- contracts.status = RECEIVER_SIGNED, content_hash 갱신
+- contract_status_logs (SHARED → RECEIVER_SIGNED) row INSERT
+- 생성자 카카오톡 알림톡 2번 템플릿 `[Trana] 수신자 서명 완료, 최종 확인 필요`
+
+후속:
+- 생성자 알림 보고 PDF v2 검토 + 최종 서명 → SIGNED (W6 #32 진행 중)
+            """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "수신자 서명 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ReceiverSignResponse::class),
+                        examples = [
+                            ExampleObject(name = "receiverSigned", value = ContractExamples.RECEIVER_SIGN_RESPONSE),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "약관 ID 누락/불일치",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "termsMismatch",
+                                value = ContractExamples.RECEIVER_SIGN_TERMS_MISMATCH,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "생성자 본인 호출 또는 party 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notReceiver", value = ContractExamples.RECEIVER_SIGN_NOT_RECEIVER),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "계약 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notFound", value = ContractExamples.NOT_FOUND)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "SHARED 상태가 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notShared", value = ContractExamples.RECEIVER_SIGN_NOT_SHARED),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/receiver-sign")
+    fun receiverSign(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: ReceiverSignRequest,
+        httpRequest: HttpServletRequest,
+    ): ReceiverSignResponse
 
     @Tag(name = "Contract Invitation", description = "전자계약 수신자 흐름 (token 기반 — accept / 수정요청)")
     @Operation(

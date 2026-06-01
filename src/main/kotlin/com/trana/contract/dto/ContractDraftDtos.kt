@@ -8,6 +8,7 @@ import com.trana.contract.entity.PartyType
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
@@ -202,7 +203,45 @@ data class RequestRevisionRequest(
             !conditionDetailsReason.isNullOrBlank()
 }
 
+@Schema(description = "수신자 서명 요청 — 계약 약관 + 전자서명 약관 동의 + PNG 서명 image base64")
+data class ReceiverSignRequest(
+    @field:NotBlank
+    @field:Size(max = SIGNATURE_BASE64_MAX_LENGTH)
+    @field:Schema(
+        description =
+            "전자서명 PNG image base64 인코딩 (data URI prefix 없이 raw base64). " +
+                "frontend signature 패키지의 png bytes → base64 변환",
+        example = "iVBORw0KGgoAAAANSUhEUgAA...",
+        maxLength = SIGNATURE_BASE64_MAX_LENGTH,
+    )
+    val signatureBase64: String,
+    @field:NotEmpty
+    @field:Size(min = REQUIRED_TERM_COUNT, max = MAX_TERM_COUNT)
+    @field:Schema(
+        description =
+            "동의한 약관 ID 목록 — CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 2개 필수. " +
+                "frontend 가 GET /v1/terms?context=CONTRACT 로 조회한 ID 그대로 전달",
+        example = "[5, 6]",
+    )
+    val agreedTermIds: List<Long>,
+)
+
+@Schema(description = "수신자 서명 완료 응답 — RECEIVER_SIGNED 전이 + PDF v2 갱신")
+data class ReceiverSignResponse(
+    @field:Schema(description = "외부 노출 식별자", example = "Yx7Kp2qLm9Nz")
+    val publicCode: String,
+    @field:Schema(description = "전이 후 상태", example = "RECEIVER_SIGNED")
+    val status: ContractStatus,
+    @field:Schema(description = "서명된 PDF 리비전 version (contract_signatures.pdf_version_at_sign 과 일치)", example = "1")
+    val pdfVersion: Int,
+    @field:Schema(description = "수신자 서명 시각 (UTC)")
+    val receiverSignedAt: Instant,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"
 private const val REVISION_REASON_MAX_LENGTH = 500
+private const val SIGNATURE_BASE64_MAX_LENGTH = 262144
+private const val REQUIRED_TERM_COUNT = 2
+private const val MAX_TERM_COUNT = 10

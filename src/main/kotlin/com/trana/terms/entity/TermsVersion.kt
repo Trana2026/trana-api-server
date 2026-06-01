@@ -42,4 +42,6 @@ enum class TermsType {
     PRIVACY,
     MARKETING,
     LOCATION,
+    CONTRACT_AGREEMENT,
+    ELECTRONIC_SIGNATURE,
 }
