@@ -8,6 +8,9 @@ import com.trana.contract.repository.ContractRepository
 import com.trana.guardian.entity.GuardianLink
 import com.trana.guardian.entity.LinkPurpose
 import com.trana.guardian.service.GuardianLinkService
+import com.trana.identity.entity.VerificationPurpose
+import com.trana.identity.entity.VerificationStatus
+import com.trana.identity.repository.IdentityVerificationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,10 +23,12 @@ import org.springframework.transaction.annotation.Transactional
  *    - GuardianLinkService.createForContract 위임 → 토큰 발급
  *    - 응답 토큰을 보호자에게 공유 (URL 변환은 Controller 가 web base URL 결합)
  *
- * 2. approveConsent(token, guardianId)
- *    - 보호자 KYC Compare SUCCESS 후 호출 (호출자가 guardianId 전달)
+ * 2. approveConsent(token)
+ *    - 보호자가 web 단순 동의 (token URL 클릭 + 약관 동의 클릭) 시 호출
  *    - 토큰 검증 (active + purpose=CONTRACT_CONSENT)
+ *    - 미성년 user 의 가입 단계 보호자 ID 자동 매핑 (identity_verifications.purpose=GUARDIAN + SUCCESS)
  *    - contract.markGuardianConsented(guardianId) + link.markUsed()
+ *    - 매번 full eKYC 안 함 — 가입 단계 보호자 KYC 1회로 신원 검증 끝
  *
  * 트랜잭션:
  * - approveConsent 는 contract / link 양쪽 변경 → @Transactional 안에서 일관성 보장
@@ -37,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional
 class ContractGuardianConsentService(
     private val contractRepository: ContractRepository,
     private val guardianLinkService: GuardianLinkService,
+    private val identityVerificationRepository: IdentityVerificationRepository,
 ) {
     fun requestConsent(
         publicCode: String,
@@ -56,10 +62,7 @@ class ContractGuardianConsentService(
     }
 
     @Suppress("ThrowsCount")
-    fun approveConsent(
-        token: String,
-        guardianId: Long,
-    ): Contract {
+    fun approveConsent(token: String): Contract {
         val link = guardianLinkService.findActive(token)
         if (link.purpose != LinkPurpose.CONTRACT_CONSENT) {
             throw ContractException.InvalidConsentType(
@@ -88,9 +91,26 @@ class ContractGuardianConsentService(
             throw ContractException.GuardianConsentAlready(contract.publicCode)
         }
 
+        val guardianId = resolveGuardianId(minorUserId = link.userId, publicCode = contract.publicCode)
         contract.markGuardianConsented(guardianId)
         guardianLinkService.markUsed(token)
         return contract
+    }
+
+    private fun resolveGuardianId(
+        minorUserId: Long,
+        publicCode: String,
+    ): Long {
+        val guardianVerification =
+            identityVerificationRepository.findFirstBySubjectUserIdAndPurposeAndStatus(
+                subjectUserId = minorUserId,
+                purpose = VerificationPurpose.GUARDIAN,
+                status = VerificationStatus.SUCCESS,
+            ) ?: throw ContractException.GuardianConsentRequired(publicCode)
+        return guardianVerification.guardianId
+            ?: throw IllegalStateException(
+                "가입 단계 보호자 verification 에 guardianId 가 없음 (verificationId=${guardianVerification.id})",
+            )
     }
 
     @Suppress("ThrowsCount")

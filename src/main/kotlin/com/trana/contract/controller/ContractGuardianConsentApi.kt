@@ -99,19 +99,21 @@ interface ContractGuardianConsentApi {
 
     @Operation(
         operationId = "contractGuardianConsentApprove",
-        summary = "보호자 동의 확정 (public — 보호자 KYC 완료 후)",
+        summary = "보호자 동의 확정 (public — web 단순 동의)",
         description = """
-보호자가 KYC Compare SUCCESS 후 호출. JWT 미요구 (보호자는 user 아님).
+보호자가 web 에서 token URL 클릭 + 약관 동의 클릭 시 호출. JWT 미요구 (보호자는 user 아님).
 
 흐름:
 - 토큰 검증 (active + purpose=CONTRACT_CONSENT)
+- 미성년 user 의 가입 단계 보호자 (identity_verifications.purpose=GUARDIAN + SUCCESS) ID 자동 매핑
 - contract.markGuardianConsented(guardianId) + link.markUsed()
 - 응답으로 publicCode + 동의 시각만 반환 (최소 정보)
 
 주의:
-- guardianId 는 보호자 KYC Compare SUCCESS 결과 (identity 도메인 응답)
+- 보호자 신원 확인은 가입 단계 보호자 KYC 1회로 끝 — 계약마다 또 eKYC 안 함 (2026-06-01 정책 변경)
+- 가입 단계 보호자 KYC 미완료 미성년 시 409 GuardianConsentRequired
 - 토큰 1회용 — approve 후 markUsed → 재호출 시 410
-              """,
+                """,
     )
     @ApiResponses(
         value = [

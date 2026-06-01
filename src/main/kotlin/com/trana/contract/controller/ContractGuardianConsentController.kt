@@ -31,7 +31,7 @@ class ContractGuardianConsentController(
     override fun approve(
         @RequestBody request: ApproveContractGuardianConsentRequest,
     ): ContractGuardianConsentApprovedResponse {
-        val contract = service.approveConsent(token = request.token, guardianId = request.guardianId)
+        val contract = service.approveConsent(token = request.token)
         return contract.toApprovedResponse()
     }
 }

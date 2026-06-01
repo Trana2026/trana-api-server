@@ -39,11 +39,10 @@ internal object ContractExamples {
           """
 
     const val GUARDIAN_CONSENT_APPROVE_REQUEST = """
-                {
-                  "token": "V1StGXR8_Z5jdHi6B-myT",
-                  "guardianId": 42
-                }
-            """
+              {
+                    "token": "V1StGXR8_Z5jdHi6B-myT"
+              }
+          """
 
     const val GUARDIAN_CONSENT_APPROVE_RESPONSE = """
                 {
