@@ -86,7 +86,7 @@ class Contract(
         protected set
 
     @Column(name = "version", nullable = false)
-    var version: Int = 1
+    var version: Int = 0
         protected set
 
     @Column(name = "pdf_s3_key", length = 500)
@@ -165,6 +165,7 @@ class Contract(
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()
+        this.version += 1
     }
 
     fun markShared() {

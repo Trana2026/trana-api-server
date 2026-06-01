@@ -64,7 +64,7 @@ class ContractStatusService(
         accessGuard.ensureDraft(contract)
         accessGuard.validateReadyEligible(contract)
 
-        val pdfBytes = pdfRenderer.render(contract)
+        val pdfBytes = pdfRenderer.render(ContractPdfRenderInput(contract))
         val pdfSha256 = sha256Hex(pdfBytes)
         val pdfS3Key = buildPdfS3Key(publicCode)
         pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)

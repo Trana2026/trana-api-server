@@ -228,7 +228,7 @@ class ContractDraftService(
         val contract = accessGuard.loadOwned(publicCode, userId)
         accessGuard.ensureDraft(contract)
         accessGuard.validateReadyEligible(contract)
-        return pdfRenderer.render(contract)
+        return pdfRenderer.render(ContractPdfRenderInput(contract))
     }
 }
 

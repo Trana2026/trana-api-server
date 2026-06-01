@@ -9,6 +9,7 @@ import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.time.LocalDate
 import java.util.Locale
 
 /**
@@ -29,7 +30,8 @@ import java.util.Locale
 class ContractPdfRenderer(
     private val templateEngine: TemplateEngine,
 ) {
-    fun render(contract: Contract): ByteArray {
+    fun render(input: ContractPdfRenderInput): ByteArray {
+        val contract = input.contract
         val deliveryType = contract.deliveryType
         val context =
             Context(Locale.KOREA).apply {
@@ -43,14 +45,8 @@ class ContractPdfRenderer(
                 setVariable("shippingMark", if (deliveryType == DeliveryType.SHIPPING) CHECK_MARK else EMPTY_MARK)
                 setVariable("directMark", if (deliveryType == DeliveryType.DIRECT) CHECK_MARK else EMPTY_MARK)
                 setVariable("warrantyPeriodDays", contract.warrantyPeriodDays)
-                setVariable("sellerName", PLACEHOLDER)
-                setVariable("sellerBirthDate", PLACEHOLDER)
-                setVariable("sellerPhone", PLACEHOLDER)
-                setVariable("sellerSignatureBase64", null)
-                setVariable("buyerName", PLACEHOLDER)
-                setVariable("buyerBirthDate", PLACEHOLDER)
-                setVariable("buyerPhone", PLACEHOLDER)
-                setVariable("buyerSignatureBase64", null)
+                setPartyVariables("seller", input.seller)
+                setPartyVariables("buyer", input.buyer)
             }
         val html = templateEngine.process(TEMPLATE_NAME, context)
 
@@ -86,6 +82,16 @@ class ContractPdfRenderer(
             "Pretendard-Bold.ttf 폰트 리소스 누락 — $FONT_BOLD_PATH"
         }
 
+    private fun Context.setPartyVariables(
+        prefix: String,
+        party: PartyRenderInfo?,
+    ) {
+        setVariable("${prefix}Name", party?.name ?: PLACEHOLDER)
+        setVariable("${prefix}BirthDate", party?.birthDate?.toString() ?: PLACEHOLDER)
+        setVariable("${prefix}Phone", party?.phone ?: PLACEHOLDER)
+        setVariable("${prefix}SignatureBase64", party?.signatureBase64)
+    }
+
     companion object {
         private const val TEMPLATE_NAME = "contract-pdf"
         private const val FONT_FAMILY = "Pretendard"
@@ -98,3 +104,16 @@ class ContractPdfRenderer(
         private const val EMPTY_MARK = "[ ]"
     }
 }
+
+data class ContractPdfRenderInput(
+    val contract: Contract,
+    val seller: PartyRenderInfo? = null,
+    val buyer: PartyRenderInfo? = null,
+)
+
+data class PartyRenderInfo(
+    val name: String,
+    val birthDate: LocalDate,
+    val phone: String,
+    val signatureBase64: String? = null,
+)

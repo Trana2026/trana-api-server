@@ -46,7 +46,7 @@ CREATE TABLE contracts
     content_hash               VARCHAR(64),
     final_hash                 VARCHAR(64),
     pdf_generated_at           TIMESTAMPTZ,
-    version                    INT         NOT NULL DEFAULT 1,
+    version                    INT         NOT NULL DEFAULT 0,
 
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
