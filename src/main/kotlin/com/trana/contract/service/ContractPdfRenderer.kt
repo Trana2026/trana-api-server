@@ -89,6 +89,7 @@ class ContractPdfRenderer(
         setVariable("${prefix}BirthDate", party?.birthDate ?: PLACEHOLDER)
         setVariable("${prefix}Phone", party?.phone ?: PLACEHOLDER)
         setVariable("${prefix}SignatureBase64", party?.signatureBase64)
+        setVariable("${prefix}SignedClass", if (party?.signatureBase64 != null) "signed" else "")
     }
 
     companion object {

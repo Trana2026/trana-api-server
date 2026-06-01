@@ -145,6 +145,10 @@
             object-fit: contain;
             background: rgba(255, 255, 255, 0.95);
         }
+
+        .signature-line.signed {
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -268,7 +272,7 @@
         </div>
         <div class="party-row signature-row">
             <span class="party-label">서명:</span>
-            <span class="signature-line">
+            <span class="signature-line" th:classappend="${sellerSignedClass}">
                 <span class="signature-stamp">(인)</span>
                 <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}"
                      class="signature-image" alt="판매자 서명"/>
@@ -288,7 +292,7 @@
         </div>
         <div class="party-row signature-row">
             <span class="party-label">서명:</span>
-            <span class="signature-line">
+            <span class="signature-line" th:classappend="${buyerSignedClass}">
           <span class="signature-stamp">(인)</span>
           <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}"
                class="signature-image" alt="판매자 서명"/>
