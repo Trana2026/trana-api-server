@@ -22,6 +22,7 @@ import com.trana.common.exception.ErrorCode
  * - RoleAlreadySet: creatorRole 이미 설정된 계약에 다시 PATCH 시도
  * - NotReceiver: 수신자 전용 endpoint 에 생성자 본인 또는 외부 user 호출
  * - TermsMismatch: 수신자 서명 시 agreedTermIds 가 contract domain term ID 와 불일치
+ * - NotInReceiverSignedState: 생성자 최종 서명 시점 status 가 RECEIVER_SIGNED 가 아님
  */
 sealed class ContractException(
     errorCode: ErrorCode,
@@ -220,5 +221,13 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_TERMS_MISMATCH,
             "동의해야 할 약관 ID 가 일치하지 않습니다 (expected=$expected, actual=$actual)",
+        )
+
+    class NotInReceiverSignedState(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_IN_RECEIVER_SIGNED_STATE,
+            "현재 RECEIVER_SIGNED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
         )
 }

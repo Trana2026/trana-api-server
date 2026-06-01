@@ -148,4 +148,9 @@ enum class ErrorCode(
         "CONTRACT_400_TERMS",
         "동의 약관 ID 가 올바르지 않습니다",
     ),
+    CONTRACT_NOT_IN_RECEIVER_SIGNED_STATE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_NOT_RECEIVER_SIGNED",
+        "현재 RECEIVER_SIGNED 상태가 아닙니다",
+    ),
 }

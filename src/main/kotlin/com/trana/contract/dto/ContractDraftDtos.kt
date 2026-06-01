@@ -238,6 +238,37 @@ data class ReceiverSignResponse(
     val receiverSignedAt: Instant,
 )
 
+@Schema(description = "생성자 최종 서명 요청 — 계약 약관 + 전자서명 약관 동의 + PNG 서명 image base64")
+data class CreatorSignRequest(
+    @field:NotBlank
+    @field:Size(max = SIGNATURE_BASE64_MAX_LENGTH)
+    @field:Schema(
+        description = "전자서명 PNG image base64 인코딩 (data URI prefix 없이 raw base64)",
+        example = "iVBORw0KGgoAAAANSUhEUgAA...",
+        maxLength = SIGNATURE_BASE64_MAX_LENGTH,
+    )
+    val signatureBase64: String,
+    @field:NotEmpty
+    @field:Size(min = REQUIRED_TERM_COUNT, max = MAX_TERM_COUNT)
+    @field:Schema(
+        description = "동의한 약관 ID 목록 — CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 2개 필수",
+        example = "[5, 6]",
+    )
+    val agreedTermIds: List<Long>,
+)
+
+@Schema(description = "생성자 최종 서명 완료 응답 — SIGNED 전이 + PDF v3 갱신")
+data class CreatorSignResponse(
+    @field:Schema(description = "외부 노출 식별자", example = "Yx7Kp2qLm9Nz")
+    val publicCode: String,
+    @field:Schema(description = "전이 후 상태", example = "SIGNED")
+    val status: ContractStatus,
+    @field:Schema(description = "서명된 PDF 리비전 version", example = "1")
+    val pdfVersion: Int,
+    @field:Schema(description = "생성자 서명 시각 (UTC)")
+    val creatorSignedAt: Instant,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"

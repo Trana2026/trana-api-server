@@ -29,6 +29,7 @@ import java.time.Instant
  * - markRevisionRequested → SHARED → REVISION_REQUESTED (수신자 수정 요청, W6)
  * - markRevertToDraft → READY 또는 REVISION_REQUESTED → DRAFT (PDF 폐기 + 수정 모드, W6)
  * - markReceiverSigned → SHARED → RECEIVER_SIGNED (PDF v2 갱신, 수신자 서명, W6)
+ * - markSigned → RECEIVER_SIGNED → SIGNED (PDF v3 양측 박스 채움, 생성자 최종 서명, W6)
  * - softDelete → IN_PROGRESS / DRAFT 만 가능
  *
  * 불변식:
@@ -203,6 +204,20 @@ class Contract(
         }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.RECEIVER_SIGNED
+        this.pdfS3Key = pdfS3Key
+        this.contentHash = pdfSha256
+        this.pdfGeneratedAt = Instant.now()
+    }
+
+    fun markSigned(
+        pdfS3Key: String,
+        pdfSha256: String,
+    ) {
+        check(status == ContractStatus.RECEIVER_SIGNED) {
+            "RECEIVER_SIGNED 상태에서만 SIGNED 전이 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        this.status = ContractStatus.SIGNED
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()

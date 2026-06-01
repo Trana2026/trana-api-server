@@ -5,6 +5,8 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.CreatorSignRequest
+import com.trana.contract.dto.CreatorSignResponse
 import com.trana.contract.dto.ReceiverSignRequest
 import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
@@ -16,6 +18,7 @@ import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
 import com.trana.contract.service.ContractListView
 import com.trana.contract.service.ContractStatusService
+import com.trana.contract.service.CreatorSignView
 import com.trana.contract.service.PdfDownloadView
 import com.trana.contract.service.ReceiverSignView
 import io.swagger.v3.oas.annotations.Parameter
@@ -163,6 +166,22 @@ class ContractDraftController(
                 signerUserAgent = httpRequest.getHeader("User-Agent"),
             ).toResponse()
 
+    override fun creatorSign(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: CreatorSignRequest,
+        httpRequest: HttpServletRequest,
+    ): CreatorSignResponse =
+        statusService
+            .creatorSign(
+                publicCode = publicCode,
+                userId = userId,
+                signatureBase64 = request.signatureBase64,
+                agreedTermIds = request.agreedTermIds,
+                signerIp = httpRequest.remoteAddr,
+                signerUserAgent = httpRequest.getHeader("User-Agent"),
+            ).toResponse()
+
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
@@ -223,4 +242,12 @@ private fun ReceiverSignView.toResponse(): ReceiverSignResponse =
         status = status,
         pdfVersion = pdfVersion,
         receiverSignedAt = receiverSignedAt,
+    )
+
+private fun CreatorSignView.toResponse(): CreatorSignResponse =
+    CreatorSignResponse(
+        publicCode = publicCode,
+        status = status,
+        pdfVersion = pdfVersion,
+        creatorSignedAt = creatorSignedAt,
     )

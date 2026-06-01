@@ -7,6 +7,8 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
+import com.trana.contract.dto.CreatorSignRequest
+import com.trana.contract.dto.CreatorSignResponse
 import com.trana.contract.dto.ReceiverSignRequest
 import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
@@ -641,6 +643,108 @@ SHARED 상태 계약에 수신자가 약관 동의 + 전자서명 → PDF v2 생
         @RequestBody @Valid request: ReceiverSignRequest,
         httpRequest: HttpServletRequest,
     ): ReceiverSignResponse
+
+    @Tag(name = "Contract Lifecycle")
+    @Operation(
+        operationId = "contractCreatorSign",
+        summary = "생성자 최종 서명 — RECEIVER_SIGNED → SIGNED",
+        description = """
+  RECEIVER_SIGNED 상태 계약에 대해 생성자가 PDF v2 검토 후 약관 동의 + 전자서명 → PDF v3 생성 + 양측 알림톡 + status SIGNED 전이.
+
+  전제:
+  - 권한: contract.creatorUserId == 본인 (수신자 호출 시 403 NotOwner)
+  - 계약 status = RECEIVER_SIGNED (그 외 상태면 409)
+  - backend 강제 검증: 수신자 user 가 ACTIVE + 미성년이면 guardianVerifiedAt!=null
+  - 동의 약관: CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개씩 정확히 2개
+
+  효과:
+  - contract_consents row INSERT (생성자 약관 동의 2 row)
+  - contract_signatures row INSERT (생성자 서명 + IP/UA + pdfVersionAtSign snapshot, WORM)
+  - PDF v3 렌더링 (양측 박스 모두 채움 = 생성자 + 수신자 기존 서명) + S3 덮어쓰기 (Versioning 으로 v1/v2 보존)
+  - contracts.status = SIGNED, content_hash 갱신
+  - contract_status_logs (RECEIVER_SIGNED → SIGNED) row INSERT
+  - 양측 (생성자 + 수신자) 카카오톡 알림톡 3번 템플릿 `[Trana] 계약 체결 완료`
+
+  후속:
+  - COMPLETED 전이 (거래 완료 확정, W7+) → PDF attachment 다운로드 가능
+                """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "생성자 최종 서명 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = CreatorSignResponse::class),
+                        examples = [
+                            ExampleObject(name = "signed", value = ContractExamples.CREATOR_SIGN_RESPONSE),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "약관 ID 누락/불일치",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "termsMismatch", value = ContractExamples.CREATOR_SIGN_TERMS_MISMATCH),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "생성자 본인이 아님 또는 수신자 KYC 미완료",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notOwner", value = ContractExamples.CREATOR_SIGN_NOT_OWNER),
+                            ExampleObject(
+                                name = "receiverNotReady",
+                                value = ContractExamples.CREATOR_SIGN_RECEIVER_NOT_READY,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "계약 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notFound", value = ContractExamples.NOT_FOUND)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "RECEIVER_SIGNED 상태가 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "notReceiverSigned",
+                                value = ContractExamples.CREATOR_SIGN_NOT_RECEIVER_SIGNED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/creator-sign")
+    fun creatorSign(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: CreatorSignRequest,
+        httpRequest: HttpServletRequest,
+    ): CreatorSignResponse
 
     @Tag(name = "Contract Invitation", description = "전자계약 수신자 흐름 (token 기반 — accept / 수정요청)")
     @Operation(

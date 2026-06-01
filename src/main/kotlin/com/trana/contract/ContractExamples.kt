@@ -708,4 +708,66 @@ internal object ContractExamples {
               "timestamp": "2026-06-01T12:34:56Z"
             }
         """
+
+    // ───── 생성자 최종 서명 (W6 #32) ─────
+
+    const val CREATOR_SIGN_REQUEST = """
+            {
+              "signatureBase64": "iVBORw0KGgoAAAANSUhEUgAA...AAAFBT",
+              "agreedTermIds": [5, 6]
+            }
+        """
+
+    const val CREATOR_SIGN_RESPONSE = """
+            {
+              "publicCode": "Yx7Kp2qLm9Nz",
+              "status": "SIGNED",
+              "pdfVersion": 1,
+              "creatorSignedAt": "2026-06-01T13:00:00Z"
+            }
+        """
+
+    const val CREATOR_SIGN_NOT_OWNER = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_403_OWNER",
+              "status": 403,
+              "detail": "본인이 작성한 계약만 수정할 수 있습니다 (publicCode=Yx7Kp2qLm9Nz, userId=42)",
+              "code": "CONTRACT_403_OWNER",
+              "timestamp": "2026-06-01T13:00:00Z"
+            }
+        """
+
+    const val CREATOR_SIGN_RECEIVER_NOT_READY = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_403_USER_NOT_READY",
+              "status": 403,
+              "detail": "가입이 완료되지 않은 사용자입니다 (userId=99, 수신자 미성년 보호자 검증 미완료)",
+              "code": "CONTRACT_403_USER_NOT_READY",
+              "timestamp": "2026-06-01T13:00:00Z"
+            }
+        """
+
+    const val CREATOR_SIGN_NOT_RECEIVER_SIGNED = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_409_NOT_RECEIVER_SIGNED",
+              "status": 409,
+              "detail": "현재 RECEIVER_SIGNED 상태가 아닙니다 (publicCode=Yx7Kp2qLm9Nz, status=SHARED)",
+              "code": "CONTRACT_409_NOT_RECEIVER_SIGNED",
+              "timestamp": "2026-06-01T13:00:00Z"
+            }
+        """
+
+    const val CREATOR_SIGN_TERMS_MISMATCH = """
+            {
+              "type": "about:blank",
+              "title": "CONTRACT_400_TERMS",
+              "status": 400,
+              "detail": "동의해야 할 약관 ID 가 일치하지 않습니다 (expected=CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개, actual=[5])",
+              "code": "CONTRACT_400_TERMS",
+              "timestamp": "2026-06-01T13:00:00Z"
+            }
+        """
 }
