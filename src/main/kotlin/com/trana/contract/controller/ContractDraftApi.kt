@@ -2,6 +2,7 @@ package com.trana.contract.controller
 
 import com.trana.common.exception.ProblemDetailResponse
 import com.trana.contract.ContractExamples
+import com.trana.contract.dto.ConfirmCompletionResponse
 import com.trana.contract.dto.ContractListItem
 import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
@@ -745,6 +746,103 @@ SHARED 상태 계약에 수신자가 약관 동의 + 전자서명 → PDF v2 생
         @RequestBody @Valid request: CreatorSignRequest,
         httpRequest: HttpServletRequest,
     ): CreatorSignResponse
+
+    @Tag(name = "Contract Lifecycle")
+    @Operation(
+        operationId = "contractConfirmCompletion",
+        summary = "거래 완료 확인 — SIGNED → COMPLETED (양측 클릭 모델)",
+        description = """
+SIGNED 상태 계약에서 양측(SELLER + BUYER)이 각자 호출 → 본인 partyCompletedAt 채움.
+두 번째 클릭 시점에 contract.completedAt 채움 + status SIGNED → COMPLETED 자동 전이.
+
+전제:
+- 권한: contract.creatorUserId == 본인 OR contract_parties 에 본인 매핑 (외부 user 403 NotAccessible)
+- 계약 status = SIGNED (그 외 상태면 409 NotInSignedState — DRAFT/READY/SHARED/RECEIVER_SIGNED/COMPLETED 모두 차단)
+- 본인이 이미 클릭한 상태에서 재호출 시 409 AlreadyCompletedByParty (멱등 X)
+
+효과:
+- contract_parties.completed_at 채움 (본인 partyType row)
+- 양측 모두 completed_at != null 이면 contracts.status = COMPLETED + contracts.completed_at 채움
+- contract_status_logs (SIGNED → COMPLETED) row INSERT — 양측 완료 시점만
+- 알림톡 없음 (W7 분쟁 흐름과 함께 결정)
+
+후속:
+- COMPLETED 부터 보증기간(3일) 시작 — contracts.completed_at 기준
+- COMPLETED 부터 PDF attachment 다운로드 가능 (S3 presigned URL response-content-disposition 분기)
+                  """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "거래 완료 확인 성공 (한쪽만 클릭 = SIGNED 유지 / 양측 완료 = COMPLETED 전이)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ConfirmCompletionResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "partial",
+                                value = ContractExamples.CONFIRM_COMPLETION_RESPONSE_PARTIAL,
+                            ),
+                            ExampleObject(
+                                name = "both",
+                                value = ContractExamples.CONFIRM_COMPLETION_RESPONSE_BOTH,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "계약 당사자(creator 또는 contract_parties)가 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "notAccessible",
+                                value = ContractExamples.CONFIRM_COMPLETION_NOT_ACCESSIBLE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "계약 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notFound", value = ContractExamples.NOT_FOUND)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "SIGNED 상태가 아님 또는 본인이 이미 클릭함",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "notSigned",
+                                value = ContractExamples.CONFIRM_COMPLETION_NOT_IN_SIGNED,
+                            ),
+                            ExampleObject(
+                                name = "alreadyByParty",
+                                value = ContractExamples.CONFIRM_COMPLETION_ALREADY_BY_PARTY,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/confirm-completion")
+    fun confirmCompletion(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+    ): ConfirmCompletionResponse
 
     @Tag(name = "Contract Invitation", description = "전자계약 수신자 흐름 (token 기반 — accept / 수정요청)")
     @Operation(

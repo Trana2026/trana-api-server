@@ -770,4 +770,57 @@ internal object ContractExamples {
               "timestamp": "2026-06-01T13:00:00Z"
             }
         """
+
+    const val CONFIRM_COMPLETION_RESPONSE_PARTIAL = """
+              {
+                "publicCode": "Yx7Kp2qLm9Nz",
+                "status": "SIGNED",
+                "sellerCompletedAt": "2026-06-02T10:00:00Z",
+                "buyerCompletedAt": null,
+                "completedAt": null
+              }
+          """
+
+    const val CONFIRM_COMPLETION_RESPONSE_BOTH = """
+              {
+                "publicCode": "Yx7Kp2qLm9Nz",
+                "status": "COMPLETED",
+                "sellerCompletedAt": "2026-06-02T10:00:00Z",
+                "buyerCompletedAt": "2026-06-02T10:15:00Z",
+                "completedAt": "2026-06-02T10:15:00Z"
+              }
+          """
+
+    const val CONFIRM_COMPLETION_NOT_IN_SIGNED = """
+              {
+                "type": "about:blank",
+                "title": "CONTRACT_409_NOT_SIGNED",
+                "status": 409,
+                "detail": "현재 SIGNED 상태가 아닙니다 (publicCode=Yx7Kp2qLm9Nz, status=RECEIVER_SIGNED)",
+                "code": "CONTRACT_409_NOT_SIGNED",
+                "timestamp": "2026-06-02T10:00:00Z"
+              }
+          """
+
+    const val CONFIRM_COMPLETION_ALREADY_BY_PARTY = """
+              {
+                "type": "about:blank",
+                "title": "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
+                "status": 409,
+                "detail": "이미 거래 완료를 클릭한 사용자입니다 (publicCode=Yx7Kp2qLm9Nz, userId=42)",
+                "code": "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
+                "timestamp": "2026-06-02T10:00:00Z"
+              }
+          """
+
+    const val CONFIRM_COMPLETION_NOT_ACCESSIBLE = """
+              {
+                "type": "about:blank",
+                "title": "CONTRACT_403_NOT_ACCESSIBLE",
+                "status": 403,
+                "detail": "이 계약에 접근할 권한이 없습니다 (publicCode=Yx7Kp2qLm9Nz, userId=99)",
+                "code": "CONTRACT_403_NOT_ACCESSIBLE",
+                "timestamp": "2026-06-02T10:00:00Z"
+              }
+          """
 }

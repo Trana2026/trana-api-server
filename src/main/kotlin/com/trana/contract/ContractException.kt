@@ -230,4 +230,20 @@ sealed class ContractException(
             ErrorCode.CONTRACT_NOT_IN_RECEIVER_SIGNED_STATE,
             "현재 RECEIVER_SIGNED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
         )
+
+    class NotInSignedState(
+        publicCode: String,
+        currentStatus: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_IN_SIGNED_STATE,
+            "현재 SIGNED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
+        )
+
+    class AlreadyCompletedByParty(
+        publicCode: String,
+        userId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_ALREADY_COMPLETED_BY_PARTY,
+            "이미 거래 완료를 클릭한 사용자입니다 (publicCode=$publicCode, userId=$userId)",
+        )
 }

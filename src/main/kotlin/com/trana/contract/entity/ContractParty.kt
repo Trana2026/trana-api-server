@@ -20,6 +20,7 @@ import java.time.Instant
  * 불변식:
  * - (contract_id, party_type) UNIQUE — 한 계약에 같은 역할 중복 불가
  * - markValidated() 는 KYC SUCCESS + ACTIVE user 확인 후만 호출 (Service 책임)
+ * - markCompleted() 는 멱등 X (이미 완료면 fail) — 양측 각자 1회만
  */
 @Entity
 @Table(name = "contract_parties")
@@ -44,6 +45,10 @@ class ContractParty(
     var validatedAt: Instant? = null
         protected set
 
+    @Column(name = "completed_at")
+    var completedAt: Instant? = null
+        protected set
+
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)
     val joinedAt: Instant? = null
@@ -52,6 +57,11 @@ class ContractParty(
         check(!validated) { "이미 검증된 당사자" }
         this.validated = true
         this.validatedAt = Instant.now()
+    }
+
+    fun markCompleted() {
+        check(completedAt == null) { "이미 거래 완료를 클릭한 당사자" }
+        this.completedAt = Instant.now()
     }
 
     companion object {

@@ -269,6 +269,26 @@ data class CreatorSignResponse(
     val creatorSignedAt: Instant,
 )
 
+@Schema(
+    description = """
+  거래 완료 확인 응답.
+  - 한쪽만 클릭 시: status=SIGNED 유지, 본인 partyCompletedAt 만 채움
+  - 양측 모두 클릭 완료 시: status=COMPLETED 자동 전이 + completedAt 채움 (보증기간 3일 기준)
+  """,
+)
+data class ConfirmCompletionResponse(
+    @field:Schema(description = "외부 노출 식별자", example = "Yx7Kp2qLm9Nz")
+    val publicCode: String,
+    @field:Schema(description = "전이 후 상태 (양측 미완료면 SIGNED, 양측 완료면 COMPLETED)", example = "SIGNED")
+    val status: ContractStatus,
+    @field:Schema(description = "판매자(SELLER)가 거래 완료 클릭한 시각 (UTC), 미클릭 시 null")
+    val sellerCompletedAt: Instant?,
+    @field:Schema(description = "구매자(BUYER)가 거래 완료 클릭한 시각 (UTC), 미클릭 시 null")
+    val buyerCompletedAt: Instant?,
+    @field:Schema(description = "양측 모두 완료된 시각 (UTC), 보증기간 시작 기준점. 한쪽만 완료면 null")
+    val completedAt: Instant?,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"

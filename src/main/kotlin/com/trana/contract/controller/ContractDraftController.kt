@@ -1,5 +1,6 @@
 package com.trana.contract.controller
 
+import com.trana.contract.dto.ConfirmCompletionResponse
 import com.trana.contract.dto.ContractListItem
 import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
@@ -15,6 +16,7 @@ import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
+import com.trana.contract.service.ConfirmCompletionView
 import com.trana.contract.service.ContractDraftService
 import com.trana.contract.service.ContractListView
 import com.trana.contract.service.ContractStatusService
@@ -182,6 +184,12 @@ class ContractDraftController(
                 signerUserAgent = httpRequest.getHeader("User-Agent"),
             ).toResponse()
 
+    override fun confirmCompletion(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ConfirmCompletionResponse =
+        statusService.confirmCompletion(publicCode = publicCode, userId = userId).toResponse()
+
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
@@ -250,4 +258,13 @@ private fun CreatorSignView.toResponse(): CreatorSignResponse =
         status = status,
         pdfVersion = pdfVersion,
         creatorSignedAt = creatorSignedAt,
+    )
+
+private fun ConfirmCompletionView.toResponse(): ConfirmCompletionResponse =
+    ConfirmCompletionResponse(
+        publicCode = publicCode,
+        status = status,
+        sellerCompletedAt = sellerCompletedAt,
+        buyerCompletedAt = buyerCompletedAt,
+        completedAt = completedAt,
     )

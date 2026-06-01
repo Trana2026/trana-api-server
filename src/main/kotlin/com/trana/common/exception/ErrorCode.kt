@@ -153,4 +153,14 @@ enum class ErrorCode(
         "CONTRACT_409_NOT_RECEIVER_SIGNED",
         "현재 RECEIVER_SIGNED 상태가 아닙니다",
     ),
+    CONTRACT_NOT_IN_SIGNED_STATE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_NOT_SIGNED",
+        "현재 SIGNED 상태가 아닙니다 (거래 완료는 SIGNED 이후에만 가능)",
+    ),
+    CONTRACT_ALREADY_COMPLETED_BY_PARTY(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
+        "이미 거래 완료를 클릭한 사용자입니다",
+    ),
 }

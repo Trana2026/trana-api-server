@@ -403,6 +403,59 @@ class ContractStatusService(
         )
     }
 
+    /**
+     * 거래 완료 확인 (W7).
+     *
+     * - 양측 (SELLER + BUYER) 각자 호출 → contract_parties.completed_at 채움
+     * - 두 번째 클릭 시점에 contract.markCompleted() 자동 호출 (SIGNED → COMPLETED + completed_at)
+     * - 보증기간(3일) 시작 기준 = contract.completed_at
+     * - 멱등 X — 본인이 이미 클릭했으면 409 (AlreadyCompletedByParty)
+     *
+     * 흐름:
+     * 1. accessGuard.loadAccessible 로 권한 확인 (creator OR party 만)
+     * 2. status != SIGNED → NotInSignedState (DRAFT/READY/SHARED/RECEIVER_SIGNED/COMPLETED 등 모두 차단)
+     * 3. 본인의 ContractParty 조회 → completedAt 검사 → markCompleted()
+     * 4. 양측 ContractParty 모두 completedAt != null 이면 contract.markCompleted() + status log
+     *
+     * 알림톡: W7 분쟁 흐름과 함께 결정 (현재는 status log 만).
+     */
+    @Suppress("ThrowsCount")
+    fun confirmCompletion(
+        publicCode: String,
+        userId: Long,
+    ): ConfirmCompletionView {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        if (contract.status != ContractStatus.SIGNED) {
+            throw ContractException.NotInSignedState(publicCode, contract.status.name)
+        }
+
+        val myParty =
+            contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+                ?: throw ContractException.NotAccessible(publicCode, userId)
+        if (myParty.completedAt != null) {
+            throw ContractException.AlreadyCompletedByParty(publicCode, userId)
+        }
+        myParty.markCompleted()
+
+        val parties = contractPartyRepository.findAllByContractId(contract.id!!)
+        val bothCompleted = parties.size == 2 && parties.all { it.completedAt != null }
+        if (bothCompleted) {
+            val from = contract.status
+            contract.markCompleted()
+            publishStatusChanged(contract, from, userId, "양측 거래 완료 확정")
+        }
+
+        val seller = parties.firstOrNull { it.partyType == PartyType.SELLER }
+        val buyer = parties.firstOrNull { it.partyType == PartyType.BUYER }
+        return ConfirmCompletionView(
+            publicCode = contract.publicCode,
+            status = contract.status,
+            sellerCompletedAt = seller?.completedAt,
+            buyerCompletedAt = buyer?.completedAt,
+            completedAt = contract.completedAt,
+        )
+    }
+
     private fun sendCompletedAlimtalkBoth(
         contract: Contract,
         creator: User,
@@ -628,4 +681,12 @@ data class CreatorSignView(
     val status: ContractStatus,
     val pdfVersion: Int,
     val creatorSignedAt: Instant,
+)
+
+data class ConfirmCompletionView(
+    val publicCode: String,
+    val status: ContractStatus,
+    val sellerCompletedAt: Instant?,
+    val buyerCompletedAt: Instant?,
+    val completedAt: Instant?,
 )
