@@ -3,11 +3,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>물품 매매 계약서</title>
+    <title>물품 거래 계약서</title>
     <style type="text/css">
         @page {
             size: A4;
-            margin: 60pt 40pt;
+            margin: 98pt 84pt;
         }
 
         * {
@@ -20,111 +20,255 @@
             font-family: 'Pretendard', sans-serif;
             font-weight: 500;
             color: #272829;
-            letter-spacing: -0.01em;
-            line-height: 1.5;
+            letter-spacing: 0;
+            line-height: 1.6;
+            font-size: 10pt;
         }
 
-        .container {
-            border: 1pt solid rgba(111, 114, 112, 0.25);
-            padding: 24pt 20pt 40pt 20pt;
-        }
-
-        .title {
+        h1.title {
             font-weight: 700;
-            font-size: 20pt;
+            font-size: 18pt;
             text-align: center;
-            margin: 0 0 40pt 0;
+            margin: 0 0 24pt 0;
+        }
+
+        .intro {
+            font-size: 10pt;
+            margin: 0 0 24pt 0;
+            line-height: 1.6;
         }
 
         .clause {
-            margin-bottom: 28pt;
+            margin-bottom: 24pt;
         }
 
         .clause-heading {
             font-weight: 700;
             font-size: 12pt;
-            margin-bottom: 10pt;
+            margin: 0 0 8pt 0;
         }
 
         .clause-body {
             font-weight: 500;
-            font-size: 12pt;
+            font-size: 10pt;
         }
 
-        .clause-body .line + .line {
-            margin-top: 4pt;
+        .clause-body p {
+            margin: 0 0 6pt 0;
+        }
+
+        .clause-body ol {
+            margin: 6pt 0 0 0;
+            padding: 0 0 0 18pt;
+        }
+
+        .clause-body ol li {
+            margin: 0 0 4pt 0;
+        }
+
+        .field-line {
+            display: inline-block;
+            border-bottom: 1pt solid #6F7270;
+            min-width: 200pt;
+            padding: 0 4pt;
+        }
+
+        .field-line.short {
+            min-width: 100pt;
+        }
+
+        .checkbox-row {
+            margin: 0 0 6pt 0;
+        }
+
+        .page-break {
+            page-break-before: always;
         }
 
         .signature-section {
-            text-align: right;
-            margin-top: 28pt;
+            margin-top: 32pt;
         }
 
-        .signature-label {
+        .signature-intro {
             font-weight: 500;
-            font-size: 14pt;
-            margin-bottom: 10pt;
+            font-size: 10pt;
+            margin: 0 0 32pt 0;
+            line-height: 1.6;
         }
 
-        .signature-box {
-            display: inline-block;
-            width: 89pt;
-            height: 50pt;
-            background-color: #F6F8F9;
-            border: 1pt solid #CDD0CE;
-            text-align: center;
+        .party-block {
+            margin-bottom: 32pt;
         }
 
-        .signature-placeholder {
+        .party-heading {
             font-weight: 700;
             font-size: 12pt;
-            color: #B5B7B6;
-            line-height: 50pt;
+            margin: 0 0 12pt 0;
+        }
+
+        .party-row {
+            margin: 0 0 6pt 0;
+            font-size: 10pt;
+        }
+
+        .party-label {
+            display: inline-block;
+            width: 70pt;
+        }
+
+        .signature-row {
+            margin-top: 6pt;
+        }
+
+        .signature-line {
+            position: relative;
+            display: inline-block;
+            min-width: 100pt;
+            padding: 0 4pt;
+            vertical-align: baseline;
+            text-align: right;
+        }
+
+        .signature-stamp {
+            font-size: 10pt;
+            color: #41464A;
+        }
+
+        .signature-image {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 30pt;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1 class="title">물품 매매 계약서</h1>
 
-    <div class="clause">
-        <div class="clause-heading">제1조 [목적]</div>
-        <div class="clause-body">
-            <div class="line">본 계약은 판매자가 제공한 정보에 기반하여 작성되었습니다.</div>
+<h1 class="title">물품 거래 계약서</h1>
+
+<p class="intro">
+    본 계약서는 안전 거래 플랫폼 <strong>Trana</strong>를 통하여, 사전에 신분증 OCR 및 안면인식(Face Liveness)을 통한 신원인증을 완료한 당사자 간에 체결되는 법적 구속력을 가진 전자계약서입니다.
+</p>
+
+<div class="clause">
+    <div class="clause-heading">제1조 (계약의 목적)</div>
+    <div class="clause-body">
+        <p>본 계약은 판매자가 보유한 물품을 구매자에게 양도하고, 구매자는 그 대금을 지급함에 있어 당사자 간의 권리와 의무를 명확히 규정함을 목적으로 한다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제2조 (거래 정보 및 방식)</div>
+    <div class="clause-body">
+        <p>당사자는 다음 각호의 거래 조건을 확인하고 본 계약을 체결한다.</p>
+        <ol>
+            <li><strong>거래 플랫폼:</strong> <span class="field-line short">Trana</span></li>
+            <li><strong>거래 방식:</strong>
+                <span th:text="${shippingMark}">[ ]</span>택배거래
+                /
+                <span th:text="${directMark}">[ ]</span>직거래
+            </li>
+            <li><strong>거래 물품명:</strong> <span class="field-line short" th:text="${title}">맥북 프로 M1 16GB</span></li>
+            <li><strong>거래 금액:</strong> 금 <span class="field-line short" th:text="${priceFormatted}">500,000</span> 원정</li>
+        </ol>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제3조 (물품 상태 및 상세 설명)</div>
+    <div class="clause-body">
+        <p>판매자는 구매자에게 물품의 상태를 성실하게 고지하여야 하며, 구매자는 이를 확인하고 거래에 동의한다.</p>
+        <ol>
+            <li><strong>상품 상태:</strong> <span class="field-line" th:text="${conditionSummary}">사용감 적음</span></li>
+            <li><strong>상품 상세 설명:</strong> <span class="field-line" th:text="${conditionDetails}">1년 사용, 박스 미포함</span></li>
+        </ol>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제4조 (판매자 보증 제공 여부)</div>
+    <div class="clause-body">
+        <p>판매자는 제3조에 기재된 물품 상태 외의 중대한 하자가 발생할 경우에 대비하여, 다음과 같이 사후 보증(A/S 및 환불) 여부를 선택하여 구매자에게 제공한다.</p>
+        <p class="checkbox-row">[✓] <strong>보증 제공함:</strong> 물품 인도 후 <strong th:text="${warrantyPeriodDays}">3</strong>일이내에 판매자가 고지하지 않은 기능적 하자가 발견될 경우, 판매자는 즉시 100% 환불 또는 배상할 의무를 진다.</p>
+        <p class="checkbox-row">[ ] <strong>보증 제공하지 않음 (현 상태 인도):</strong> 판매자는 사전에 고지한 물품 상태를 기준으로 양도하며, 구매자의 단순 변심이나 사전에 합의된 하자를 이유로 한 환불 의무를 지지 않는다. (단, 제5조의 '기본 진술 및 보장'을 위반한 사기 행위는 본 항으로 면책되지 아니한다.)</p>
+    </div>
+</div>
+
+<div class="page-break"></div>
+
+<div class="clause">
+    <div class="clause-heading">제5조 (판매자의 필수 진술 및 보장)</div>
+    <div class="clause-body">
+        <p>제4조의 보증 제공 여부와 관계없이, 판매자는 다음 각 호의 사항을 필수적으로 보장하며, 이는 본 계약의 핵심 성립 조건이다.</p>
+        <ol>
+            <li>판매자는 본 계약 체결 직전 수행한 신원인증(OCR 및 안면인식)이 본인의 유효한 명의이며, 타인의 명의를 도용하거나 기망하지 않았음을 진술한다.</li>
+            <li>본 거래 물품은 판매자의 정당한 소유물이며, 장물, 위조품(가품) 등 위법한 물품이 아님을 보장한다.</li>
+            <li>판매자는 고의로 물품의 중대한 하자(침수, 핵심 부품 고장 등)를 숨기고 기망하여 판매하지 않았음을 보장한다.</li>
+        </ol>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제6조 (계약의 해제 및 위약벌)</div>
+    <div class="clause-body">
+        <ol>
+            <li>판매자가 제5조(필수 진술 및 보장)를 위반하여 고의적인 기망 또는 사기 행위를 한 경우, 구매자는 즉시 본 계약을 해제할 수 있다.</li>
+            <li>본 조 제1항에 따라 계약이 해제될 경우, 위반 당사자(판매자)는 구매자에게 <strong>거래 금액의 [ 2 ]배에 해당하는 금액을 위약벌로 지급</strong>하여야 하며, 플랫폼 Trana 및 구매자의 사기죄 형사고소 등 민·형사상 법적 조치에 이의 없이 응하여야 한다.</li>
+            <li><strong>(미이행 시 자동 해제)</strong> 본 계약 서명 완료 후, 당사자 간 별도의 합의가 없는 한 <strong>[ 24시간 ]</strong>이내에 대금 지급 또는 물품의 발송(택배) 및 인도(직거래)가 이루어지지 않을 경우, 본 계약은 당사자 일방의 통보로 즉시 해제될 수 있다.</li>
+        </ol>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제7조 (분쟁 해결 및 관할법원)</div>
+    <div class="clause-body">
+        <p>본 계약과 관련하여 분쟁이 발생하는 경우, 본 계약서에 기록된 전자서명 및 사전 신원인증 로그 데이터를 최우선 법적 증거로 삼는다. 소송이 제기될 경우 <strong>[ 구매자 ]의 주소지 관할 법원</strong>을 합의관할법원으로 한다.</p>
+        <p><strong>(수사기관 협조 인지)</strong> 사기 등의 혐의로 수사기관의 적법한 요청이 발생할 경우, 당사자들은 플랫폼 Trana가 사전에 유저로부터 동의받은 '개인정보 처리방침'에 근거하여 본 계약 체결 전 수집된 신원인증(OCR 및 안면인식) 데이터를 수사기관에 제공할 수 있음을 상호 인지한다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제8조 (플랫폼의 지위 및 면책)</div>
+    <div class="clause-body">
+        <p>Trana는 당사자 간의 안전한 전자계약 시스템 및 신원인증 솔루션을 제공할 뿐, 본 거래의 당사자가 아니다. 당사자 간의 대금 지급, 물품 인도 및 하자에 대한 모든 법적 책임은 거래 당사자에게 있으며 Trana는 이에 대해 면책된다.</p>
+    </div>
+</div>
+
+<div class="page-break"></div>
+
+<div class="signature-section">
+    <p class="signature-intro">본 계약의 체결을 증명하기 위하여, 당사자는 플랫폼 Trana의 본인인증 절차를 거쳐 각자 전자서명함으로써 본 계약을 발효한다.</p>
+
+    <div class="party-block">
+        <div class="party-heading">[ 판매자 (양도인) ]</div>
+        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short" th:text="${sellerName}">홍길동</span></div>
+        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short" th:text="${sellerBirthDate}">1990-01-01</span></div>
+        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short" th:text="${sellerPhone}">010-0000-0000</span></div>
+        <div class="party-row signature-row">
+            <span class="party-label">서명:</span>
+            <span class="signature-line">
+                <span class="signature-stamp">(인)</span>
+                <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}" class="signature-image" alt="판매자 서명"/>
+            </span>
         </div>
     </div>
 
-    <div class="clause">
-        <div class="clause-heading">제2조 [거래 대상]</div>
-        <div class="clause-body">
-            <div class="line">물품명: <span th:text="${title}">맥북 프로 M1 16GB</span></div>
-            <div class="line">금액: <span th:text="${#numbers.formatInteger(price, 0, 'COMMA')}">500,000</span>원</div>
-            <div class="line" th:if="${conditionSummary}">상태: <span th:text="${conditionSummary}">사용감 적음</span></div>
-            <div class="line" th:if="${conditionDetails}">세부: <span th:text="${conditionDetails}">1년 사용, 박스 미포함</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="clause">
-        <div class="clause-heading">제3조 [인도]</div>
-        <div class="clause-body">
-            <div class="line">본 거래는 <span th:text="${deliveryTypeLabel}">택배</span> 거래 방식으로 진행됩니다.</div>
-        </div>
-    </div>
-
-    <div class="clause">
-        <div class="clause-heading">제4조 [서명]</div>
-        <div class="clause-body">
-            <div class="line">본 문서는 전자서명법에 의거하여 법적 효력을 가진다.</div>
-        </div>
-    </div>
-
-    <div class="signature-section">
-        <div class="signature-label">판매자 서명</div>
-        <div class="signature-box">
-            <span class="signature-placeholder">(비어있음)</span>
+    <div class="party-block">
+        <div class="party-heading">[ 구매자 (양수인) ]</div>
+        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short" th:text="${buyerName}">김철수</span></div>
+        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short" th:text="${buyerBirthDate}">1995-05-05</span></div>
+        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short" th:text="${buyerPhone}">010-0000-0000</span></div>
+        <div class="party-row signature-row">
+            <span class="party-label">서명:</span>
+            <span class="signature-line">
+                <span class="signature-stamp">(인)</span>
+                <img th:if="${buyerSignatureBase64}" th:src="'data:image/png;base64,' + ${buyerSignatureBase64}" class="signature-image" alt="구매자 서명"/>
+            </span>
         </div>
     </div>
 </div>
+
 </body>
 </html>

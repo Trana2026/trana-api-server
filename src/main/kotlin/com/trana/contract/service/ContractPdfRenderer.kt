@@ -20,7 +20,7 @@ import java.util.Locale
  *
  * 폰트:
  * - Pretendard Medium (500) — 본문
- * - Pretendard Bold (700) — 타이틀 / 조항 헤더
+ * - Pretendard Bold (700) — 타이틀 / 조항 헤더 / 본문 강조
  * - subset=true — 실제 사용된 글리프만 임베딩 (용량 절감)
  *
  * 사용처: ContractDraftService.transitionToReady() 가 markReady 직전 호출.
@@ -30,21 +30,27 @@ class ContractPdfRenderer(
     private val templateEngine: TemplateEngine,
 ) {
     fun render(contract: Contract): ByteArray {
+        val deliveryType = contract.deliveryType
         val context =
             Context(Locale.KOREA).apply {
-                setVariable("title", contract.title)
-                setVariable("price", contract.price)
-                setVariable("conditionSummary", contract.conditionSummary)
-                setVariable("conditionDetails", contract.conditionDetails)
+                setVariable("title", contract.title ?: PLACEHOLDER)
                 setVariable(
-                    "deliveryTypeLabel",
-                    deliveryLabel(
-                        requireNotNull(contract.deliveryType) {
-                            "deliveryType null in PDF rendering" +
-                                " (publicCode=${contract.publicCode}) — validateReadyEligible 누락"
-                        },
-                    ),
+                    "priceFormatted",
+                    contract.price?.let { String.format(Locale.KOREA, "%,d", it) } ?: PLACEHOLDER,
                 )
+                setVariable("conditionSummary", contract.conditionSummary ?: PLACEHOLDER)
+                setVariable("conditionDetails", contract.conditionDetails ?: PLACEHOLDER)
+                setVariable("shippingMark", if (deliveryType == DeliveryType.SHIPPING) CHECK_MARK else EMPTY_MARK)
+                setVariable("directMark", if (deliveryType == DeliveryType.DIRECT) CHECK_MARK else EMPTY_MARK)
+                setVariable("warrantyPeriodDays", contract.warrantyPeriodDays)
+                setVariable("sellerName", PLACEHOLDER)
+                setVariable("sellerBirthDate", PLACEHOLDER)
+                setVariable("sellerPhone", PLACEHOLDER)
+                setVariable("sellerSignatureBase64", null)
+                setVariable("buyerName", PLACEHOLDER)
+                setVariable("buyerBirthDate", PLACEHOLDER)
+                setVariable("buyerPhone", PLACEHOLDER)
+                setVariable("buyerSignatureBase64", null)
             }
         val html = templateEngine.process(TEMPLATE_NAME, context)
 
@@ -80,12 +86,6 @@ class ContractPdfRenderer(
             "Pretendard-Bold.ttf 폰트 리소스 누락 — $FONT_BOLD_PATH"
         }
 
-    private fun deliveryLabel(type: DeliveryType): String =
-        when (type) {
-            DeliveryType.DIRECT -> "직거래"
-            DeliveryType.SHIPPING -> "택배"
-        }
-
     companion object {
         private const val TEMPLATE_NAME = "contract-pdf"
         private const val FONT_FAMILY = "Pretendard"
@@ -93,5 +93,8 @@ class ContractPdfRenderer(
         private const val FONT_BOLD_PATH = "/fonts/Pretendard-Bold.ttf"
         private const val FONT_WEIGHT_MEDIUM = 500
         private const val FONT_WEIGHT_BOLD = 700
+        private val PLACEHOLDER = " ".repeat(20)
+        private const val CHECK_MARK = "[✓]"
+        private const val EMPTY_MARK = "[ ]"
     }
 }
