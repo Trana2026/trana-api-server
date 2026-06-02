@@ -2,6 +2,7 @@ package com.trana.auth.jwt
 
 import com.trana.common.security.JwtProperties
 import com.trana.common.security.JwtProvider
+import io.jsonwebtoken.JwtException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.Duration
@@ -28,13 +29,13 @@ class JwtProviderTest {
     @Test
     fun extractUserIdFromAccessTokenReturnsOriginalUserId() {
         val token = provider.createAccessToken(userId = 123L)
-        Assertions.assertEquals(123L, provider.extractUserId(token))
+        Assertions.assertEquals(123L, provider.extractUserIdFromAccessToken(token))
     }
 
     @Test
     fun extractUserIdFromRefreshTokenReturnsOriginalUserId() {
         val token = provider.createRefreshToken(userId = 456L)
-        Assertions.assertEquals(456L, provider.extractUserId(token))
+        Assertions.assertEquals(456L, provider.extractUserIdFromRefreshToken(token))
     }
 
     @Test
@@ -47,7 +48,25 @@ class JwtProviderTest {
                 ),
             )
         Assertions.assertThrows(Exception::class.java) {
-            otherProvider.verify(token)
+            otherProvider.extractUserIdFromAccessToken(token)
+        }
+    }
+
+    @Test
+    fun refreshTokenPassedAsAccessIsRejected() {
+        val refreshToken = provider.createRefreshToken(userId = 123L)
+
+        Assertions.assertThrows(JwtException::class.java) {
+            provider.extractUserIdFromAccessToken(refreshToken)
+        }
+    }
+
+    @Test
+    fun accessTokenPassedAsRefreshIsRejected() {
+        val accessToken = provider.createAccessToken(userId = 123L)
+
+        Assertions.assertThrows(JwtException::class.java) {
+            provider.extractUserIdFromRefreshToken(accessToken)
         }
     }
 }
