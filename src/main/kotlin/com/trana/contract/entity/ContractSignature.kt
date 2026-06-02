@@ -37,6 +37,8 @@ class ContractSignature(
     val signatureData: String,
     @Column(name = "pdf_version_at_sign", nullable = false)
     val pdfVersionAtSign: Int,
+    @Column(name = "pdf_sha256_at_sign", length = 64)
+    val pdfSha256AtSign: String?,
     @Column(name = "signer_ip", length = 45)
     val signerIp: String? = null,
     @Column(name = "signer_user_agent", columnDefinition = "text")
@@ -57,6 +59,7 @@ class ContractSignature(
             partyType: PartyType,
             signatureData: String,
             pdfVersionAtSign: Int,
+            pdfSha256AtSign: String,
             signerIp: String? = null,
             signerUserAgent: String? = null,
         ): ContractSignature =
@@ -66,6 +69,7 @@ class ContractSignature(
                 partyType = partyType,
                 signatureData = signatureData,
                 pdfVersionAtSign = pdfVersionAtSign,
+                pdfSha256AtSign = pdfSha256AtSign,
                 signerIp = signerIp,
                 signerUserAgent = signerUserAgent,
             )
