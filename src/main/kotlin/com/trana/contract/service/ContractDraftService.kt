@@ -135,6 +135,7 @@ class ContractDraftService(
         price: Long? = null,
         conditionSummary: String? = null,
         conditionDetails: String? = null,
+        tradingPlatform: String? = null,
         deliveryType: DeliveryType? = null,
         creatorRole: PartyType? = null,
     ): Contract {
@@ -161,6 +162,7 @@ class ContractDraftService(
             price = price,
             conditionSummary = conditionSummary,
             conditionDetails = conditionDetails,
+            tradingPlatform = tradingPlatform,
             deliveryType = deliveryType,
         )
         if (contract.status != fromStatus) {

@@ -18,6 +18,7 @@ CREATE TABLE contracts
 
     -- 거래 정보
     delivery_type              VARCHAR(20) NOT NULL,
+    trading_platform           VARCHAR(50),
     title                      VARCHAR(200),
     price                      BIGINT,
     condition_summary          TEXT,
@@ -64,6 +65,7 @@ COMMENT ON COLUMN contracts.creator_user_id IS '작성자 user_id (논리 FK —
 COMMENT ON COLUMN contracts.status IS 'DRAFT | SIGN_REQUESTED | REVISION_REQUESTED | SIGNED | COMPLETED';
 COMMENT ON COLUMN contracts.dispute_state IS 'NONE | REPORTED | RESOLVED | DISMISSED (W7)';
 COMMENT ON COLUMN contracts.delivery_type IS 'DIRECT | SHIPPING';
+COMMENT ON COLUMN contracts.trading_platform IS '거래 발견 플랫폼 (자유 텍스트 50자, 예: 당근마켓 / 번개장터 / 인스타그램 DM). 분쟁 audit + AI 자동 추출';
 COMMENT ON COLUMN contracts.price IS '원 단위 정수';
 COMMENT ON COLUMN contracts.warranty_period_days IS '보증 기간 일수 (현재 3일 고정)';
 COMMENT ON COLUMN contracts.consent_type IS 'GUARDIAN_REQUIRED | NONE | NOT_APPLICABLE';

@@ -42,6 +42,13 @@ data class CreateContractDraftRequest(
 
 @Schema(description = "계약 DRAFT 부분 수정 요청 — null 인 필드는 변경 없음")
 data class UpdateContractDraftRequest(
+    @field:Size(max = TRADING_PLATFORM_MAX_LENGTH)
+    @field:Schema(
+        description = "거래 발견 플랫폼 (자유 텍스트, 50자 이내)",
+        example = "당근마켓",
+        maxLength = TRADING_PLATFORM_MAX_LENGTH,
+    )
+    val tradingPlatform: String? = null,
     @field:Size(max = TITLE_MAX_LENGTH)
     @field:Schema(description = "상품명", example = "아이폰 15 Pro 256GB 블랙", maxLength = TITLE_MAX_LENGTH)
     val title: String? = null,
@@ -76,6 +83,8 @@ data class ContractResponse(
     val deliveryType: DeliveryType?,
     @field:Schema(description = "보호자 동의 유형")
     val consentType: ConsentType,
+    @field:Schema(description = "거래 발견 플랫폼", example = "당근마켓")
+    val tradingPlatform: String?,
     val title: String?,
     val price: Long?,
     val conditionSummary: String?,
@@ -296,3 +305,4 @@ private const val REVISION_REASON_MAX_LENGTH = 500
 private const val SIGNATURE_BASE64_MAX_LENGTH = 262144
 private const val REQUIRED_TERM_COUNT = 2
 private const val MAX_TERM_COUNT = 10
+private const val TRADING_PLATFORM_MAX_LENGTH = 50

@@ -52,6 +52,8 @@ class Contract(
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_type", nullable = false, length = 20)
     var deliveryType: DeliveryType? = null,
+    @Column(name = "trading_platform", length = 50)
+    var tradingPlatform: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "consent_type", nullable = false, length = 30)
     var consentType: ConsentType,
@@ -127,6 +129,7 @@ class Contract(
         price: Long? = null,
         conditionSummary: String? = null,
         conditionDetails: String? = null,
+        tradingPlatform: String? = null,
         deliveryType: DeliveryType? = null,
     ) {
         check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
@@ -137,12 +140,17 @@ class Contract(
         price?.let { this.price = it }
         conditionSummary?.let { this.conditionSummary = it }
         conditionDetails?.let { this.conditionDetails = it }
+        tradingPlatform?.let { this.tradingPlatform = it }
         deliveryType?.let { this.deliveryType = it }
         this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
     }
 
     private fun allRequiredFieldsFilled(): Boolean =
-        title != null && price != null && conditionSummary != null && conditionDetails != null
+        title != null &&
+            price != null &&
+            conditionSummary != null &&
+            conditionDetails != null &&
+            tradingPlatform != null
 
     fun markGuardianConsented(boundGuardianId: Long) {
         check(consentType == ConsentType.GUARDIAN_REQUIRED) {
@@ -165,6 +173,7 @@ class Contract(
         check(price != null) { "price 미입력" }
         check(conditionSummary != null) { "conditionSummary 미입력" }
         check(conditionDetails != null) { "conditionDetails 미입력" }
+        check(tradingPlatform != null) { "tradingPlatform 미입력 — AI 추출 또는 수동 입력 필요" }
         if (consentType == ConsentType.GUARDIAN_REQUIRED) {
             check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
         }

@@ -153,7 +153,7 @@ class ContractAiExtractionService(
         userId: Long,
     ): Contract {
         val contract = loadOwned(publicCode, userId)
-        if (contract.status != ContractStatus.DRAFT) {
+        if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(publicCode, contract.status.name)
         }
         return contract

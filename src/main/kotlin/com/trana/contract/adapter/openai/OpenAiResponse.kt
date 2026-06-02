@@ -64,6 +64,8 @@ data class OpenAiUsage(
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ExtractedPrefill(
+    @JsonProperty("trading_platform")
+    val tradingPlatform: String?,
     @JsonProperty("product_name")
     val productName: String,
     val price: Long,

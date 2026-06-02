@@ -34,6 +34,7 @@ class ContractPdfRenderer(
         val deliveryType = contract.deliveryType
         val context =
             Context(Locale.KOREA).apply {
+                setVariable("tradingPlatform", contract.tradingPlatform ?: PLACEHOLDER)
                 setVariable("title", contract.title ?: PLACEHOLDER)
                 setVariable(
                     "priceFormatted",

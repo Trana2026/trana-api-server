@@ -63,6 +63,7 @@ class AiExtractionAsyncProcessor(
                     price = result.prefill.price,
                     conditionSummary = result.prefill.conditionSummary,
                     conditionDetails = result.prefill.conditionDetails,
+                    tradingPlatform = result.prefill.tradingPlatform,
                 )
             } else {
                 log.warn(

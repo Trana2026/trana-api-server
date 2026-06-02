@@ -75,6 +75,7 @@ class ContractDraftController(
                 price = request.price,
                 conditionSummary = request.conditionSummary,
                 conditionDetails = request.conditionDetails,
+                tradingPlatform = request.tradingPlatform,
                 deliveryType = request.deliveryType,
                 creatorRole = request.creatorRole,
             ).toResponse()
@@ -203,6 +204,7 @@ private fun Contract.toResponse(): ContractResponse =
         disputeState = disputeState,
         deliveryType = deliveryType,
         consentType = consentType,
+        tradingPlatform = tradingPlatform,
         title = title,
         price = price,
         conditionSummary = conditionSummary,

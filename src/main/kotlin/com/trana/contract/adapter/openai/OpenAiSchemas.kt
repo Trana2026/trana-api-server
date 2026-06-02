@@ -13,6 +13,7 @@ internal object OpenAiSchemas {
             "additionalProperties" to false,
             "required" to
                 listOf(
+                    "trading_platform",
                     "product_name",
                     "price",
                     "condition_summary",
@@ -20,6 +21,11 @@ internal object OpenAiSchemas {
                 ),
             "properties" to
                 mapOf(
+                    "trading_platform" to
+                        mapOf(
+                            "type" to listOf("string", "null"),
+                            "description" to "거래 플랫폼명 (예: '당근', '번개장터', '중고나라'). 특정 불가 시 null. 명시된 8개 후보 외 반환 금지",
+                        ),
                     "product_name" to
                         mapOf(
                             "type" to "string",
