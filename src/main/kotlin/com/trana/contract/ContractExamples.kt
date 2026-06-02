@@ -195,6 +195,7 @@ internal object ContractExamples {
                     "sizeBytes": 524288,
                     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "sortOrder": 0,
+                    "viewUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/attachments/abc-uuid?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300&...",
                     "uploadedAt": "2026-05-20T10:05:00Z"
                   }
               """
@@ -209,6 +210,7 @@ internal object ContractExamples {
                       "sizeBytes": 524288,
                       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                       "sortOrder": 0,
+                      "viewUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/.../abc-uuid?X-Amz-...",
                       "uploadedAt": "2026-05-20T10:05:00Z"
                     },
                     {
@@ -219,6 +221,7 @@ internal object ContractExamples {
                       "sizeBytes": 612345,
                       "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                       "sortOrder": 1,
+                      "viewUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/.../abc-uuid?X-Amz-...",
                       "uploadedAt": "2026-05-20T10:05:30Z"
                     }
                   ]

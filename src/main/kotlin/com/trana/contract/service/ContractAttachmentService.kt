@@ -37,6 +37,7 @@ class ContractAttachmentService(
     private val contractRepository: ContractRepository,
     private val attachmentRepository: ContractAttachmentRepository,
     private val storage: ContractAttachmentStorage,
+    private val accessGuard: ContractAccessGuard,
 ) {
     /**
      * 1단계 — presigned PUT URL 발급.
@@ -66,7 +67,7 @@ class ContractAttachmentService(
         contentType: String?,
         sizeBytes: Long?,
         originalFilename: String?,
-    ): ContractAttachment {
+    ): AttachmentView {
         val contract = loadOwnedDraft(publicCode, userId)
         ensureCapacity(contract)
         val sha256 = storage.computeSha256(s3Key)
@@ -81,16 +82,19 @@ class ContractAttachmentService(
                 sha256 = sha256,
                 sortOrder = nextOrder,
             )
-        return attachmentRepository.save(attachment)
+        val saved = attachmentRepository.save(attachment)
+        return AttachmentView(saved, storage.presignGet(saved.s3Key))
     }
 
     @Transactional(readOnly = true)
     fun list(
         publicCode: String,
         userId: Long,
-    ): List<ContractAttachment> {
-        val contract = loadOwned(publicCode, userId)
-        return attachmentRepository.findAllByContractIdOrderBySortOrderAsc(contract.id!!)
+    ): List<AttachmentView> {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        return attachmentRepository
+            .findAllByContractIdOrderBySortOrderAsc(contract.id!!)
+            .map { AttachmentView(it, storage.presignGet(it.s3Key)) }
     }
 
     fun delete(
@@ -147,3 +151,8 @@ class ContractAttachmentService(
         private const val MAX_ATTACHMENTS = 7
     }
 }
+
+data class AttachmentView(
+    val attachment: ContractAttachment,
+    val viewUrl: String,
+)

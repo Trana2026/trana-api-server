@@ -5,7 +5,7 @@ import com.trana.contract.dto.AttachmentResponse
 import com.trana.contract.dto.PresignAttachmentRequest
 import com.trana.contract.dto.PresignAttachmentResponse
 import com.trana.contract.dto.RegisterAttachmentRequest
-import com.trana.contract.entity.ContractAttachment
+import com.trana.contract.service.AttachmentView
 import com.trana.contract.service.ContractAttachmentService
 import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -67,14 +67,15 @@ private fun PresignedUpload.toResponse(): PresignAttachmentResponse =
         expiresAt = expiresAt,
     )
 
-private fun ContractAttachment.toResponse(): AttachmentResponse =
+private fun AttachmentView.toResponse(): AttachmentResponse =
     AttachmentResponse(
-        id = requireNotNull(id) { "ContractAttachment.id 는 영속화 후 채워짐" },
-        s3Key = s3Key,
-        originalFilename = originalFilename,
-        contentType = contentType,
-        sizeBytes = sizeBytes,
-        sha256 = sha256,
-        sortOrder = sortOrder,
-        uploadedAt = requireNotNull(uploadedAt) { "uploadedAt 은 @CreationTimestamp 로 채워짐" },
+        id = requireNotNull(attachment.id) { "ContractAttachment.id 는 영속화 후 채워짐" },
+        s3Key = attachment.s3Key,
+        originalFilename = attachment.originalFilename,
+        contentType = attachment.contentType,
+        sizeBytes = attachment.sizeBytes,
+        sha256 = attachment.sha256,
+        sortOrder = attachment.sortOrder,
+        viewUrl = viewUrl,
+        uploadedAt = requireNotNull(attachment.uploadedAt) { "uploadedAt 은 @CreationTimestamp 로 채워짐" },
     )

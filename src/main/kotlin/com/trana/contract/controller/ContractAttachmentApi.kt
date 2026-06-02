@@ -139,8 +139,19 @@ S3 PUT 완료 후 호출. sortOrder 는 등록 시점 count 로 자동 부여 (0
 
     @Operation(
         operationId = "contractAttachmentList",
-        summary = "첨부 목록 조회",
-        description = "본인 계약의 첨부 목록 (sort_order asc). 상태 무관 — DRAFT/SIGNED 등 모두 조회 가능.",
+        summary = "첨부 목록 조회 (캐러셀)",
+        description = """
+계약 첨부 사진 목록 (sort_order asc). 캐러셀 inline 이미지 표시용.
+
+권한:
+- creator OR contract_parties 멤버 (수신자 invitation accept 후 포함)
+- 그 외 user 는 403 NotAccessible
+
+응답:
+- 각 row 에 viewUrl (presigned GET URL, TTL 5분) 포함 — inline 이미지 직접 표시
+- TTL 만료 시 list 재호출
+- 상태 무관 — IN_PROGRESS/DRAFT/SHARED/SIGNED/COMPLETED 등 모두 조회 가능
+  """,
     )
     @ApiResponses(
         value = [

@@ -59,6 +59,11 @@ data class AttachmentResponse(
     val sha256: String,
     @field:Schema(description = "UI 표시 순서 (0-based)", example = "0")
     val sortOrder: Int,
+    @field:Schema(
+        description = "presigned GET URL (캐러셀 inline 이미지 표시용, TTL 5분). 만료 시 list 재호출",
+        example = "https://trana-contract-dev.s3.../attachments/.../0.jpg?X-Amz-...",
+    )
+    val viewUrl: String,
     val uploadedAt: Instant,
 )
 
