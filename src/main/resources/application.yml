@@ -46,3 +46,5 @@ trana:
       - http://localhost:3000
   guardian:
     web-base-url: ${TRANA_GUARDIAN_WEB_BASE_URL:http://localhost:3000}
+  dev:
+    token-key: ${TRANA_DEV_TOKEN_KEY:}

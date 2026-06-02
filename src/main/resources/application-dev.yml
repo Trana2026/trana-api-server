@@ -24,6 +24,8 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id: ${GOOGLE_CLIENT_ID}
+  dev:
+    token-key: ${TRANA_DEV_TOKEN_KEY}
   kyc:
     ncp:
       id-card:
