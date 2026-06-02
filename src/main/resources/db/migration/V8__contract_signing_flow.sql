@@ -80,6 +80,7 @@ CREATE TABLE contract_signatures
     signer_user_agent   TEXT,
     signature_data      TEXT        NOT NULL,
     pdf_version_at_sign INT         NOT NULL,
+    pdf_sha256_at_sign  VARCHAR(64),
 
     CONSTRAINT chk_contract_signatures_party
         CHECK (party_type IN ('SELLER', 'BUYER'))
@@ -94,6 +95,7 @@ COMMENT ON COLUMN contract_signatures.party_type IS 'SELLER | BUYER';
 COMMENT ON COLUMN contract_signatures.signer_ip IS '서명자 IP (IPv4/v6 둘 다 수용)';
 COMMENT ON COLUMN contract_signatures.signature_data IS '서명 데이터 (base64 image 또는 typed name 등). 향후 PAdES 검토 (W7+)';
 COMMENT ON COLUMN contract_signatures.pdf_version_at_sign IS '서명 시점 contracts.version 스냅샷 — 어느 리비전 PDF 에 서명했는지 audit';
+COMMENT ON COLUMN contract_signatures.pdf_sha256_at_sign IS '서명 시점 PDF sha256 hash 스냅샷 — 분쟁 시 서명한 그 PDF 증명. W6 refactor (e)';
 
 -- ============================================================
 -- contract_consents
@@ -112,10 +114,13 @@ CREATE TABLE contract_consents
 );
 
 CREATE INDEX idx_contract_consents_contract_user ON contract_consents (contract_id, user_id);
+CREATE UNIQUE INDEX uq_contract_consents_contract_user_term
+    ON contract_consents (contract_id, user_id, term_id);
 
 COMMENT ON TABLE contract_consents IS '계약 도메인 약관 동의 audit (4 + 1). 양측이 각자 서명 직전 동의 — user_consents 와 별도';
 COMMENT ON COLUMN contract_consents.term_id IS 'terms 테이블 FK (논리)';
 COMMENT ON COLUMN contract_consents.term_version IS '동의 시점 term version (snapshot)';
+COMMENT ON INDEX uq_contract_consents_contract_user_term IS '한 user 가 같은 contract 의 같은 term 에 1번만 동의 (audit 카운트 무결성). W6 refactor (g)';
 
 -- ============================================================
 -- contract_revision_requests
