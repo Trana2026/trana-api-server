@@ -32,6 +32,9 @@ import com.trana.user.entity.User
 import com.trana.user.entity.UserStatus
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
@@ -421,6 +424,11 @@ class ContractStatusService(
      *
      * 알림톡: W7 분쟁 흐름과 함께 결정 (현재는 status log 만).
      */
+    @Retryable(
+        retryFor = [ObjectOptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 50),
+    )
     @Suppress("ThrowsCount")
     fun confirmCompletion(
         publicCode: String,

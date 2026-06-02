@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
@@ -92,6 +93,11 @@ class Contract(
 
     @Column(name = "version", nullable = false)
     var version: Int = 0
+        protected set
+
+    @Version
+    @Column(name = "optimistic_version", nullable = false)
+    var optimisticVersion: Long = 0
         protected set
 
     @Column(name = "pdf_s3_key", length = 500)

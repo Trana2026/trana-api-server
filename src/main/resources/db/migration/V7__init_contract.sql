@@ -46,6 +46,7 @@ CREATE TABLE contracts
     final_hash                 VARCHAR(64),
     pdf_generated_at           TIMESTAMPTZ,
     version                    INT         NOT NULL DEFAULT 0,
+    optimistic_version         BIGINT      NOT NULL DEFAULT 0,
 
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -76,6 +77,7 @@ COMMENT ON COLUMN contracts.final_hash IS 'SHA-256 hex (64자). 양측 SIGNED �
 COMMENT ON COLUMN contracts.pdf_generated_at IS 'PDF 생성 시각 — markReady 시점 (재 markReady 시 갱신)';
 COMMENT ON COLUMN contracts.completed_at IS '양측 SELLER+BUYER 모두 거래 완료 클릭 시점. 보증기간(3일) 시작 기준 (W7)';
 COMMENT ON COLUMN contracts.version IS 'markReady 마다 +1. PDF 리비전 식별 (W5+)';
+COMMENT ON COLUMN contracts.optimistic_version IS 'JPA @Version 낙관적 잠금 — confirmCompletion 등 race 차단. W6 refactor (f). 비즈니스 PDF version 과 분리';
 COMMENT ON COLUMN contracts.deleted_at IS 'soft delete (DRAFT 만 허용)';
 
 -- ============================================================

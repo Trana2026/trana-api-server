@@ -39,6 +39,9 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
 
+    // --- Resilience ---
+    implementation("org.springframework.retry:spring-retry:2.0.12")
+
     // --- Auth / Security ---
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
