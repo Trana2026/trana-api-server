@@ -23,7 +23,7 @@ class ConsentService(
     private val termsService: TermsService,
     private val guardianLinkService: GuardianLinkService,
 ) {
-    /** 여러 약관에 한 번에 동의 — batch INSERT. */
+    /** 여러 약관에 한 번에 동의 — batch INSERT. 보호자 흐름은 idempotent (refactor ee). */
     fun agree(command: AgreeCommand): List<UserConsent> {
         require(command.termsVersionIds.isNotEmpty()) { "동의할 약관이 없습니다" }
         require(!(command.signupSessionId != null && command.guardianLinkToken != null)) {
@@ -39,24 +39,42 @@ class ConsentService(
 
         val signupSessionId = resolveSignupSessionId(command)
 
-        val consents =
-            command.termsVersionIds.map { termsVersionId ->
-                val consent =
-                    UserConsent(
-                        termsVersionId = termsVersionId,
-                        contextType = command.contextType,
-                        ageGroup = command.ageGroup,
-                        ip = command.ip,
-                        contextId = command.contextId,
-                        signupSessionId = signupSessionId,
-                        guardianLinkToken = command.guardianLinkToken,
-                        userAgent = command.userAgent,
-                    )
-                if (command.userId != null) consent.assignUserId(command.userId)
-                consent
+        // 보호자 흐름 idempotency (refactor ee): 같은 (token, termsVersionId) 조합은 1회만
+        val existingByToken: Map<Long, UserConsent> =
+            if (command.guardianLinkToken != null) {
+                userConsentRepository
+                    .findAllByGuardianLinkToken(command.guardianLinkToken)
+                    .associateBy { it.termsVersionId }
+            } else {
+                emptyMap()
             }
 
-        return userConsentRepository.saveAll(consents)
+        val newConsents =
+            command.termsVersionIds
+                .filter { it !in existingByToken }
+                .map { termsVersionId ->
+                    val consent =
+                        UserConsent(
+                            termsVersionId = termsVersionId,
+                            contextType = command.contextType,
+                            ageGroup = command.ageGroup,
+                            ip = command.ip,
+                            contextId = command.contextId,
+                            signupSessionId = signupSessionId,
+                            guardianLinkToken = command.guardianLinkToken,
+                            userAgent = command.userAgent,
+                        )
+                    if (command.userId != null) consent.assignUserId(command.userId)
+                    consent
+                }
+
+        val saved = if (newConsents.isNotEmpty()) userConsentRepository.saveAll(newConsents) else emptyList()
+
+        // 요청 순서대로 (기존 + 신규) 합쳐 반환 — caller 응답 일관성
+        return command.termsVersionIds.map { termsVersionId ->
+            existingByToken[termsVersionId]
+                ?: saved.first { it.termsVersionId == termsVersionId }
+        }
     }
 
     /** 가입 세션 TTL 검증용 — IdentityService에서 호출. */

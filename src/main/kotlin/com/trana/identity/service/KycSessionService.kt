@@ -66,6 +66,9 @@ class KycSessionService(
             throw IdentityException.Duplicate(identifierHash)
         }
 
+        // 미성년 본인 KYC 우회 차단 (refactor n) — KycSignupService.compareFaces 가 ADULT 하드코딩이므로 게이트 필수
+        stateLookup.requireAdult(ocr.result.birthDate, identifierHash)
+
         val verification =
             ocrPersister.persist(ocr, image) {
                 IdentityVerification.startSignup(

@@ -10,4 +10,7 @@ interface UserConsentRepository : JpaRepository<UserConsent, Long> {
 
     /** Compare SUCCESS 시 user_id 백필용 (해당 세션의 모든 동의 row). */
     fun findAllBySignupSessionId(signupSessionId: UUID): List<UserConsent>
+
+    /** 보호자 동의 idempotency 체크용 (refactor ee) — 같은 토큰의 기존 동의 row 전체. */
+    fun findAllByGuardianLinkToken(guardianLinkToken: String): List<UserConsent>
 }
