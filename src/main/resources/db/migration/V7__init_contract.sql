@@ -228,3 +228,11 @@ COMMENT ON TABLE contract_status_logs IS 'WORM 상태 전이 로그 — insert-o
 COMMENT ON COLUMN contract_status_logs.from_status IS '이전 상태. NULL = INITIAL (계약 생성 시점)';
 COMMENT ON COLUMN contract_status_logs.actor_user_id IS '전이를 일으킨 user. NULL = 시스템 자동 (만료 등)';
 COMMENT ON COLUMN contract_status_logs.reason IS '사유 (취소 사유 등 — nullable)';
+
+-- WORM trigger 부착 (refactor ll-2) — V1 promise 와 일관 유지
+-- entity 가 val 만 — JPA 가 UPDATE 발행 X. raw SQL 우회 INSERT 만 허용
+CREATE TRIGGER trg_contract_status_logs_worm
+    BEFORE UPDATE OR DELETE
+    ON contract_status_logs
+    FOR EACH ROW
+EXECUTE FUNCTION worm_protect();
