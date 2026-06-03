@@ -82,14 +82,22 @@ class ConsentService(
     fun findFirstBySignupSessionId(signupSessionId: UUID): UserConsent? =
         userConsentRepository.findFirstBySignupSessionIdOrderByAgreedAtAsc(signupSessionId)
 
-    /** 성인 가입 완료(Compare SUCCESS) 시 — signup_session_id 매칭 row 모두에 user_id 백필. */
+    /**
+     * 성인 가입 완료(Compare SUCCESS) 시 — signup_session_id 매칭 row 중 user_id null 인 것만 백필 (refactor ff).
+     *
+     * idempotent — 이미 백필된 row 가 섞여있어도 throw 안 함 (운영 사고 재시도 / 부분 실패 후 재진입 안전).
+     * 반환은 실제 백필 발생한 row 수 (skip 된 row 는 미포함).
+     */
     fun backfillUserId(
         signupSessionId: UUID,
         userId: Long,
     ): Int {
-        val consents = userConsentRepository.findAllBySignupSessionId(signupSessionId)
-        consents.forEach { it.assignUserId(userId) }
-        return consents.size
+        val toBackfill =
+            userConsentRepository
+                .findAllBySignupSessionId(signupSessionId)
+                .filter { it.userId == null }
+        toBackfill.forEach { it.assignUserId(userId) }
+        return toBackfill.size
     }
 
     private fun resolveSignupSessionId(command: AgreeCommand): UUID? =
