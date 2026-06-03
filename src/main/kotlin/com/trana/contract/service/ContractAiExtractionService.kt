@@ -4,9 +4,7 @@ import com.trana.contract.ContractException
 import com.trana.contract.adapter.openai.ExtractedPrefill
 import com.trana.contract.adapter.openai.OpenAiProperties
 import com.trana.contract.adapter.openai.OpenAiUsage
-import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractAiExtraction
-import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ExtractionStatus
 import com.trana.contract.repository.ContractAiExtractionRepository
 import com.trana.contract.repository.ContractAttachmentRepository
@@ -39,6 +37,7 @@ class ContractAiExtractionService(
     private val openAiProps: OpenAiProperties,
     private val objectMapper: ObjectMapper,
     private val eventPublisher: ApplicationEventPublisher,
+    private val accessGuard: ContractAccessGuard,
 ) {
     fun submit(
         publicCode: String,
@@ -46,7 +45,7 @@ class ContractAiExtractionService(
         attachmentIds: List<Long>,
         consentedAt: Instant,
     ): AiExtractionStatusView {
-        val contract = loadOwnedDraft(publicCode, userId)
+        val contract = accessGuard.loadOwnedEditable(publicCode, userId)
 
         if (attachmentIds.size !in MIN_IMAGES..MAX_IMAGES) {
             throw ContractException.AiImageCountInvalid(attachmentIds.size)
@@ -88,7 +87,7 @@ class ContractAiExtractionService(
         extractionId: Long,
         userId: Long,
     ): AiExtractionStatusView {
-        val contract = loadOwned(publicCode, userId)
+        val contract = accessGuard.loadOwned(publicCode, userId)
         val extraction =
             aiExtractionRepository.findByIdAndContractId(extractionId, contract.id!!)
                 ?: throw ContractException.AiExtractionNotFound(extractionId)
@@ -100,7 +99,7 @@ class ContractAiExtractionService(
         publicCode: String,
         userId: Long,
     ): AiExtractionStatusView? {
-        val contract = loadOwned(publicCode, userId)
+        val contract = accessGuard.loadOwned(publicCode, userId)
         val extraction =
             aiExtractionRepository.findFirstByContractIdOrderByExtractedAtDesc(contract.id!!)
                 ?: return null
@@ -133,30 +132,6 @@ class ContractAiExtractionService(
             errorMessage = extraction.errorMessage,
             extractedAt = requireNotNull(extraction.extractedAt),
         )
-    }
-
-    private fun loadOwned(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract =
-            contractRepository.findByPublicCodeAndDeletedAtIsNull(publicCode)
-                ?: throw ContractException.NotFound(publicCode)
-        if (contract.creatorUserId != userId) {
-            throw ContractException.NotOwner(publicCode, userId)
-        }
-        return contract
-    }
-
-    private fun loadOwnedDraft(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract = loadOwned(publicCode, userId)
-        if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
-            throw ContractException.NotDraft(publicCode, contract.status.name)
-        }
-        return contract
     }
 
     companion object {

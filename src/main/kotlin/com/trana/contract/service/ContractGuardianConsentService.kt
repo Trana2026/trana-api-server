@@ -43,12 +43,13 @@ class ContractGuardianConsentService(
     private val contractRepository: ContractRepository,
     private val guardianLinkService: GuardianLinkService,
     private val identityVerificationRepository: IdentityVerificationRepository,
+    private val accessGuard: ContractAccessGuard,
 ) {
     fun requestConsent(
         publicCode: String,
         minorUserId: Long,
     ): GuardianLink {
-        val contract = loadOwnedConsentRequired(publicCode, minorUserId)
+        val contract = accessGuard.loadOwnedConsentRequired(publicCode, minorUserId)
         if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(publicCode, contract.status.name)
         }
@@ -111,24 +112,5 @@ class ContractGuardianConsentService(
             ?: throw IllegalStateException(
                 "가입 단계 보호자 verification 에 guardianId 가 없음 (verificationId=${guardianVerification.id})",
             )
-    }
-
-    @Suppress("ThrowsCount")
-    private fun loadOwnedConsentRequired(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract =
-            contractRepository.findByPublicCodeAndDeletedAtIsNull(publicCode)
-                ?: throw ContractException.NotFound(publicCode)
-        if (contract.creatorUserId != userId) {
-            throw ContractException.NotOwner(publicCode, userId)
-        }
-        if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
-            throw ContractException.InvalidConsentType(
-                "보호자 동의가 불필요한 계약입니다 (consentType=${contract.consentType})",
-            )
-        }
-        return contract
     }
 }

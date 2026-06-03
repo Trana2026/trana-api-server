@@ -59,6 +59,30 @@ class ContractAccessGuard(
         }
     }
 
+    /** loadOwned + IN_PROGRESS/DRAFT 검증 — 첨부 / AI 추출 진입 시 (refactor h). */
+    fun loadOwnedEditable(
+        publicCode: String,
+        userId: Long,
+    ): Contract {
+        val contract = loadOwned(publicCode, userId)
+        ensureEditable(contract)
+        return contract
+    }
+
+    /** loadOwned + consentType=GUARDIAN_REQUIRED 검증 — 보호자 동의 흐름 진입 시 (refactor h). */
+    fun loadOwnedConsentRequired(
+        publicCode: String,
+        userId: Long,
+    ): Contract {
+        val contract = loadOwned(publicCode, userId)
+        if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
+            throw ContractException.InvalidConsentType(
+                "보호자 동의가 불필요한 계약입니다 (consentType=${contract.consentType})",
+            )
+        }
+        return contract
+    }
+
     /** 수정 가능 상태 검증 (IN_PROGRESS / DRAFT — updateDraft / softDelete 진입 시) */
     fun ensureEditable(contract: Contract) {
         if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {

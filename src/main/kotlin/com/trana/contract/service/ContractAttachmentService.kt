@@ -5,7 +5,6 @@ import com.trana.contract.adapter.storage.ContractAttachmentStorage
 import com.trana.contract.adapter.storage.PresignedUpload
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractAttachment
-import com.trana.contract.entity.ContractStatus
 import com.trana.contract.repository.ContractAttachmentRepository
 import com.trana.contract.repository.ContractRepository
 import org.springframework.stereotype.Service
@@ -49,7 +48,7 @@ class ContractAttachmentService(
         userId: Long,
         contentType: String,
     ): PresignedUpload {
-        val contract = loadOwnedDraft(publicCode, userId)
+        val contract = accessGuard.loadOwnedEditable(publicCode, userId)
         ensureCapacity(contract)
         val s3Key = buildS3Key(publicCode)
         return storage.presignPut(s3Key, contentType)
@@ -68,7 +67,7 @@ class ContractAttachmentService(
         sizeBytes: Long?,
         originalFilename: String?,
     ): AttachmentView {
-        val contract = loadOwnedDraft(publicCode, userId)
+        val contract = accessGuard.loadOwnedEditable(publicCode, userId)
         ensureCapacity(contract)
         val sha256 = storage.computeSha256(s3Key)
         val nextOrder = attachmentRepository.countByContractId(contract.id!!).toInt()
@@ -102,7 +101,7 @@ class ContractAttachmentService(
         userId: Long,
         attachmentId: Long,
     ) {
-        val contract = loadOwnedDraft(publicCode, userId)
+        val contract = accessGuard.loadOwnedEditable(publicCode, userId)
         val attachment =
             attachmentRepository.findById(attachmentId).orElseThrow {
                 ContractException.AttachmentNotFound(attachmentId)
@@ -112,30 +111,6 @@ class ContractAttachmentService(
         }
         attachmentRepository.delete(attachment)
         storage.delete(attachment.s3Key)
-    }
-
-    private fun loadOwned(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract =
-            contractRepository.findByPublicCodeAndDeletedAtIsNull(publicCode)
-                ?: throw ContractException.NotFound(publicCode)
-        if (contract.creatorUserId != userId) {
-            throw ContractException.NotOwner(publicCode, userId)
-        }
-        return contract
-    }
-
-    private fun loadOwnedDraft(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract = loadOwned(publicCode, userId)
-        if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
-            throw ContractException.NotDraft(publicCode, contract.status.name)
-        }
-        return contract
     }
 
     private fun ensureCapacity(contract: Contract) {
