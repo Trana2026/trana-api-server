@@ -1,6 +1,6 @@
 package com.trana.contract.service
 
-import com.trana.common.util.ContractInvitationTokenGenerator
+import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.kakao.ContractCompletedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
@@ -59,7 +59,7 @@ class ContractStatusService(
     private val accessGuard: ContractAccessGuard,
     private val statusLogRepository: ContractStatusLogRepository,
     private val invitationRepository: ContractInvitationRepository,
-    private val invitationTokenGenerator: ContractInvitationTokenGenerator,
+    private val tokenGenerator: TokenGenerator,
     private val contractRepository: ContractRepository,
     private val revisionRequestRepository: ContractRevisionRequestRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
@@ -124,7 +124,7 @@ class ContractStatusService(
         val invitation =
             ContractInvitation.create(
                 contractId = contract.id!!,
-                token = invitationTokenGenerator.generate(),
+                token = tokenGenerator.generateContractInvitation(),
                 receiverName = receiverName,
                 receiverPhone = receiverPhone,
             )

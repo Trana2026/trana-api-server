@@ -1,7 +1,7 @@
 package com.trana.guardian.service
 
 import com.trana.audit.AuditLogger
-import com.trana.common.util.GuardianLinkTokenGenerator
+import com.trana.common.util.TokenGenerator
 import com.trana.guardian.GuardianException
 import com.trana.guardian.entity.GuardianLink
 import com.trana.guardian.entity.LinkPurpose
@@ -27,7 +27,7 @@ import java.time.Instant
 class GuardianLinkService(
     private val guardianLinkRepository: GuardianLinkRepository,
     private val userService: UserService,
-    private val tokenGenerator: GuardianLinkTokenGenerator,
+    private val tokenGenerator: TokenGenerator,
     private val auditLogger: AuditLogger,
 ) {
     fun create(userId: Long): GuardianLink {
@@ -41,7 +41,7 @@ class GuardianLinkService(
 
         val link =
             GuardianLink(
-                token = tokenGenerator.generate(),
+                token = tokenGenerator.generateGuardianLink(),
                 userId = userId,
                 expiresAt = Instant.now().plus(TTL),
             )
@@ -74,7 +74,7 @@ class GuardianLinkService(
 
         val link =
             GuardianLink(
-                token = tokenGenerator.generate(),
+                token = tokenGenerator.generateGuardianLink(),
                 userId = minorUserId,
                 expiresAt = Instant.now().plus(TTL),
                 purpose = LinkPurpose.CONTRACT_CONSENT,

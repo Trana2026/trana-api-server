@@ -1,6 +1,6 @@
 package com.trana.contract.service
 
-import com.trana.common.util.PublicCodeGenerator
+import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractAttachmentStorage
 import com.trana.contract.entity.ConsentType
@@ -41,7 +41,7 @@ class ContractDraftService(
     private val contractRepository: ContractRepository,
     private val contractPartyRepository: ContractPartyRepository,
     private val userRepository: UserRepository,
-    private val publicCodeGenerator: PublicCodeGenerator,
+    private val tokenGenerator: TokenGenerator,
     private val eventPublisher: ApplicationEventPublisher,
     private val pdfRenderer: ContractPdfRenderer,
     private val accessGuard: ContractAccessGuard,
@@ -63,7 +63,7 @@ class ContractDraftService(
 
         val contract =
             Contract.createDraft(
-                publicCode = publicCodeGenerator.generate(),
+                publicCode = tokenGenerator.generatePublicCode(),
                 creatorUserId = creatorUserId,
                 deliveryType = deliveryType,
                 consentType = consentType,

@@ -2,7 +2,7 @@ package com.trana.user.service
 
 import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialProvider
-import com.trana.common.util.PublicCodeGenerator
+import com.trana.common.util.TokenGenerator
 import com.trana.user.UserException
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.SocialAccount
@@ -22,14 +22,14 @@ import java.util.Optional
 class UserServiceTest {
     private val userRepository: UserRepository = mockk()
     private val socialAccountRepository: SocialAccountRepository = mockk()
-    private val publicCodeGenerator: PublicCodeGenerator = mockk()
+    private val tokenGenerator: TokenGenerator = mockk()
     private val auditLogger: AuditLogger = mockk(relaxed = true)
 
     private val service =
         UserService(
             userRepository = userRepository,
             socialAccountRepository = socialAccountRepository,
-            publicCodeGenerator = publicCodeGenerator,
+            tokenGenerator = tokenGenerator,
             auditLogger = auditLogger,
         )
 
@@ -96,7 +96,7 @@ class UserServiceTest {
         every { userRepository.findById(1L) } returns Optional.of(withdrawnUser)
         every { socialAccountRepository.delete(existingSocial) } just Runs
         every { socialAccountRepository.flush() } just Runs
-        every { publicCodeGenerator.generate() } returns "PUBLIC-2"
+        every { tokenGenerator.generatePublicCode() } returns "PUBLIC-2"
         every { userRepository.save(any<User>()) } answers { firstArg<User>().withId(2L) }
         every { socialAccountRepository.save(any<SocialAccount>()) } answers { firstArg() }
 

@@ -2,7 +2,7 @@ package com.trana.user.service
 
 import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialProvider
-import com.trana.common.util.PublicCodeGenerator
+import com.trana.common.util.TokenGenerator
 import com.trana.user.UserException
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.Gender
@@ -26,7 +26,7 @@ import java.time.LocalDate
 class UserService(
     private val userRepository: UserRepository,
     private val socialAccountRepository: SocialAccountRepository,
-    private val publicCodeGenerator: PublicCodeGenerator,
+    private val tokenGenerator: TokenGenerator,
     private val auditLogger: AuditLogger,
 ) {
     /**
@@ -58,7 +58,7 @@ class UserService(
 
         val newUser =
             User(
-                publicCode = publicCodeGenerator.generate(),
+                publicCode = tokenGenerator.generatePublicCode(),
                 email = email,
                 nickname = nickname,
                 ageGroup = ageGroup,
@@ -104,7 +104,7 @@ class UserService(
     ): User {
         val newUser =
             User(
-                publicCode = publicCodeGenerator.generate(),
+                publicCode = tokenGenerator.generatePublicCode(),
                 name = name,
                 birthDate = birthDate.toString(),
                 gender = gender,
