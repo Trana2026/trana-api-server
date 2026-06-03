@@ -1,5 +1,6 @@
 package com.trana.terms.service
 
+import com.trana.audit.AuditLogger
 import com.trana.guardian.service.GuardianLinkService
 import com.trana.terms.entity.ConsentContextType
 import com.trana.terms.entity.UserConsent
@@ -22,8 +23,10 @@ class ConsentService(
     private val userConsentRepository: UserConsentRepository,
     private val termsService: TermsService,
     private val guardianLinkService: GuardianLinkService,
+    private val auditLogger: AuditLogger,
 ) {
     /** 여러 약관에 한 번에 동의 — batch INSERT. 보호자 흐름은 idempotent (refactor ee). */
+    @Suppress("LongMethod")
     fun agree(command: AgreeCommand): List<UserConsent> {
         require(command.termsVersionIds.isNotEmpty()) { "동의할 약관이 없습니다" }
         require(!(command.signupSessionId != null && command.guardianLinkToken != null)) {
@@ -69,6 +72,23 @@ class ConsentService(
                 }
 
         val saved = if (newConsents.isNotEmpty()) userConsentRepository.saveAll(newConsents) else emptyList()
+
+        auditLogger.log(
+            eventType = "CONSENT_AGREED",
+            actorUserId = command.userId,
+            entityType = "USER_CONSENT",
+            metadata =
+                mapOf(
+                    "contextType" to command.contextType.name,
+                    "ageGroup" to command.ageGroup.name,
+                    "termsVersionIds" to command.termsVersionIds,
+                    "newlyInsertedCount" to newConsents.size,
+                    "totalReturnedCount" to command.termsVersionIds.size,
+                    "signupSessionId" to signupSessionId?.toString(),
+                    "guardianLinkTokenPrefix" to command.guardianLinkToken?.take(8),
+                ),
+            ip = command.ip,
+        )
 
         // 요청 순서대로 (기존 + 신규) 합쳐 반환 — caller 응답 일관성
         return command.termsVersionIds.map { termsVersionId ->
