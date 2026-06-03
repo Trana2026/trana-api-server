@@ -36,13 +36,24 @@ class RequestMdcFilter : OncePerRequestFilter() {
             MDC.put(MDC_REQUEST_ID, requestId)
             MDC.put(MDC_PATH, request.requestURI)
             MDC.put(MDC_METHOD, request.method)
+            resolveClientIp(request)?.let { MDC.put(MDC_IP, it) }
+            request.getHeader("User-Agent")?.let { MDC.put(MDC_USER_AGENT, it) }
             response.setHeader(HEADER_REQUEST_ID, requestId)
             filterChain.doFilter(request, response)
         } finally {
             MDC.remove(MDC_REQUEST_ID)
             MDC.remove(MDC_PATH)
             MDC.remove(MDC_METHOD)
+            MDC.remove(MDC_IP)
+            MDC.remove(MDC_USER_AGENT)
         }
+    }
+
+    /** X-Forwarded-For 우선 (Railway proxy 환경), 없으면 remoteAddr. */
+    private fun resolveClientIp(request: HttpServletRequest): String? {
+        val xff = request.getHeader("X-Forwarded-For")
+        if (!xff.isNullOrBlank()) return xff.substringBefore(",").trim()
+        return request.remoteAddr
     }
 
     companion object {
@@ -50,5 +61,7 @@ class RequestMdcFilter : OncePerRequestFilter() {
         private const val MDC_REQUEST_ID = "requestId"
         private const val MDC_PATH = "path"
         private const val MDC_METHOD = "method"
+        private const val MDC_IP = "ip"
+        private const val MDC_USER_AGENT = "userAgent"
     }
 }

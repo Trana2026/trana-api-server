@@ -1,5 +1,6 @@
 package com.trana.audit
 
+import org.slf4j.MDC
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -28,7 +29,12 @@ class AuditLogger(
         entityId: Long? = null,
         metadata: Map<String, Any?>? = null,
         ip: String? = null,
+        userAgent: String? = null,
     ) {
+        // MDC 자동 fallback (refactor mm) — 호출자 명시 안 하면 RequestMdcFilter 가 채운 컨텍스트 사용
+        val resolvedIp = ip ?: MDC.get(MDC_IP)
+        val resolvedUserAgent = userAgent ?: MDC.get(MDC_USER_AGENT)
+
         repository.save(
             AuditLog(
                 eventType = eventType.name, // ← enum → DB String
@@ -39,5 +45,20 @@ class AuditLogger(
                 ip = ip,
             ),
         )
+    }
+
+    /** AuditLog 에 userAgent 컬럼 없으므로 metadata 에 함께 저장. */
+    private fun mergeUserAgent(
+        metadata: Map<String, Any?>?,
+        userAgent: String?,
+    ): Map<String, Any?>? {
+        if (userAgent.isNullOrBlank()) return metadata
+        val base = metadata ?: emptyMap()
+        return base + ("userAgent" to userAgent)
+    }
+
+    companion object {
+        private const val MDC_IP = "ip"
+        private const val MDC_USER_AGENT = "userAgent"
     }
 }
