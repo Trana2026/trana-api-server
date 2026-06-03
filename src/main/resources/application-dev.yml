@@ -57,6 +57,8 @@ trana:
       consent-text-version: v1
       image-url-ttl-minutes: 5
       timeout-seconds: 60
+    web:
+      base-url: ${TRANA_CONTRACT_WEB_BASE_URL:https://trana.app}
   cors:
     allowed-origins:
       - https://trana-web-guardian.vercel.app

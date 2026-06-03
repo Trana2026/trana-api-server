@@ -1,6 +1,6 @@
 package com.trana.guardian.controller
 
-import com.trana.guardian.GuardianProperties
+import com.trana.common.web.WebUrlBuilder
 import com.trana.guardian.dto.GuardianLinkResponse
 import com.trana.guardian.entity.GuardianLink
 import com.trana.guardian.service.GuardianLinkService
@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/v1/guardian")
 class GuardianController(
     private val guardianLinkService: GuardianLinkService,
-    private val guardianProperties: GuardianProperties,
+    private val webUrlBuilder: WebUrlBuilder,
 ) : GuardianApi {
     override fun createLink(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
     ): GuardianLinkResponse {
         val link = guardianLinkService.create(userId)
-        return link.toResponse(guardianProperties.webBaseUrl)
+        return link.toResponse(webUrlBuilder)
     }
 }
 
-private fun GuardianLink.toResponse(webBaseUrl: String): GuardianLinkResponse =
+private fun GuardianLink.toResponse(webUrlBuilder: WebUrlBuilder): GuardianLinkResponse =
     GuardianLinkResponse(
         token = token,
         expiresAt = expiresAt,
-        verifyUrl = "$webBaseUrl/verify/$token?openExternalBrowser=1",
+        verifyUrl = webUrlBuilder.guardianSignupVerify(token),
     )

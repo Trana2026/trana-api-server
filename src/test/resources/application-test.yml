@@ -61,3 +61,5 @@ trana:
       consent-text-version: v1
       image-url-ttl-minutes: 5
       timeout-seconds: 60
+    web:
+      base-url: https://test.trana.app

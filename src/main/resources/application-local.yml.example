@@ -57,3 +57,5 @@ trana:
   pdf-archive:
       bucket: trana-pdf
       presigned-get-ttl-minutes: 10
+  web:
+      base-url: http://localhost:3000

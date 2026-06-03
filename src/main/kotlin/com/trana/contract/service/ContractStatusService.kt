@@ -1,6 +1,7 @@
 package com.trana.contract.service
 
 import com.trana.common.util.TokenGenerator
+import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.kakao.ContractCompletedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
@@ -72,6 +73,7 @@ class ContractStatusService(
     private val contractConsentRepository: ContractConsentRepository,
     private val termsVersionRepository: TermsVersionRepository,
     private val committer: ContractStatusCommitter,
+    private val webUrlBuilder: WebUrlBuilder,
 ) {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun transitionToReady(
@@ -396,7 +398,7 @@ class ContractStatusService(
         creator: User,
         receiver: User,
     ) {
-        val downloadUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}/pdf"
+        val downloadUrl = webUrlBuilder.contractPdf(contract.publicCode)
         listOf(creator, receiver).forEach { recipient ->
             val recipientName = recipient.name ?: recipient.nickname ?: "Trana 사용자"
             val recipientPhone = recipient.phone ?: "(unknown)"
@@ -441,7 +443,7 @@ class ContractStatusService(
             }
         val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
-        val reviewUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}"
+        val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
         kakaoAlimtalkClient.sendReceiverSigned(
             ReceiverSignedMessage(
                 creatorPhone = creatorPhone,
@@ -514,7 +516,7 @@ class ContractStatusService(
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$sellerUserId)")
             }
         val sellerName = seller.name ?: seller.nickname ?: "Trana 사용자"
-        val invitationUrl = "$INVITATION_BASE_URL/contracts/invitations/${invitation.token}"
+        val invitationUrl = webUrlBuilder.contractInvitation(invitation.token)
         kakaoAlimtalkClient.sendNewContract(
             NewContractMessage(
                 receiverPhone = invitation.receiverPhone,
@@ -541,7 +543,7 @@ class ContractStatusService(
         val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
         val requesterName = requester.name ?: requester.nickname ?: "Trana 사용자"
-        val reviewUrl = "$INVITATION_BASE_URL/contracts/${contract.publicCode}"
+        val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
         kakaoAlimtalkClient.sendRevisionRequested(
             RevisionRequestedMessage(
                 creatorPhone = creatorPhone,
@@ -598,7 +600,6 @@ class ContractStatusService(
 
     companion object {
         // TODO(W6): ConfigurationProperties 로 분리 (dev/prod URL 분기, BSP 준비 시점)
-        private const val INVITATION_BASE_URL = "https://trana.app"
         private val CONTRACT_TERM_TYPES = listOf(TermsType.CONTRACT_AGREEMENT, TermsType.ELECTRONIC_SIGNATURE)
     }
 }

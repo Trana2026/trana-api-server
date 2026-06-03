@@ -58,3 +58,6 @@ trana:
     web-base-url: ${TRANA_GUARDIAN_WEB_BASE_URL:http://localhost:3000}
   dev:
     token-key: ${TRANA_DEV_TOKEN_KEY:}
+  contract:
+    web:
+      base-url: ${TRANA_CONTRACT_WEB_BASE_URL}
