@@ -42,6 +42,10 @@ dependencies {
     // --- Resilience ---
     implementation("org.springframework.retry:spring-retry:2.0.12")
 
+    // --- Cache ---
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
+
     // --- Auth / Security ---
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")

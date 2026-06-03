@@ -336,8 +336,7 @@ class ContractStatusCommitter(
     }
 
     private fun loadContractTerms(): List<TermsVersion> {
-        val allEffective =
-            termsVersionRepository.findAllByEffectiveAtLessThanEqualOrderByEffectiveAtDesc(Instant.now())
+        val allEffective = termsVersionRepository.findActiveByType(Instant.now())
         val picked =
             CONTRACT_TERM_TYPES.mapNotNull { type ->
                 allEffective.firstOrNull { it.type == type }

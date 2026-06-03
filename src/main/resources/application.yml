@@ -12,6 +12,12 @@ spring:
       enabled: true
   jpa:
     open-in-view: false
+  cache:
+    type: caffeine
+    cache-names:
+      - activeTerms
+    caffeine:
+      spec: maximumSize=4,expireAfterWrite=10m
   servlet:
     multipart:
       max-file-size: 10MB
