@@ -33,4 +33,10 @@ enum class AuditEvent {
 
     // Consent (약관 동의)
     CONSENT_AGREED,
+
+    // Auth 도메인 — 소셜 로그인 / 토큰 갱신
+    USER_SIGNED_IN,
+
+    // Contract 도메인 — 보호자 동의 승인 (web 단순 동의)
+    CONTRACT_GUARDIAN_CONSENT_APPROVED,
 }

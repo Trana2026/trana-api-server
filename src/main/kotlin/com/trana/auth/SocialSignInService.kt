@@ -1,5 +1,7 @@
 package com.trana.auth
 
+import com.trana.audit.AuditEvent
+import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialAuthAdapter
 import com.trana.auth.oauth.SocialProvider
 import com.trana.common.security.JwtProvider
@@ -14,6 +16,7 @@ class SocialSignInService(
     private val socialAuthAdapters: List<SocialAuthAdapter>,
     private val userService: UserService,
     private val jwtProvider: JwtProvider,
+    private val auditLogger: AuditLogger,
 ) {
     private val adaptersByProvider: Map<SocialProvider, SocialAuthAdapter> =
         socialAuthAdapters.associateBy { it.provider }
@@ -47,6 +50,18 @@ class SocialSignInService(
             )
 
         val userId = checkNotNull(user.id) { "User id should be assigned after save" }
+
+        auditLogger.log(
+            eventType = AuditEvent.USER_SIGNED_IN,
+            actorUserId = userId,
+            entityType = "USER",
+            entityId = userId,
+            metadata =
+                mapOf(
+                    "provider" to socialUser.provider.name,
+                    "ageGroup" to request.ageGroup.name,
+                ),
+        )
 
         return SignInResponse(
             accessToken = jwtProvider.createAccessToken(userId),

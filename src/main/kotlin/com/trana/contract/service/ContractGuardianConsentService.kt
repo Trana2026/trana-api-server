@@ -1,5 +1,7 @@
 package com.trana.contract.service
 
+import com.trana.audit.AuditEvent
+import com.trana.audit.AuditLogger
 import com.trana.contract.ContractException
 import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
@@ -44,6 +46,7 @@ class ContractGuardianConsentService(
     private val guardianLinkService: GuardianLinkService,
     private val identityVerificationRepository: IdentityVerificationRepository,
     private val accessGuard: ContractAccessGuard,
+    private val auditLogger: AuditLogger,
 ) {
     fun requestConsent(
         publicCode: String,
@@ -95,6 +98,20 @@ class ContractGuardianConsentService(
         val guardianId = resolveGuardianId(minorUserId = link.userId, publicCode = contract.publicCode)
         contract.markGuardianConsented(guardianId)
         guardianLinkService.markUsed(token)
+
+        auditLogger.log(
+            eventType = AuditEvent.CONTRACT_GUARDIAN_CONSENT_APPROVED,
+            actorUserId = guardianId,
+            entityType = "CONTRACT",
+            entityId = contract.id,
+            metadata =
+                mapOf(
+                    "publicCode" to contract.publicCode,
+                    "minorUserId" to link.userId,
+                    "tokenPrefix" to token.take(8),
+                ),
+        )
+
         return contract
     }
 
