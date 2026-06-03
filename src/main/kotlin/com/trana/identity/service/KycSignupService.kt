@@ -1,5 +1,6 @@
 package com.trana.identity.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.security.JwtProvider
 import com.trana.common.storage.StorageService
@@ -58,7 +59,7 @@ class KycSignupService(
                 errorMessage = "얼굴 유사도 임계값 미달 (similarity=${result.similarity})",
             )
             auditLogger.log(
-                eventType = "IDENTITY_COMPARE_FAILED",
+                eventType = AuditEvent.IDENTITY_COMPARE_FAILED,
                 entityType = "IDENTITY_VERIFICATION",
                 entityId = verification.id,
                 metadata = mapOf("similarity" to result.similarity),
@@ -88,7 +89,7 @@ class KycSignupService(
         val refreshToken = jwtProvider.createRefreshToken(newUserId)
 
         auditLogger.log(
-            eventType = "IDENTITY_SIGNUP_COMPLETED",
+            eventType = AuditEvent.IDENTITY_SIGNUP_COMPLETED,
             actorUserId = newUserId,
             entityType = "USER",
             entityId = newUserId,
@@ -114,7 +115,7 @@ class KycSignupService(
         val session = sessionService.findActive(requestId)
         if (session == null) {
             auditLogger.log(
-                eventType = "SIGNUP_KYC_CANCEL_NOOP",
+                eventType = AuditEvent.SIGNUP_KYC_CANCEL_NOOP,
                 entityType = "ID_CARD_VERIFY_SESSION",
                 metadata = mapOf("requestIdPrefix" to requestId.take(8)),
             )
@@ -131,7 +132,7 @@ class KycSignupService(
         sessionService.delete(requestId)
 
         auditLogger.log(
-            eventType = "SIGNUP_KYC_CANCELED",
+            eventType = AuditEvent.SIGNUP_KYC_CANCELED,
             entityType = "ID_CARD_VERIFY_SESSION",
             metadata =
                 mapOf(

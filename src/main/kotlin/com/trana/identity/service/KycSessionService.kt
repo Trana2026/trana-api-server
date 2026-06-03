@@ -1,5 +1,6 @@
 package com.trana.identity.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.storage.StorageService
 import com.trana.identity.IdentityException
@@ -83,7 +84,7 @@ class KycSessionService(
             }
 
         auditLogger.log(
-            eventType = "IDENTITY_OCR_PASSED",
+            eventType = AuditEvent.IDENTITY_OCR_PASSED,
             entityType = "IDENTITY_VERIFICATION",
             entityId = verification.id,
             metadata = mapOf("idType" to ocr.result.idType.name, "signupSessionId" to signupSessionId.toString()),
@@ -114,7 +115,7 @@ class KycSessionService(
             val errorMessage = result.errorMessage ?: "신분증 진위확인 실패"
             verification.markVerifyFailed(errorCode = errorCode, errorMessage = errorMessage)
             auditLogger.log(
-                eventType = "IDENTITY_VERIFY_FAILED",
+                eventType = AuditEvent.IDENTITY_VERIFY_FAILED,
                 entityType = "IDENTITY_VERIFICATION",
                 entityId = verification.id,
                 metadata = mapOf("errorCode" to errorCode),
@@ -124,7 +125,7 @@ class KycSessionService(
 
         verification.markVerifyPassed()
         auditLogger.log(
-            eventType = "IDENTITY_VERIFY_PASSED",
+            eventType = AuditEvent.IDENTITY_VERIFY_PASSED,
             entityType = "IDENTITY_VERIFICATION",
             entityId = verification.id,
         )
@@ -160,7 +161,7 @@ class KycSessionService(
 
         verification.recordPhone(digits)
         auditLogger.log(
-            eventType = "IDENTITY_PHONE_RECORDED",
+            eventType = AuditEvent.IDENTITY_PHONE_RECORDED,
             entityType = "IDENTITY_VERIFICATION",
             entityId = verification.id,
         )

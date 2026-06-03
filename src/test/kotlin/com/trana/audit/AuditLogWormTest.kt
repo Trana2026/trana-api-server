@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles
 class AuditLogWormTest
     @Autowired
     constructor(
-        private val auditLogger: AuditLogger,
         private val repository: AuditLogRepository,
         private val jdbcTemplate: JdbcTemplate,
     ) {
@@ -36,7 +35,7 @@ class AuditLogWormTest
 
         @Test
         fun insertSucceeds() {
-            auditLogger.log(eventType = "TEST_INSERT", actorUserId = 1L)
+            repository.save(AuditLog(eventType = "TEST_INSERT", actorUserId = 1L))
 
             val all = repository.findAll()
             Assertions.assertEquals(1, all.size)
@@ -48,7 +47,7 @@ class AuditLogWormTest
 
         @Test
         fun updateIsRejectedByWormTrigger() {
-            auditLogger.log(eventType = "BEFORE_UPDATE", actorUserId = 1L)
+            repository.save(AuditLog(eventType = "BEFORE_UPDATE", actorUserId = 1L))
 
             Assertions.assertThrows(DataAccessException::class.java) {
                 jdbcTemplate.update(
@@ -59,7 +58,7 @@ class AuditLogWormTest
 
         @Test
         fun deleteIsRejectedByWormTrigger() {
-            auditLogger.log(eventType = "BEFORE_DELETE", actorUserId = 1L)
+            repository.save(AuditLog(eventType = "BEFORE_DELETE", actorUserId = 1L))
 
             Assertions.assertThrows(DataAccessException::class.java) {
                 jdbcTemplate.update("DELETE FROM audit_logs WHERE event_type = 'BEFORE_DELETE'")
@@ -69,7 +68,7 @@ class AuditLogWormTest
         @Test
         fun jsonbMetadataRoundTrip() {
             val meta = mapOf("provider" to "KAKAO", "ip_country" to "KR", "score" to 95)
-            auditLogger.log(eventType = "JSONB_TEST", metadata = meta)
+            repository.save(AuditLog(eventType = "JSONB_TEST", metadata = meta))
 
             val saved = repository.findAll().first()
             Assertions.assertEquals("KAKAO", saved.metadata?.get("provider"))
@@ -80,7 +79,7 @@ class AuditLogWormTest
 
         @Test
         fun inetIpRoundTrip() {
-            auditLogger.log(eventType = "INET_TEST", ip = "192.168.0.1")
+            repository.save(AuditLog(eventType = "INET_TEST", ip = "192.168.0.1"))
 
             val saved = repository.findAll().first()
             Assertions.assertEquals("192.168.0.1", saved.ip)

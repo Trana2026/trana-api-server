@@ -1,5 +1,6 @@
 package com.trana.identity.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.storage.StorageService
 import com.trana.guardian.GuardianException
@@ -89,7 +90,7 @@ class KycGuardianService(
             }
 
         auditLogger.log(
-            eventType = "GUARDIAN_IDENTITY_OCR_PASSED",
+            eventType = AuditEvent.GUARDIAN_IDENTITY_OCR_PASSED,
             entityType = "IDENTITY_VERIFICATION",
             entityId = verification.id,
             metadata = mapOf("subjectUserId" to link.userId, "tokenPrefix" to token.take(8)),
@@ -150,7 +151,7 @@ class KycGuardianService(
                 errorMessage = "얼굴 유사도 임계값 미달 (similarity=${result.similarity})",
             )
             auditLogger.log(
-                eventType = "GUARDIAN_IDENTITY_COMPARE_FAILED",
+                eventType = AuditEvent.GUARDIAN_IDENTITY_COMPARE_FAILED,
                 entityType = "IDENTITY_VERIFICATION",
                 entityId = verification.id,
                 metadata = mapOf("similarity" to result.similarity),
@@ -179,7 +180,7 @@ class KycGuardianService(
         deleteIdCardImage(session.idCardS3Key)
 
         auditLogger.log(
-            eventType = "GUARDIAN_VERIFIED_COMPLETED",
+            eventType = AuditEvent.GUARDIAN_VERIFIED_COMPLETED,
             actorUserId = subjectUserId,
             entityType = "USER",
             entityId = subjectUserId,

@@ -22,7 +22,7 @@ class AuditLogger(
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun log(
-        eventType: String,
+        eventType: AuditEvent, // ← String → AuditEvent
         actorUserId: Long? = null,
         entityType: String? = null,
         entityId: Long? = null,
@@ -31,7 +31,7 @@ class AuditLogger(
     ) {
         repository.save(
             AuditLog(
-                eventType = eventType,
+                eventType = eventType.name, // ← enum → DB String
                 actorUserId = actorUserId,
                 entityType = entityType,
                 entityId = entityId,

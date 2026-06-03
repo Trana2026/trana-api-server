@@ -1,5 +1,6 @@
 package com.trana.user.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialProvider
 import com.trana.common.util.TokenGenerator
@@ -75,7 +76,7 @@ class UserService(
         )
 
         auditLogger.log(
-            eventType = EVENT_USER_CREATED,
+            eventType = AuditEvent.USER_CREATED,
             actorUserId = userId,
             entityType = ENTITY_USER,
             entityId = userId,
@@ -115,7 +116,7 @@ class UserService(
         val userId = checkNotNull(newUser.id) { "User id should be assigned after save" }
 
         auditLogger.log(
-            eventType = EVENT_USER_CREATED,
+            eventType = AuditEvent.USER_CREATED,
             actorUserId = userId,
             entityType = ENTITY_USER,
             entityId = userId,
@@ -153,7 +154,7 @@ class UserService(
         }
         user.withdraw()
         auditLogger.log(
-            eventType = EVENT_USER_WITHDRAWN,
+            eventType = AuditEvent.USER_WITHDRAWN,
             actorUserId = userId,
             entityType = ENTITY_USER,
             entityId = userId,
@@ -161,6 +162,4 @@ class UserService(
     }
 }
 
-private const val EVENT_USER_CREATED = "USER_CREATED"
-private const val EVENT_USER_WITHDRAWN = "USER_WITHDRAWN"
 private const val ENTITY_USER = "USER"

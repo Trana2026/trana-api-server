@@ -1,5 +1,6 @@
 package com.trana.terms.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.guardian.service.GuardianLinkService
 import com.trana.terms.entity.ConsentContextType
@@ -74,7 +75,7 @@ class ConsentService(
         val saved = if (newConsents.isNotEmpty()) userConsentRepository.saveAll(newConsents) else emptyList()
 
         auditLogger.log(
-            eventType = "CONSENT_AGREED",
+            eventType = AuditEvent.CONSENT_AGREED,
             actorUserId = command.userId,
             entityType = "USER_CONSENT",
             metadata =

@@ -1,5 +1,6 @@
 package com.trana.guardian.service
 
+import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.util.TokenGenerator
 import com.trana.guardian.GuardianException
@@ -48,7 +49,7 @@ class GuardianLinkService(
         val saved = guardianLinkRepository.save(link)
 
         auditLogger.log(
-            eventType = "GUARDIAN_LINK_CREATED",
+            eventType = AuditEvent.GUARDIAN_LINK_CREATED,
             actorUserId = userId,
             entityType = "GUARDIAN_LINK",
             metadata = mapOf("tokenPrefix" to saved.token.take(8)),
@@ -83,7 +84,7 @@ class GuardianLinkService(
         val saved = guardianLinkRepository.save(link)
 
         auditLogger.log(
-            eventType = "CONTRACT_GUARDIAN_LINK_CREATED",
+            eventType = AuditEvent.CONTRACT_GUARDIAN_LINK_CREATED,
             actorUserId = minorUserId,
             entityType = "GUARDIAN_LINK",
             metadata =
