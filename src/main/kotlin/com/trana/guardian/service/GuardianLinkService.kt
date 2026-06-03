@@ -108,10 +108,29 @@ class GuardianLinkService(
         return link.also { validateActive(it) }
     }
 
-    /** Phase 6 Compare SUCCESS 시 호출 — 재사용 차단. */
+    /**
+     * 1회용 토큰 사용 처리 — conditional UPDATE atomic (refactor cc).
+     *
+     * - `WHERE used_at IS NULL AND expires_at > now` 매칭 시만 affected=1
+     * - 동시 진입 race 시 한쪽만 통과, 다른쪽 LinkInvalid → 트랜잭션 rollback
+     * - affected=0 시 findById 로 사유 분류 (이미 사용 / 만료 / 없음)
+     */
     fun markUsed(token: String) {
-        val link = findActive(token)
-        link.markUsed()
+        val now = Instant.now()
+        val affected = guardianLinkRepository.markUsedAtomically(token, now)
+        if (affected == 1) return
+
+        val link =
+            guardianLinkRepository.findById(token).orElseThrow {
+                GuardianException.LinkNotFound(token)
+            }
+        val reason =
+            when {
+                link.usedAt != null -> "이미 사용된 토큰"
+                link.isExpired(now) -> "만료된 토큰"
+                else -> "토큰 상태 확인 실패"
+            }
+        throw GuardianException.LinkInvalid(token, reason)
     }
 
     private fun validateActive(link: GuardianLink) {
