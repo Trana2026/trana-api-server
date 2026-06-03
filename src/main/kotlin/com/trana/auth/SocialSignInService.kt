@@ -6,6 +6,8 @@ import com.trana.common.security.JwtProvider
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class SocialSignInService(
@@ -16,6 +18,14 @@ class SocialSignInService(
     private val adaptersByProvider: Map<SocialProvider, SocialAuthAdapter> =
         socialAuthAdapters.associateBy { it.provider }
 
+    /**
+     * 소셜 로그인 — OAuth provider verify (JWKS HTTP I/O) 가 DB 트랜잭션 안에 들어가지 않도록 명시 가드 (refactor u).
+     *
+     * - `adapter.verify(idToken)` 는 콜드 캐시 시 JWKS fetch 발생 → 트랜잭션 안에서 풀 점유 risk
+     * - `findOrCreateBySocial` 의 자체 @Transactional 만 별도 짧은 트랜잭션
+     * - NOT_SUPPORTED: caller 가 트랜잭션 열고 호출해도 suspend → verify 가 트랜잭션 밖 보장
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun signIn(request: SocialSignInRequest): SignInResponse {
         require(request.ageGroup == AgeGroup.MINOR) {
             "소셜 로그인은 미성년자(MINOR)만 가능합니다. 성인은 본인 KYC 흐름으로 가입하세요."
