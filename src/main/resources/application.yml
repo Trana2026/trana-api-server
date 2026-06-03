@@ -35,6 +35,10 @@ management:
     env:
       enabled: true
 
+logging:
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{requestId:-}]){faint} %clr([%X{method:-} %X{path:-}]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
+
 springdoc:
   swagger-ui:
     display-request-duration: true
