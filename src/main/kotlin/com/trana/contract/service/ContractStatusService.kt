@@ -23,9 +23,6 @@ import com.trana.contract.repository.ContractRepository
 import com.trana.contract.repository.ContractRevisionRequestRepository
 import com.trana.contract.repository.ContractSignatureRepository
 import com.trana.contract.repository.ContractStatusLogRepository
-import com.trana.terms.entity.TermsType
-import com.trana.terms.entity.TermsVersion
-import com.trana.terms.repository.TermsVersionRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.entity.UserStatus
@@ -71,7 +68,6 @@ class ContractStatusService(
     private val eventPublisher: ApplicationEventPublisher,
     private val contractSignatureRepository: ContractSignatureRepository,
     private val contractConsentRepository: ContractConsentRepository,
-    private val termsVersionRepository: TermsVersionRepository,
     private val committer: ContractStatusCommitter,
     private val webUrlBuilder: WebUrlBuilder,
 ) {
@@ -424,18 +420,6 @@ class ContractStatusService(
             signatureBase64 = signatureBase64,
         )
 
-    private fun loadContractTerms(): List<TermsVersion> {
-        val allEffective = termsVersionRepository.findActiveByType(Instant.now())
-        val picked =
-            CONTRACT_TERM_TYPES.mapNotNull { type ->
-                allEffective.firstOrNull { it.type == type }
-            }
-        check(picked.size == CONTRACT_TERM_TYPES.size) {
-            "계약 도메인 약관 시드 누락 — V10 마이그레이션 확인 필요"
-        }
-        return picked
-    }
-
     private fun sendReceiverSignedAlimtalk(contract: Contract) {
         val creator =
             userRepository.findById(contract.creatorUserId).orElseThrow {
@@ -597,11 +581,6 @@ class ContractStatusService(
     }
 
     private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
-
-    companion object {
-        // TODO(W6): ConfigurationProperties 로 분리 (dev/prod URL 분기, BSP 준비 시점)
-        private val CONTRACT_TERM_TYPES = listOf(TermsType.CONTRACT_AGREEMENT, TermsType.ELECTRONIC_SIGNATURE)
-    }
 }
 
 data class ReceiverSignView(

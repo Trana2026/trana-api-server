@@ -9,9 +9,7 @@ import com.trana.contract.entity.PartyType
 import com.trana.contract.repository.ContractConsentRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractSignatureRepository
-import com.trana.terms.entity.TermsType
 import com.trana.terms.entity.TermsVersion
-import com.trana.terms.repository.TermsVersionRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.entity.UserStatus
@@ -35,9 +33,9 @@ class ContractStatusCommitter(
     private val eventPublisher: ApplicationEventPublisher,
     private val contractPartyRepository: ContractPartyRepository,
     private val userRepository: UserRepository,
-    private val termsVersionRepository: TermsVersionRepository,
     private val contractConsentRepository: ContractConsentRepository,
     private val contractSignatureRepository: ContractSignatureRepository,
+    private val termsLoader: ContractTermsLoader,
 ) {
     /** transitionToReady 의 외부 I/O 진입 전 preview — pre-check + PDF 렌더 input 생성. */
     @Transactional(readOnly = true)
@@ -95,7 +93,7 @@ class ContractStatusCommitter(
             contractPartyRepository.findFirstByContractIdAndUserId(contractId, userId)
                 ?: throw ContractException.NotReceiver(publicCode, userId)
 
-        val expectedTerms = loadContractTerms()
+        val expectedTerms = termsLoader.load()
         val expectedIds = expectedTerms.map { it.id!! }.toSet()
         if (agreedTermIds.toSet() != expectedIds) {
             throw ContractException.TermsMismatch(
@@ -211,7 +209,7 @@ class ContractStatusCommitter(
 
         validateUserReady(receiverParty.userId)
 
-        val expectedTerms = loadContractTerms()
+        val expectedTerms = termsLoader.load()
         val expectedIds = expectedTerms.map { it.id!! }.toSet()
         if (agreedTermIds.toSet() != expectedIds) {
             throw ContractException.TermsMismatch(
@@ -333,23 +331,6 @@ class ContractStatusCommitter(
             receiver = receiver,
             creatorSignedAt = signature.signedAt ?: Instant.now(),
         )
-    }
-
-    private fun loadContractTerms(): List<TermsVersion> {
-        val allEffective = termsVersionRepository.findActiveByType(Instant.now())
-        val picked =
-            CONTRACT_TERM_TYPES.mapNotNull { type ->
-                allEffective.firstOrNull { it.type == type }
-            }
-        check(picked.size == CONTRACT_TERM_TYPES.size) {
-            "계약 도메인 약관 시드 누락 — V10 마이그레이션 확인 필요"
-        }
-        return picked
-    }
-
-    companion object {
-        private val CONTRACT_TERM_TYPES =
-            listOf(TermsType.CONTRACT_AGREEMENT, TermsType.ELECTRONIC_SIGNATURE)
     }
 
     private fun validateUserReady(userId: Long) {
