@@ -2,7 +2,6 @@ package com.trana.identity.service
 
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
-import com.trana.common.storage.StorageService
 import com.trana.guardian.GuardianException
 import com.trana.guardian.entity.Guardian
 import com.trana.guardian.repository.GuardianRepository
@@ -10,12 +9,10 @@ import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.IdCardOcrAdapter
-import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.adapter.idType
 import com.trana.identity.adapter.identifierHashRaw
 import com.trana.identity.adapter.toDomainGender
-import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.IdentityVerification
 import com.trana.identity.entity.VerificationPurpose
 import com.trana.identity.entity.VerificationStatus
@@ -36,7 +33,6 @@ import java.time.LocalDate
  */
 @Service
 @Transactional
-@Suppress("TooManyFunctions")
 class KycGuardianService(
     private val idCardOcrAdapter: IdCardOcrAdapter,
     private val faceCompareAdapter: FaceCompareAdapter,
@@ -48,10 +44,11 @@ class KycGuardianService(
     private val guardianRepository: GuardianRepository,
     private val guardianLinkService: GuardianLinkService,
     private val userRepository: UserRepository,
-    private val storageService: StorageService,
+    private val idCardImageGateway: IdCardImageGateway,
     private val auditLogger: AuditLogger,
     private val idCardMasker: IdCardMasker,
     private val purger: IdentitySessionPurger,
+    private val postCompareHandler: KycPostCompareHandler,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -124,7 +121,7 @@ class KycGuardianService(
         val verification = stateLookup.loadPendingVerification(requestId)
         validateBelongsToToken(verification, token)
 
-        val image = loadIdCardImage(session)
+        val image = idCardImageGateway.load(session)
         val polygons = sessionService.decodeMaskRegions(session)
         val maskedBytes = idCardMasker.apply(image.bytes, polygons)
         return IdCardImagePreview(bytes = maskedBytes, mime = "image/png")
@@ -141,22 +138,15 @@ class KycGuardianService(
 
         if (!verification.verifyPassed) throw IdentityException.VerifyRequired(requestId)
 
-        val idCardImage = loadIdCardImage(session)
+        val idCardImage = idCardImageGateway.load(session)
         val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, GUARDIAN_FACE_MATCH_THRESHOLD)
 
         if (!result.isMatch) {
-            verification.markCompareFailed(
+            postCompareHandler.handleCompareFailed(
+                verification = verification,
                 similarity = result.similarity,
-                errorCode = "FACE_MISMATCH",
-                errorMessage = "얼굴 유사도 임계값 미달 (similarity=${result.similarity})",
+                failedEvent = AuditEvent.GUARDIAN_IDENTITY_COMPARE_FAILED,
             )
-            auditLogger.log(
-                eventType = AuditEvent.GUARDIAN_IDENTITY_COMPARE_FAILED,
-                entityType = "IDENTITY_VERIFICATION",
-                entityId = verification.id,
-                metadata = mapOf("similarity" to result.similarity),
-            )
-            throw IdentityException.CompareRejected(similarity = result.similarity)
         }
 
         val subjectUserId = checkNotNull(verification.subjectUserId) { "GUARDIAN verification에 subjectUserId 필수" }
@@ -176,8 +166,7 @@ class KycGuardianService(
         minor.markGuardianVerified()
         userRepository.save(minor)
 
-        sessionService.delete(requestId)
-        deleteIdCardImage(session.idCardS3Key)
+        postCompareHandler.finalizeCompareSuccess(requestId, session.idCardS3Key)
 
         auditLogger.log(
             eventType = AuditEvent.GUARDIAN_VERIFIED_COMPLETED,
@@ -226,23 +215,6 @@ class KycGuardianService(
         if (verification.guardianLinkToken != token) {
             throw GuardianException.LinkInvalid(token, "verification과 token 불일치")
         }
-    }
-
-    private fun loadIdCardImage(session: IdCardVerifySession): ImageInput {
-        val s3Key = checkNotNull(session.idCardS3Key) { "session.idCardS3Key null" }
-        val mime = checkNotNull(session.idCardMime) { "session.idCardMime null" }
-        val format = ImageFormat.fromMime(mime)
-        return ImageInput(
-            bytes = storageService.get(s3Key),
-            format = format,
-            originalFilename = "id-card.${format.extension}",
-        )
-    }
-
-    private fun deleteIdCardImage(s3Key: String?) {
-        if (s3Key == null) return
-        runCatching { storageService.delete(s3Key) }
-            .onFailure { log.warn("S3 id-card delete failed: key={}", s3Key, it) }
     }
 }
 

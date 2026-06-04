@@ -1,6 +1,5 @@
 package com.trana.identity.service
 
-import com.trana.common.storage.StorageService
 import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdCardVerifySessionRepository
@@ -18,20 +17,20 @@ import java.util.Optional
 class IdentitySessionPurgerTest {
     private val sessionRepository: IdCardVerifySessionRepository = mockk()
     private val verificationRepository: IdentityVerificationRepository = mockk()
-    private val storageService: StorageService = mockk()
+    private val idCardImageGateway: IdCardImageGateway = mockk()
 
     private val purger =
         IdentitySessionPurger(
             sessionRepository = sessionRepository,
             verificationRepository = verificationRepository,
-            storageService = storageService,
+            idCardImageGateway = idCardImageGateway,
         )
 
     @Test
     fun purgeDeletesS3AndVerificationAndSessionInOrder() {
         val session = session(requestId = "req-1", s3Key = "identity/req-1/id-card.jpg")
         every { sessionRepository.findById("req-1") } returns Optional.of(session)
-        every { storageService.delete("identity/req-1/id-card.jpg") } just Runs
+        every { idCardImageGateway.deleteSwallow("identity/req-1/id-card.jpg") } just Runs
         every {
             verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)
         } returns 1
@@ -40,16 +39,17 @@ class IdentitySessionPurgerTest {
         purger.purgeByRequestId("req-1")
 
         verifyOrder {
-            storageService.delete("identity/req-1/id-card.jpg")
+            idCardImageGateway.deleteSwallow("identity/req-1/id-card.jpg")
             verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)
             sessionRepository.deleteById("req-1")
         }
     }
 
     @Test
-    fun purgeSkipsS3WhenSessionS3KeyIsNull() {
+    fun purgeProceedsWhenSessionS3KeyIsNull() {
         val session = session(requestId = "req-1", s3Key = null)
         every { sessionRepository.findById("req-1") } returns Optional.of(session)
+        every { idCardImageGateway.deleteSwallow(null) } just Runs
         every {
             verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)
         } returns 0
@@ -57,25 +57,7 @@ class IdentitySessionPurgerTest {
 
         purger.purgeByRequestId("req-1")
 
-        verify(exactly = 0) { storageService.delete(any()) }
-        verify { sessionRepository.deleteById("req-1") }
-    }
-
-    @Test
-    fun purgeContinuesWhenS3DeleteFails() {
-        val session = session(requestId = "req-1", s3Key = "identity/req-1/id-card.jpg")
-        every { sessionRepository.findById("req-1") } returns Optional.of(session)
-        every { storageService.delete(any()) } throws RuntimeException("S3 unreachable")
-        every {
-            verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)
-        } returns 1
-        every { sessionRepository.deleteById("req-1") } just Runs
-
-        purger.purgeByRequestId("req-1")
-
-        verify {
-            verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)
-        }
+        verify { idCardImageGateway.deleteSwallow(null) }
         verify { sessionRepository.deleteById("req-1") }
     }
 
@@ -88,7 +70,7 @@ class IdentitySessionPurgerTest {
 
         purger.purgeByRequestId("req-1")
 
-        verify(exactly = 0) { storageService.delete(any()) }
+        verify(exactly = 0) { idCardImageGateway.deleteSwallow(any()) }
         verify(exactly = 0) { sessionRepository.deleteById(any<String>()) }
         verify {
             verificationRepository.deleteByNcpDocumentRequestIdAndStatus("req-1", VerificationStatus.PENDING)

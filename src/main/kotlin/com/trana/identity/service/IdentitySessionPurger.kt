@@ -1,10 +1,8 @@
 package com.trana.identity.service
 
-import com.trana.common.storage.StorageService
 import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdCardVerifySessionRepository
 import com.trana.identity.repository.IdentityVerificationRepository
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,10 +21,8 @@ import org.springframework.transaction.annotation.Transactional
 class IdentitySessionPurger(
     private val sessionRepository: IdCardVerifySessionRepository,
     private val verificationRepository: IdentityVerificationRepository,
-    private val storageService: StorageService,
+    private val idCardImageGateway: IdCardImageGateway,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
-
     @Transactional
     fun purgeByRequestId(requestId: String) {
         val session = sessionRepository.findById(requestId).orElse(null)
@@ -39,17 +35,11 @@ class IdentitySessionPurger(
             return
         }
 
-        deleteS3IfPresent(session.idCardS3Key)
+        idCardImageGateway.deleteSwallow(session.idCardS3Key)
         verificationRepository.deleteByNcpDocumentRequestIdAndStatus(
             requestId,
             VerificationStatus.PENDING,
         )
         sessionRepository.deleteById(requestId)
-    }
-
-    private fun deleteS3IfPresent(s3Key: String?) {
-        if (s3Key == null) return
-        runCatching { storageService.delete(s3Key) }
-            .onFailure { log.warn("S3 id-card delete failed (lifecycle 1d will cleanup): key={}", s3Key, it) }
     }
 }

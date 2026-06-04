@@ -3,19 +3,15 @@ package com.trana.identity.service
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.security.JwtProvider
-import com.trana.common.storage.StorageService
 import com.trana.identity.IdentityException
 import com.trana.identity.adapter.FaceCompareAdapter
-import com.trana.identity.adapter.ImageFormat
 import com.trana.identity.adapter.ImageInput
-import com.trana.identity.entity.IdCardVerifySession
 import com.trana.identity.entity.IdentityVerification
 import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.terms.service.ConsentService
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -34,13 +30,12 @@ class KycSignupService(
     private val stateLookup: KycStateLookup,
     private val consentService: ConsentService,
     private val userService: UserService,
-    private val storageService: StorageService,
+    private val idCardImageGateway: IdCardImageGateway,
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,
     private val verificationRepository: IdentityVerificationRepository,
+    private val postCompareHandler: KycPostCompareHandler,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
-
     fun compareFaces(
         requestId: String,
         selfieImage: ImageInput,
@@ -49,22 +44,15 @@ class KycSignupService(
         val verification = stateLookup.loadPendingVerification(requestId)
         val phone = ensureReadyForCompare(verification, requestId)
 
-        val idCardImage = loadIdCardImage(session)
+        val idCardImage = idCardImageGateway.load(session)
         val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, ADULT_FACE_MATCH_THRESHOLD)
 
         if (!result.isMatch) {
-            verification.markCompareFailed(
+            postCompareHandler.handleCompareFailed(
+                verification = verification,
                 similarity = result.similarity,
-                errorCode = "FACE_MISMATCH",
-                errorMessage = "얼굴 유사도 임계값 미달 (similarity=${result.similarity})",
+                failedEvent = AuditEvent.IDENTITY_COMPARE_FAILED,
             )
-            auditLogger.log(
-                eventType = AuditEvent.IDENTITY_COMPARE_FAILED,
-                entityType = "IDENTITY_VERIFICATION",
-                entityId = verification.id,
-                metadata = mapOf("similarity" to result.similarity),
-            )
-            throw IdentityException.CompareRejected(similarity = result.similarity)
         }
 
         val signupSessionId =
@@ -82,8 +70,7 @@ class KycSignupService(
 
         verification.markCompareSuccess(similarity = result.similarity, boundUserId = newUserId)
         consentService.backfillUserId(signupSessionId, newUserId)
-        sessionService.delete(requestId)
-        deleteIdCardImage(session.idCardS3Key)
+        postCompareHandler.finalizeCompareSuccess(requestId, session.idCardS3Key)
 
         val accessToken = jwtProvider.createAccessToken(newUserId)
         val refreshToken = jwtProvider.createRefreshToken(newUserId)
@@ -122,7 +109,7 @@ class KycSignupService(
             return
         }
 
-        deleteIdCardImage(session.idCardS3Key)
+        idCardImageGateway.deleteSwallow(session.idCardS3Key)
 
         val verification = verificationRepository.findByNcpDocumentRequestId(requestId)
         if (verification != null && verification.status == VerificationStatus.PENDING) {
@@ -151,20 +138,6 @@ class KycSignupService(
             throw IdentityException.VerifyRequired(requestId)
         }
         return verification.phone!!
-    }
-
-    private fun loadIdCardImage(session: IdCardVerifySession): ImageInput {
-        val s3Key = checkNotNull(session.idCardS3Key) { "session.idCardS3Key null" }
-        val mime = checkNotNull(session.idCardMime) { "session.idCardMime null" }
-        val format = ImageFormat.fromMime(mime)
-        val bytes = storageService.get(s3Key)
-        return ImageInput(bytes = bytes, format = format, originalFilename = "id-card.${format.extension}")
-    }
-
-    private fun deleteIdCardImage(s3Key: String?) {
-        if (s3Key == null) return
-        runCatching { storageService.delete(s3Key) }
-            .onFailure { log.warn("S3 id-card delete failed (lifecycle 1d will cleanup): key={}", s3Key, it) }
     }
 }
 
