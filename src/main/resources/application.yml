@@ -61,3 +61,7 @@ trana:
   contract:
     web:
       base-url: ${TRANA_CONTRACT_WEB_BASE_URL}
+  identity:
+    face-match:
+      adult-threshold: ${TRANA_IDENTITY_FACE_MATCH_ADULT_THRESHOLD:0.5}
+      guardian-threshold: ${TRANA_IDENTITY_FACE_MATCH_GUARDIAN_THRESHOLD:0.35}

@@ -4,6 +4,7 @@ import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.security.JwtProvider
 import com.trana.identity.IdentityException
+import com.trana.identity.IdentityFaceMatchProperties
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.ImageInput
 import com.trana.identity.entity.IdentityVerification
@@ -35,6 +36,7 @@ class KycSignupService(
     private val auditLogger: AuditLogger,
     private val verificationRepository: IdentityVerificationRepository,
     private val postCompareHandler: KycPostCompareHandler,
+    private val identityFaceMatchProperties: IdentityFaceMatchProperties,
 ) {
     fun compareFaces(
         requestId: String,
@@ -45,7 +47,8 @@ class KycSignupService(
         val phone = ensureReadyForCompare(verification, requestId)
 
         val idCardImage = idCardImageGateway.load(session)
-        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, ADULT_FACE_MATCH_THRESHOLD)
+        val result =
+            faceCompareAdapter.compareFaces(idCardImage, selfieImage, identityFaceMatchProperties.adultThreshold)
 
         if (!result.isMatch) {
             postCompareHandler.handleCompareFailed(
@@ -140,8 +143,6 @@ class KycSignupService(
         return verification.phone!!
     }
 }
-
-private const val ADULT_FACE_MATCH_THRESHOLD = 0.5
 
 data class CompareFacesResult(
     val accessToken: String,

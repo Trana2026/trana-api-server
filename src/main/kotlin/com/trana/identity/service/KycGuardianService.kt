@@ -7,6 +7,7 @@ import com.trana.guardian.entity.Guardian
 import com.trana.guardian.repository.GuardianRepository
 import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.IdentityException
+import com.trana.identity.IdentityFaceMatchProperties
 import com.trana.identity.adapter.FaceCompareAdapter
 import com.trana.identity.adapter.IdCardOcrAdapter
 import com.trana.identity.adapter.ImageInput
@@ -49,6 +50,7 @@ class KycGuardianService(
     private val idCardMasker: IdCardMasker,
     private val purger: IdentitySessionPurger,
     private val postCompareHandler: KycPostCompareHandler,
+    private val identityFaceMatchProperties: IdentityFaceMatchProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -139,7 +141,8 @@ class KycGuardianService(
         if (!verification.verifyPassed) throw IdentityException.VerifyRequired(requestId)
 
         val idCardImage = idCardImageGateway.load(session)
-        val result = faceCompareAdapter.compareFaces(idCardImage, selfieImage, GUARDIAN_FACE_MATCH_THRESHOLD)
+        val result =
+            faceCompareAdapter.compareFaces(idCardImage, selfieImage, identityFaceMatchProperties.guardianThreshold)
 
         if (!result.isMatch) {
             postCompareHandler.handleCompareFailed(
@@ -217,8 +220,6 @@ class KycGuardianService(
         }
     }
 }
-
-private const val GUARDIAN_FACE_MATCH_THRESHOLD = 0.35
 
 data class CompareGuardianResult(
     val subjectUserId: Long,
