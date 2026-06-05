@@ -65,3 +65,10 @@ trana:
     face-match:
       adult-threshold: ${TRANA_IDENTITY_FACE_MATCH_ADULT_THRESHOLD:0.5}
       guardian-threshold: ${TRANA_IDENTITY_FACE_MATCH_GUARDIAN_THRESHOLD:0.35}
+  alimtalk:
+    aligo:
+      tpl-code:
+        new-contract: UI_4032
+        receiver-signed: UI_4033
+        revision-requested: UI_4034
+        completed: UI_4037

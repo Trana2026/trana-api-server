@@ -68,6 +68,12 @@ trana:
       - https://trana-web-guardian-*.vercel.app
   guardian:
     web-base-url: https://trana-web-guardian.vercel.app
+  alimtalk:
+    aligo:
+      api-key: ${TRANA_ALIGO_API_KEY}
+      user-id: ${TRANA_ALIGO_USER_ID}
+      sender-key: ${TRANA_ALIGO_SENDER_KEY}
+      sender: ${TRANA_ALIGO_SENDER}
 
 logging:
   level:
