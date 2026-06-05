@@ -74,6 +74,7 @@ trana:
       user-id: ${TRANA_ALIGO_USER_ID}
       sender-key: ${TRANA_ALIGO_SENDER_KEY}
       sender: ${TRANA_ALIGO_SENDER}
+      test-mode: true
 
 logging:
   level:

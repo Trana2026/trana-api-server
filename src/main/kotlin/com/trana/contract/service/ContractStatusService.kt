@@ -168,7 +168,15 @@ class ContractStatusService(
         contract.markRevisionRequested()
         publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
 
-        sendRevisionRequestedAlimtalk(contract, requesterUserId)
+        sendRevisionRequestedAlimtalk(
+            contract,
+            requesterUserId,
+            titleReason,
+            priceReason,
+            conditionSummaryReason,
+            conditionDetailsReason,
+        )
+
         return contract
     }
 
@@ -258,7 +266,7 @@ class ContractStatusService(
             )
 
         // 4. 알림톡 (트랜잭션 밖)
-        sendReceiverSignedAlimtalk(result.contract)
+        sendReceiverSignedAlimtalk(result.contract, preview.receiverName)
 
         return ReceiverSignView(
             publicCode = result.contract.publicCode,
@@ -403,6 +411,11 @@ class ContractStatusService(
                     recipientPhone = recipientPhone,
                     recipientName = recipientName,
                     contractTitle = contract.title ?: "(제목 없음)",
+                    price = requireNotNull(contract.price) { "price 누락 (COMPLETED 전이 후 invariant 위반)" },
+                    completedAt =
+                        requireNotNull(
+                            contract.completedAt,
+                        ) { "completedAt 누락 (COMPLETED 전이 후 invariant 위반)" },
                     downloadUrl = downloadUrl,
                 ),
             )
@@ -420,7 +433,10 @@ class ContractStatusService(
             signatureBase64 = signatureBase64,
         )
 
-    private fun sendReceiverSignedAlimtalk(contract: Contract) {
+    private fun sendReceiverSignedAlimtalk(
+        contract: Contract,
+        receiverName: String,
+    ) {
         val creator =
             userRepository.findById(contract.creatorUserId).orElseThrow {
                 IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
@@ -432,7 +448,9 @@ class ContractStatusService(
             ReceiverSignedMessage(
                 creatorPhone = creatorPhone,
                 creatorName = creatorName,
+                receiverName = receiverName,
                 contractTitle = contract.title ?: "(제목 없음)",
+                price = requireNotNull(contract.price) { "price 누락 (RECEIVER_SIGNED 전이 후 invariant 위반)" },
                 reviewUrl = reviewUrl,
             ),
         )
@@ -507,6 +525,7 @@ class ContractStatusService(
                 receiverName = invitation.receiverName,
                 sellerName = sellerName,
                 contractTitle = contract.title ?: "(제목 없음)",
+                price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
                 invitationUrl = invitationUrl,
             ),
         )
@@ -515,6 +534,10 @@ class ContractStatusService(
     private fun sendRevisionRequestedAlimtalk(
         contract: Contract,
         requesterUserId: Long,
+        titleReason: String?,
+        priceReason: String?,
+        conditionSummaryReason: String?,
+        conditionDetailsReason: String?,
     ) {
         val creator =
             userRepository.findById(contract.creatorUserId).orElseThrow {
@@ -528,16 +551,33 @@ class ContractStatusService(
         val creatorPhone = creator.phone ?: "(unknown)"
         val requesterName = requester.name ?: requester.nickname ?: "Trana 사용자"
         val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
+        val revisionReason =
+            buildRevisionReason(titleReason, priceReason, conditionSummaryReason, conditionDetailsReason)
         kakaoAlimtalkClient.sendRevisionRequested(
             RevisionRequestedMessage(
                 creatorPhone = creatorPhone,
                 creatorName = creatorName,
                 contractTitle = contract.title ?: "(제목 없음)",
                 requesterName = requesterName,
+                price = requireNotNull(contract.price) { "price 누락 (REVISION_REQUESTED 전이 후 invariant 위반)" },
+                revisionReason = revisionReason,
                 reviewUrl = reviewUrl,
             ),
         )
     }
+
+    private fun buildRevisionReason(
+        titleReason: String?,
+        priceReason: String?,
+        conditionSummaryReason: String?,
+        conditionDetailsReason: String?,
+    ): String =
+        buildList {
+            titleReason?.let { add("제목: $it") }
+            priceReason?.let { add("가격: $it") }
+            conditionSummaryReason?.let { add("조건 요약: $it") }
+            conditionDetailsReason?.let { add("조건 상세: $it") }
+        }.joinToString("\n").ifBlank { "(사유 없음)" }
 
     @Suppress("ThrowsCount")
     private fun loadActiveInvitationOnSharedContract(token: String): ActiveInvitationContext {

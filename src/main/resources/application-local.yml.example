@@ -65,3 +65,4 @@ trana:
         user-id: <알리고 로그인 ID>
         sender-key: <알리고 카카오 발신프로필 Sender Key>
         sender: <알리고 등록 발신번호 (예: 0212345678, '-' 없이)>
+        test-mode: true

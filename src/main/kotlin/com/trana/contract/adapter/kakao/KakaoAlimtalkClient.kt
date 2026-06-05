@@ -1,5 +1,7 @@
 package com.trana.contract.adapter.kakao
 
+import java.time.Instant
+
 /**
  * 카카오톡 알림톡 발송 어댑터 (Anti-corruption layer).
  *
@@ -32,12 +34,14 @@ interface KakaoAlimtalkClient {
  *
  * @param receiverPhone E.164 또는 010-XXXX-XXXX
  * @param invitationUrl 수신자가 카톡에서 클릭할 URL (token 포함)
+ * 알리고 템플릿 : UI_4032
  */
 data class NewContractMessage(
     val receiverPhone: String,
     val receiverName: String,
     val sellerName: String,
     val contractTitle: String,
+    val price: Long,
     val invitationUrl: String,
 )
 
@@ -45,11 +49,14 @@ data class NewContractMessage(
  * 수신자 서명 완료 후 생성자에게 — 최종 확인/서명 화면 진입 유도.
  *
  * @param reviewUrl 생성자가 PDF v2 검토 + 최종 서명할 URL (앱 deeplink 또는 web URL)
+ * 알리고 템플릿 : UI_4033
  */
 data class ReceiverSignedMessage(
     val creatorPhone: String,
     val creatorName: String,
+    val receiverName: String,
     val contractTitle: String,
+    val price: Long,
     val reviewUrl: String,
 )
 
@@ -62,6 +69,8 @@ data class ContractCompletedMessage(
     val recipientPhone: String,
     val recipientName: String,
     val contractTitle: String,
+    val price: Long,
+    val completedAt: Instant,
     val downloadUrl: String,
 )
 
@@ -69,11 +78,15 @@ data class ContractCompletedMessage(
  * 수신자 수정 요청 발생 시 생성자에게 — 수정 모드 진입 유도.
  *
  * @param reviewUrl 생성자가 수정 요청 화면 진입할 URL
+ * @param revisionReason 필드별 사유를 "라벨: 사유" 한 줄씩 \n join — 예: "제목: 오타 수정 필요\n가격: 100만원으로 조정"
+ * 알리고 템플릿 : UI_4034
  */
 data class RevisionRequestedMessage(
     val creatorPhone: String,
     val creatorName: String,
     val contractTitle: String,
     val requesterName: String,
+    val price: Long,
+    val revisionReason: String,
     val reviewUrl: String,
 )

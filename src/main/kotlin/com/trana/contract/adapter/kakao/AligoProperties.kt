@@ -25,6 +25,8 @@ data class AligoProperties(
     val senderKey: String,
     val sender: String,
     val tplCode: TplCode,
+    /** true 면 알리고 `testmode=Y` (응답 0 반환하지만 실제 발송 X). 운영 사고 방지용 dry-run. */
+    val testMode: Boolean = false,
 ) {
     data class TplCode(
         /** UI_4032 — SHARED 전이 시 수신자에게 (1차 서명 요청) */
