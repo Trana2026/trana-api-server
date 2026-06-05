@@ -22,8 +22,7 @@ class WebUrlBuilder(
         "${guardianProperties.webBaseUrl}/verify/$token?openExternalBrowser=1"
 
     /** 계약 보호자 동의 진입 URL (CONTRACT_CONSENT 토큰). */
-    fun guardianContractConsent(token: String): String =
-        "${guardianProperties.webBaseUrl}/contract/$token?openExternalBrowser=1"
+    fun guardianContractConsent(token: String): String = "${guardianProperties.webBaseUrl}/contract/$token"
 
     /** 계약 상세 진입 URL (publicCode). */
     fun contractDetail(publicCode: String): String = "${contractWebProperties.baseUrl}/contracts/$publicCode"
