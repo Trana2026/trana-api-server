@@ -68,6 +68,28 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
         )
     }
 
+    override fun sendDisputeReported(message: DisputeReportedMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendDisputeReported → to={}({}), contract={}, reportedAt={}, detailUrl={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.reportedAt,
+            message.detailUrl,
+        )
+    }
+
+    override fun sendCancellationRequested(message: CancellationRequestedMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendCancellationRequested → to={}({}), contract={}, requestedAt={}, detailUrl={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.requestedAt,
+            message.detailUrl,
+        )
+    }
+
     /** 010-1234-5678 → 010-****-5678 (PII 마스킹) */
     private fun maskPhone(phone: String): String =
         if (phone.length < MIN_PHONE_LENGTH) {

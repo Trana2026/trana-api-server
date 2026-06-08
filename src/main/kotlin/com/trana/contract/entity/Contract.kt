@@ -44,7 +44,7 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "contracts")
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "TooManyFunctions")
 class Contract(
     @Column(name = "public_code", nullable = false, unique = true, length = 20)
     val publicCode: String,
@@ -252,6 +252,58 @@ class Contract(
         this.completedAt = Instant.now()
     }
 
+    /**
+     * 취소 요청 발신 → status CANCEL_REQUESTED 전이.
+     * 가능 시점: SHARED (1차 서명 수신자 = receiver 측) 또는 RECEIVER_SIGNED (최종 서명 수신자 = creator 측).
+     * 즉 "본인이 서명 요청을 받은 상태" — service 가 요청자 측 검증.
+     */
+    fun markCancelRequested() {
+        check(status == ContractStatus.SHARED || status == ContractStatus.RECEIVER_SIGNED) {
+            "SHARED 또는 RECEIVER_SIGNED 상태에서만 취소 요청 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 취소 요청 불가" }
+        this.status = ContractStatus.CANCEL_REQUESTED
+    }
+
+    /**
+     * 상대 측 취소 확정 → status CANCELLED 전이.
+     * service 가 활성 취소 요청 row 존재 + confirmer != requester 검증 후 호출.
+     */
+    fun markCancelled() {
+        check(status == ContractStatus.CANCEL_REQUESTED) {
+            "CANCEL_REQUESTED 상태에서만 CANCELLED 전이 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        this.status = ContractStatus.CANCELLED
+    }
+
+    /**
+     * 신고 접수 → dispute_state REPORTED 전이.
+     * 신고 가능 상태: SIGNED 또는 COMPLETED (양측 본인확인 + 수신자 의사확정 이후만).
+     * 다중 신고 시 service 가 분기 — contract 전이는 첫 신고에서만 (이미 REPORTED 면 차단).
+     */
+    fun markReported() {
+        check(status == ContractStatus.SIGNED || status == ContractStatus.COMPLETED) {
+            "SIGNED 또는 COMPLETED 상태에서만 신고 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 신고 불가" }
+        check(disputeState == DisputeState.NONE) {
+            "이미 분쟁 상태 (current=$disputeState) — 다중 신고는 service 가 분기"
+        }
+        this.disputeState = DisputeState.REPORTED
+    }
+
+    /**
+     * 신고자 본인이 자기 신고를 취소했고, 그 결과 활성 신고가 0건이 된 경우 dispute_state NONE 복원.
+     * service 가 활성(REPORTED) dispute_records count == 0 검증 후 호출.
+     */
+    fun markReportCancelled() {
+        check(disputeState == DisputeState.REPORTED) {
+            "REPORTED 상태에서만 NONE 복원 가능 (current=$disputeState)"
+        }
+        this.disputeState = DisputeState.NONE
+    }
+
     fun softDelete() {
         check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
             "IN_PROGRESS / DRAFT 상태에서만 삭제 가능 (current=$status)"
@@ -285,12 +337,13 @@ enum class ContractStatus {
     SHARED,
     REVISION_REQUESTED,
     RECEIVER_SIGNED,
+    CANCEL_REQUESTED,
     SIGNED,
     COMPLETED,
     CANCELLED,
 }
 
-enum class DisputeState { NONE, REPORTED, RESOLVED, DISMISSED }
+enum class DisputeState { NONE, REPORTED }
 
 enum class DeliveryType { DIRECT, SHIPPING }
 

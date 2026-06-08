@@ -163,4 +163,58 @@ enum class ErrorCode(
         "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
         "이미 거래 완료를 클릭한 사용자입니다",
     ),
+
+    // === 분쟁 (DISPUTE_*) ===
+    DISPUTE_NOT_REPORTABLE(
+        HttpStatus.CONFLICT,
+        "DISPUTE_409_NOT_REPORTABLE",
+        "신고 가능 상태가 아닙니다 (SIGNED 또는 COMPLETED 단계에서만 신고 가능)",
+    ),
+    DISPUTE_ALREADY_ACTIVE(
+        HttpStatus.CONFLICT,
+        "DISPUTE_409_ALREADY_ACTIVE",
+        "이미 활성 신고가 존재합니다",
+    ),
+    DISPUTE_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "DISPUTE_404",
+        "신고를 찾을 수 없습니다",
+    ),
+    DISPUTE_NOT_REPORTER(
+        HttpStatus.FORBIDDEN,
+        "DISPUTE_403_NOT_REPORTER",
+        "본인이 접수한 신고만 취소할 수 있습니다",
+    ),
+    DISPUTE_NO_ACTIVE_REPORT(
+        HttpStatus.FORBIDDEN,
+        "DISPUTE_403_NO_ACTIVE_REPORT",
+        "활성 신고가 없는 사용자는 증거 패키지를 다운로드할 수 없습니다",
+    ),
+
+    // === 취소 요청 (CONTRACT_CANCELLATION_*) ===
+    CONTRACT_CANCELLATION_NOT_REQUESTABLE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_CANCELLATION_409_NOT_REQUESTABLE",
+        "취소 요청 가능 상태가 아닙니다 (SHARED 또는 RECEIVER_SIGNED 단계에서만 가능)",
+    ),
+    CONTRACT_CANCELLATION_NOT_ELIGIBLE_REQUESTER(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_CANCELLATION_403_NOT_ELIGIBLE_REQUESTER",
+        "서명 요청을 받은 측만 취소 요청할 수 있습니다",
+    ),
+    CONTRACT_CANCELLATION_ALREADY_ACTIVE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_CANCELLATION_409_ALREADY_ACTIVE",
+        "이미 활성 취소 요청이 존재합니다",
+    ),
+    CONTRACT_CANCELLATION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CONTRACT_CANCELLATION_404",
+        "활성 취소 요청을 찾을 수 없습니다",
+    ),
+    CONTRACT_CANCELLATION_SELF_CONFIRM(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_CANCELLATION_403_SELF_CONFIRM",
+        "취소 요청자 본인은 자기 요청을 확정할 수 없습니다",
+    ),
 }

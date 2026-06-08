@@ -11,6 +11,7 @@ import com.trana.contract.dto.CreatorSignResponse
 import com.trana.contract.dto.ReceiverSignRequest
 import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
+import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
@@ -23,6 +24,7 @@ import com.trana.contract.service.ContractStatusService
 import com.trana.contract.service.CreatorSignView
 import com.trana.contract.service.PdfDownloadView
 import com.trana.contract.service.ReceiverSignView
+import com.trana.contract.service.RiskSignalsCalculator
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController
 class ContractDraftController(
     private val service: ContractDraftService,
     private val statusService: ContractStatusService,
+    private val riskSignalsCalculator: RiskSignalsCalculator,
 ) : ContractDraftApi {
     override fun createDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -60,7 +63,11 @@ class ContractDraftController(
     override fun getDetail(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): ContractResponse = service.getDraft(publicCode, userId).toResponse()
+    ): ContractResponse {
+        val contract = service.getDetail(publicCode, userId)
+        val riskSignals = riskSignalsCalculator.calculate(contract, userId)
+        return contract.toResponse(riskSignals)
+    }
 
     override fun updateDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -197,7 +204,7 @@ class ContractDraftController(
     ): ContractPdfDownloadResponse = statusService.getPdfDownload(publicCode, userId).toResponse()
 }
 
-private fun Contract.toResponse(): ContractResponse =
+private fun Contract.toResponse(riskSignals: RiskSignalsResponse? = null): ContractResponse =
     ContractResponse(
         publicCode = publicCode,
         status = status,
@@ -215,6 +222,7 @@ private fun Contract.toResponse(): ContractResponse =
         contentHash = contentHash,
         createdAt = requireNotNull(createdAt) { "createdAt 은 @CreationTimestamp 로 채워져야 함" },
         updatedAt = requireNotNull(updatedAt) { "updatedAt 은 @UpdateTimestamp 로 채워져야 함" },
+        riskSignals = riskSignals,
     )
 
 private fun ContractListView.toListItem(): ContractListItem =

@@ -33,6 +33,7 @@ import java.time.format.DateTimeFormatter
  */
 @Component
 @Profile("alimtalk-live")
+@Suppress("TooManyFunctions")
 class LiveAligoAlimtalkClient(
     private val aligoProperties: AligoProperties,
     private val objectMapper: ObjectMapper,
@@ -146,6 +147,52 @@ class LiveAligoAlimtalkClient(
             }
 
         send(formData, label = "sendCompleted", to = message.recipientPhone)
+    }
+
+    override fun sendDisputeReported(message: DisputeReportedMessage) {
+        val body =
+            """
+            [Trana] 거래에 대한 신고가 접수되었습니다.
+
+            상품명: ${message.contractTitle}
+            접수 일시: ${completedAtFormatter.format(message.reportedAt)}
+
+            아래 버튼을 눌러 상세 내용을 확인해 주세요.
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.disputeReported)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "거래 신고 접수")
+                add("message_1", body)
+                add("button_1", buildButtonJson("상세 보기", message.detailUrl))
+            }
+
+        send(formData, label = "sendDisputeReported", to = message.recipientPhone)
+    }
+
+    override fun sendCancellationRequested(message: CancellationRequestedMessage) {
+        val body =
+            """
+            [Trana] 거래 계약 취소 요청이 도착했습니다.
+
+            상품명: ${message.contractTitle}
+            요청 일시: ${completedAtFormatter.format(message.requestedAt)}
+
+            아래 버튼을 눌러 취소 내용을 확인해 주세요.
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.cancellationRequested)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "계약 취소 요청")
+                add("message_1", body)
+                add("button_1", buildButtonJson("취소 내용 확인", message.detailUrl))
+            }
+
+        send(formData, label = "sendCancellationRequested", to = message.recipientPhone)
     }
 
     /** 공통 필드 6개 (apikey/userid/senderkey/sender/testmode/failover) 미리 채운 form data 생성. */

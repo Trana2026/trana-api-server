@@ -9,11 +9,13 @@ import java.time.Instant
  * - W6 진입 시점에는 [MockKakaoAlimtalkClient] 만 wire (local/dev/test/prod 모두)
  * - 카카오 BSP 심사 (1~2주) 완료 후 LiveKakaoAlimtalkClient 추가 + prod profile 교체
  *
- * 템플릿 4종 (모두 사전 등록 + 심사 필수):
+ * 템플릿 6종 (모두 사전 등록 + 심사 필수):
  * - [NewContractMessage] : SHARED 전이 시 → 수신자
  * - [ReceiverSignedMessage] : RECEIVER_SIGNED 전이 시 → 생성자
  * - [ContractCompletedMessage] : SIGNED 전이 시 → 양측 각각
  * - [RevisionRequestedMessage] : REVISION_REQUESTED 전이 시 → 생성자
+ * - [DisputeReportedMessage] : 신고 접수 시 → 피신고자
+ * - [CancellationRequestedMessage] : 취소 요청 접수 시 → 피요청자
  */
 interface KakaoAlimtalkClient {
     /** SHARED 전이 시 수신자에게 — `[Trana] 새 계약서 도착` 템플릿 */
@@ -27,6 +29,12 @@ interface KakaoAlimtalkClient {
 
     /** SIGNED 전이 시 양측 각각에게 — `[Trana] 계약 체결 완료` 템플릿 */
     fun sendCompleted(message: ContractCompletedMessage)
+
+    /** 신고 접수 시 피신고자에게 — `[Trana] 거래에 대한 신고가 접수되었습니다` 템플릿 */
+    fun sendDisputeReported(message: DisputeReportedMessage)
+
+    /** 취소 요청 접수 시 상대 측에게 — `[Trana] 계약 취소 요청` 템플릿 (UI_????) */
+    fun sendCancellationRequested(message: CancellationRequestedMessage)
 }
 
 /**
@@ -89,4 +97,40 @@ data class RevisionRequestedMessage(
     val price: Long,
     val revisionReason: String,
     val reviewUrl: String,
+)
+
+/**
+ * 신고 접수 시 피신고자에게 — 신고 내용 확인 유도.
+ *
+ * @param recipientPhone 피신고자 (신고 당한 사용자) phone — E.164 또는 010-XXXX-XXXX
+ * @param recipientName 피신고자 이름
+ * @param contractTitle 거래 상품명 (치환자 #{상품명})
+ * @param reportedAt 신고 접수 시각 (치환자 #{신고일시})
+ * @param detailUrl 신고 상세 페이지 deeplink (WL 버튼)
+ * 알리고 템플릿 : UI_???? (A-8 신청 후 templateId 반영)
+ */
+data class DisputeReportedMessage(
+    val recipientPhone: String,
+    val recipientName: String,
+    val contractTitle: String,
+    val reportedAt: Instant,
+    val detailUrl: String,
+)
+
+/**
+ * 취소 요청 접수 시 피요청자에게 — 취소 내용 확인 유도.
+ *
+ * @param recipientPhone 피요청자 (취소 요청 받은 측) phone — E.164 또는 010-XXXX-XXXX
+ * @param recipientName 피요청자 이름
+ * @param contractTitle 거래 상품명 (치환자 #{상품명})
+ * @param requestedAt 요청 접수 시각 (치환자 #{요청일시})
+ * @param detailUrl 취소 요청 상세 페이지 deeplink (WL 버튼)
+ * 알리고 템플릿 : UI_???? (A'-8 신청 후 templateId 반영)
+ */
+data class CancellationRequestedMessage(
+    val recipientPhone: String,
+    val recipientName: String,
+    val contractTitle: String,
+    val requestedAt: Instant,
+    val detailUrl: String,
 )

@@ -37,5 +37,9 @@ data class AligoProperties(
         val revisionRequested: String,
         /** UI_4037 — SIGNED 전이 시 양측에게 (최종 서명 완료) */
         val completed: String,
+        /** UI_???? — 신고 접수 시 피신고자에게 (A-8 등록 신청 후 templateId 반영). */
+        val disputeReported: String,
+        /** UI_???? — 취소 요청 접수 시 피요청자에게 (A'-8 등록 신청 후 templateId 반영). */
+        val cancellationRequested: String,
     )
 }
