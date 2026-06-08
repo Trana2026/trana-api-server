@@ -5,7 +5,6 @@ import com.trana.contract.entity.Contract
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.dispute.repository.DisputeRecordRepository
 import com.trana.user.entity.AgeGroup
-import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -50,9 +49,6 @@ class RiskSignalsCalculator(
             ?.userId
     }
 
-    private fun isCounterpartGuardianNotConsented(counterpartId: Long?): Boolean {
-        val counterpart: User =
-            counterpartId?.let { userRepository.findById(it).orElse(null) } ?: return false
-        return counterpart.ageGroup == AgeGroup.MINOR && counterpart.guardianVerifiedAt == null
-    }
+    private fun isCounterpartGuardianNotConsented(counterpartId: Long?): Boolean =
+        counterpart.ageGroup == AgeGroup.MINOR && counterpart.guardianVerifiedAt == null
 }
