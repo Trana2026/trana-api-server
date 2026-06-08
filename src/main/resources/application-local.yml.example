@@ -61,8 +61,15 @@ trana:
       base-url: http://localhost:3000
   alimtalk:
       aligo:
-        api-key: <알리고 API Key>
-        user-id: <알리고 로그인 ID>
-        sender-key: <알리고 카카오 발신프로필 Sender Key>
-        sender: <알리고 등록 발신번호 (예: 0212345678, '-' 없이)>
-        test-mode: true
+       api-key: <알리고 API Key>
+       user-id: <알리고 로그인 ID>
+       sender-key: <알리고 카카오 발신프로필 Sender Key>
+       sender: <알리고 등록 발신번호 (예: 0212345678, '-' 없이)>
+       test-mode: true
+       tpl-code:
+         new-contract: UI_4032
+         receiver-signed: UI_4033
+         revision-requested: UI_4034
+         completed: UI_4037
+         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
+         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION

@@ -71,6 +71,20 @@ data class UpdateContractDraftRequest(
     val creatorRole: PartyType? = null,
 )
 
+@Schema(description = "서명 시 위험 신호 (서명 팝업 경고 문구 활성화 기준)")
+data class RiskSignalsResponse(
+    @field:Schema(
+        description = "상대방이 미성년 + 법정대리인 인증 미완료 — 경고 문구 노출 (W7)",
+        example = "false",
+    )
+    val guardianNotConsented: Boolean,
+    @field:Schema(
+        description = "상대방이 다른 계약에서 신고된 이력 — 경고 문구 노출 (W7, 활성 신고만 카운트)",
+        example = "false",
+    )
+    val hasReportHistory: Boolean,
+)
+
 @Schema(description = "계약 단건 응답")
 data class ContractResponse(
     @field:Schema(description = "외부 노출 식별자 (jnanoid 12자)", example = "Yx7Kp2qLm9Nz")
@@ -102,6 +116,12 @@ data class ContractResponse(
     val contentHash: String?,
     val createdAt: Instant,
     val updatedAt: Instant,
+    @field:Schema(
+        description =
+            "서명 시 위험 신호 — getDetail 응답에만 채워짐 (list/create 응답 등에서는 null). " +
+                "Frontend 가 서명 팝업 경고 문구 + 취소하기 CTA 활성화 결정 (W7)",
+    )
+    val riskSignals: RiskSignalsResponse? = null,
 )
 
 @Schema(description = "본인 계약 목록 아이템 — 본인이 만든 것 + 받은 것 모두 포함")

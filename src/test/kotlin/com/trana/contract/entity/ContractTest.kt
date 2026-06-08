@@ -39,6 +39,24 @@ class ContractTest {
         return contract
     }
 
+    private fun signedContract(publicCode: String = "TST-CTR-FIX-SIGNED"): Contract {
+        val contract = receiverSignedContract(publicCode)
+        contract.markSigned(pdfS3Key = "contracts/$publicCode/v3.pdf", pdfSha256 = "hash-v3")
+        return contract
+    }
+
+    private fun completedContract(publicCode: String = "TST-CTR-FIX-COMPLETED"): Contract {
+        val contract = signedContract(publicCode)
+        contract.markCompleted()
+        return contract
+    }
+
+    private fun cancelRequestedContract(publicCode: String = "TST-CTR-FIX-CXR"): Contract {
+        val contract = sharedContract(publicCode)
+        contract.markCancelRequested()
+        return contract
+    }
+
     @Nested
     inner class CreateDraft {
         @Test
@@ -467,6 +485,139 @@ class ContractTest {
             Assertions.assertThrows(IllegalStateException::class.java) {
                 contract.markRevertToDraft()
             }
+        }
+    }
+
+    @Nested
+    inner class MarkReported {
+        @Test
+        fun transitionsDisputeStateToReportedFromSigned() {
+            val contract = signedContract("TST-CTR-RPT-001")
+
+            contract.markReported()
+
+            Assertions.assertEquals(DisputeState.REPORTED, contract.disputeState)
+            Assertions.assertEquals(ContractStatus.SIGNED, contract.status)
+        }
+
+        @Test
+        fun transitionsDisputeStateToReportedFromCompleted() {
+            val contract = completedContract("TST-CTR-RPT-002")
+
+            contract.markReported()
+
+            Assertions.assertEquals(DisputeState.REPORTED, contract.disputeState)
+            Assertions.assertEquals(ContractStatus.COMPLETED, contract.status)
+        }
+
+        @Test
+        fun rejectsReportFromReceiverSigned() {
+            val contract = receiverSignedContract("TST-CTR-RPT-003")
+
+            val exception =
+                Assertions.assertThrows(IllegalStateException::class.java) {
+                    contract.markReported()
+                }
+            Assertions.assertTrue(exception.message!!.contains("SIGNED 또는 COMPLETED"))
+            Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
+        }
+
+        @Test
+        fun rejectsReportWhenAlreadyReported() {
+            val contract = signedContract("TST-CTR-RPT-004")
+            contract.markReported()
+
+            val exception =
+                Assertions.assertThrows(IllegalStateException::class.java) {
+                    contract.markReported()
+                }
+            Assertions.assertTrue(exception.message!!.contains("이미 분쟁 상태"))
+            Assertions.assertEquals(DisputeState.REPORTED, contract.disputeState)
+        }
+    }
+
+    @Nested
+    inner class MarkReportCancelled {
+        @Test
+        fun revertsDisputeStateToNoneFromReported() {
+            val contract = signedContract("TST-CTR-RPT-CXL-001")
+            contract.markReported()
+
+            contract.markReportCancelled()
+
+            Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
+            Assertions.assertEquals(ContractStatus.SIGNED, contract.status)
+        }
+
+        @Test
+        fun rejectsCancelWhenDisputeStateIsNone() {
+            val contract = signedContract("TST-CTR-RPT-CXL-002")
+
+            val exception =
+                Assertions.assertThrows(IllegalStateException::class.java) {
+                    contract.markReportCancelled()
+                }
+            Assertions.assertTrue(exception.message!!.contains("REPORTED 상태에서만"))
+            Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
+        }
+    }
+
+    @Nested
+    inner class MarkCancelRequested {
+        @Test
+        fun transitionsStatusToCancelRequestedFromShared() {
+            val contract = sharedContract("TST-CTR-CXR-001")
+
+            contract.markCancelRequested()
+
+            Assertions.assertEquals(ContractStatus.CANCEL_REQUESTED, contract.status)
+            Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
+        }
+
+        @Test
+        fun transitionsStatusToCancelRequestedFromReceiverSigned() {
+            val contract = receiverSignedContract("TST-CTR-CXR-002")
+
+            contract.markCancelRequested()
+
+            Assertions.assertEquals(ContractStatus.CANCEL_REQUESTED, contract.status)
+        }
+
+        @Test
+        fun rejectsCancelRequestFromDraft() {
+            val contract = draftContract("TST-CTR-CXR-003")
+
+            val exception =
+                Assertions.assertThrows(IllegalStateException::class.java) {
+                    contract.markCancelRequested()
+                }
+            Assertions.assertTrue(exception.message!!.contains("SHARED 또는 RECEIVER_SIGNED"))
+            Assertions.assertEquals(ContractStatus.DRAFT, contract.status)
+        }
+    }
+
+    @Nested
+    inner class MarkCancelled {
+        @Test
+        fun transitionsStatusToCancelledFromCancelRequested() {
+            val contract = cancelRequestedContract("TST-CTR-CXL-001")
+
+            contract.markCancelled()
+
+            Assertions.assertEquals(ContractStatus.CANCELLED, contract.status)
+            Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
+        }
+
+        @Test
+        fun rejectsCancelFromShared() {
+            val contract = sharedContract("TST-CTR-CXL-002")
+
+            val exception =
+                Assertions.assertThrows(IllegalStateException::class.java) {
+                    contract.markCancelled()
+                }
+            Assertions.assertTrue(exception.message!!.contains("CANCEL_REQUESTED 상태에서만"))
+            Assertions.assertEquals(ContractStatus.SHARED, contract.status)
         }
     }
 

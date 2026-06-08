@@ -128,6 +128,17 @@ class ContractDraftService(
         userId: Long,
     ): Contract = accessGuard.loadOwned(publicCode, userId)
 
+    /**
+     * 상세 조회 — 양측(creator OR party) 모두 가능.
+     * - SHARED / RECEIVER_SIGNED 등 진행 단계에서 receiver 의 detail 진입 허용
+     * - getDraft 는 creator 전용 (DRAFT 편집용) — 명확 분리
+     */
+    @Transactional(readOnly = true)
+    fun getDetail(
+        publicCode: String,
+        userId: Long,
+    ): Contract = accessGuard.loadAccessible(publicCode, userId)
+
     fun updateDraft(
         publicCode: String,
         userId: Long,
@@ -196,9 +207,15 @@ class ContractDraftService(
     ): List<ContractListView> {
         val normalizedQuery = query?.takeIf { it.isNotBlank() }?.trim()
         val contracts = contractRepository.findAllByPartyUserId(userId, status, normalizedQuery)
-        if (contracts.isEmpty()) return emptyList()
+        val visible =
+            if (status == null) {
+                contracts.filter { it.status != ContractStatus.CANCELLED }
+            } else {
+                contracts
+            }
+        if (visible.isEmpty()) return emptyList()
 
-        val contractIds = contracts.mapNotNull { it.id }
+        val contractIds = visible.mapNotNull { it.id }
         val myParties =
             contractPartyRepository
                 .findAllByUserIdAndContractIdIn(userId, contractIds)
@@ -208,7 +225,7 @@ class ContractDraftService(
                 .findAllByContractIdIn(contractIds)
                 .groupBy { it.contractId }
 
-        return contracts.map { contract ->
+        return visible.map { contract ->
             val contractId = contract.id!!
             val party = myParties[contractId]
             val attachments = attachmentsByContractId[contractId].orEmpty()

@@ -125,6 +125,20 @@ class ContractAttachmentStorage(
         s3Client.deleteObject(request)
     }
 
+    /**
+     * S3 객체 InputStream 직접 노출 (서버측 zip 빌더 등 backend internal use).
+     * 호출자가 use {} 로 close 책임.
+     */
+    fun openStream(s3Key: String): java.io.InputStream {
+        val request =
+            GetObjectRequest
+                .builder()
+                .bucket(props.bucket)
+                .key(s3Key)
+                .build()
+        return s3Client.getObject(request)
+    }
+
     val bucket: String get() = props.bucket
 
     val maxAttachmentSizeBytes: Long get() = props.maxAttachmentSizeBytes

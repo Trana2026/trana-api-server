@@ -414,8 +414,8 @@ class ContractStatusService(
                     price = requireNotNull(contract.price) { "price 누락 (COMPLETED 전이 후 invariant 위반)" },
                     completedAt =
                         requireNotNull(
-                            contract.completedAt,
-                        ) { "completedAt 누락 (COMPLETED 전이 후 invariant 위반)" },
+                            contract.pdfGeneratedAt,
+                        ) { "pdfGeneratedAt 누락 (SIGNED 전이 후 invariant 위반)" },
                     downloadUrl = downloadUrl,
                 ),
             )

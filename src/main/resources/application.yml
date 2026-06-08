@@ -72,4 +72,6 @@ trana:
         receiver-signed: UI_4033
         revision-requested: UI_4034
         completed: UI_4037
-      test-mode: false
+        dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
+        cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+      test-mode: true
