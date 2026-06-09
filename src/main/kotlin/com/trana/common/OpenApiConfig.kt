@@ -63,6 +63,7 @@ class OpenApiConfig {
                 "Terms",
                 "Consent",
                 "Auth",
+                "Apple Sign In",
                 "Identity",
                 "Guardian Identity",
                 "Guardian",

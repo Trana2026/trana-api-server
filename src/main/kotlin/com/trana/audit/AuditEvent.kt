@@ -36,6 +36,7 @@ enum class AuditEvent {
 
     // Auth 도메인 — 소셜 로그인 / 토큰 갱신
     USER_SIGNED_IN,
+    APPLE_REVOKE_NOTIFICATION,
 
     // Contract 도메인 — 보호자 동의 승인 (web 단순 동의)
     CONTRACT_GUARDIAN_CONSENT_APPROVED,

@@ -38,6 +38,17 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id:
+    apple:
+      issuer: https://appleid.apple.com
+      bundle-id: <Apple App Bundle ID — 예: kr.trana.app>
+      client-id: <Apple Services ID — 예: kr.trana.app.service>
+      team-id: <Apple Developer Team ID (10자)>
+      key-id: <Sign in with Apple Key ID (10자)>
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        REPLACE_WITH_p8_FILE_CONTENT
+        -----END PRIVATE KEY-----
+      android-package-name: <Flutter Android package — 예: kr.trana.app>
   dev:
     token-key: local-dev-token-key-change-me
   kyc:

@@ -18,6 +18,16 @@ data class SocialSignInRequest(
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
     val ageGroup: AgeGroup,
+    @Schema(
+        description =
+            "Apple 전용 raw nonce (replay 방지). 클라이언트가 생성한 random string. " +
+                "Apple authorize 요청 시 이 값의 SHA256 hash 를 nonce 파라미터로 첨부 → " +
+                "백엔드가 raw nonce 를 SHA256 후 id_token 의 nonce claim 과 비교. " +
+                "Kakao/Google 은 무시 (null 가능).",
+        example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+    )
+    val nonce: String? = null,
 )
 
 @Schema(description = "로그인 응답 — 가입/로그인 성공 시 반환")

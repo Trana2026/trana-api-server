@@ -19,7 +19,11 @@ class GoogleAuthAdapter(
 ) : SocialAuthAdapter {
     override val provider = SocialProvider.GOOGLE
 
-    override fun verify(idToken: String): SocialUserInfo {
+    @Suppress("UNUSED_PARAMETER")
+    override fun verify(
+        idToken: String,
+        nonce: String?,
+    ): SocialUserInfo {
         val jwt =
             try {
                 jwtDecoder.decode(idToken)

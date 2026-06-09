@@ -38,7 +38,7 @@ class SocialSignInService(
             adaptersByProvider[request.provider]
                 ?: throw AuthException.UnsupportedProvider(request.provider)
 
-        val socialUser = adapter.verify(request.idToken)
+        val socialUser = adapter.verify(request.idToken, request.nonce)
 
         val user =
             userService.findOrCreateBySocial(

@@ -18,11 +18,13 @@ interface AuthApi {
         summary = "소셜 로그인 (미성년자 가입 + 로그인)",
         description = """
 미성년자 가입 전용 흐름. 성인은 본인 KYC 흐름으로 가입 (이 endpoint 호출 X).
-- 신규 미성년자: 자동 가입 (age_group=MINOR) + JWT 발급
-- 기존 사용자: JWT 재발급
-- 지원 공급자: KAKAO, GOOGLE (APPLE 추후)
-- 사전 조건: 공급자 OIDC 활성화 + Flutter SDK가 openid scope 요청
-- body의 ageGroup은 현재 MINOR만 허용 (성인 호출 시 거부)
+  - 신규 미성년자: 자동 가입 (age_group=MINOR) + JWT 발급
+  - 기존 사용자: JWT 재발급
+  - 지원 공급자: KAKAO, GOOGLE, APPLE
+  - 사전 조건: 공급자 OIDC 활성화 + Flutter SDK가 openid scope 요청
+  - APPLE 의 경우: nonce 필수 (raw nonce 전송, 백엔드가 SHA256 후 id_token claim 과 비교)
+  - APPLE Android: /v1/auth/apple/callback 거쳐 Flutter deeplink → 본 endpoint 호출 (iOS native 는 직접 호출)
+  - body의 ageGroup은 현재 MINOR만 허용 (성인 호출 시 거부)
       """,
     )
     @ApiResponses(
@@ -74,6 +76,7 @@ interface AuthApi {
                     examples = [
                         ExampleObject(name = "kakao", value = AuthExamples.REQUEST_KAKAO),
                         ExampleObject(name = "google", value = AuthExamples.REQUEST_GOOGLE),
+                        ExampleObject(name = "apple", value = AuthExamples.REQUEST_APPLE),
                     ],
                 ),
             ],

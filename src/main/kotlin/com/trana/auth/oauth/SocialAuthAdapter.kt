@@ -23,7 +23,13 @@ interface SocialAuthAdapter {
     /**
      * id_token 검증 후 사용자 정보 추출.
      *
+     * @param idToken 공급자 발급 OIDC JWT
+     * @param nonce Apple 전용 raw nonce (replay 방지). Kakao/Google 은 무시.
+     *              Apple 의 경우 SHA256(nonce) == id_token 의 nonce claim 강제.
      * @throws com.trana.auth.AuthException.InvalidSocialToken 검증 실패
      */
-    fun verify(idToken: String): SocialUserInfo
+    fun verify(
+        idToken: String,
+        nonce: String? = null,
+    ): SocialUserInfo
 }

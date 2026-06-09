@@ -14,8 +14,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 /**
  * 소셜 공급자별 id_token 검증용 JwtDecoder 빈.
  *
- * - withIssuerLocation: OIDC discovery로 jwks_uri 자동 발견 + 키 캐싱
- * - 검증: iss (issuer) + exp + aud (client-id)
+ * - withIssuerLocation: OIDC discovery 로 jwks_uri 자동 발견 + 키 캐싱
+ * - 검증: iss (issuer) + exp + aud (client-id, Apple 은 multi-audience)
+ *
+ * Apple multi-audience: iOS native (Bundle ID) + Android/Web (Services ID) 둘 다 허용.
  *
  * Spring Security 7 (Spring Boot 4) 호환.
  */
@@ -23,34 +25,42 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 class OidcDecoderConfig(
     private val kakaoProps: KakaoOidcProperties,
     private val googleProps: GoogleOidcProperties,
+    private val appleProps: AppleOidcProperties,
 ) {
     @Bean("kakaoIdTokenDecoder")
-    fun kakaoIdTokenDecoder(): JwtDecoder = buildDecoder(kakaoProps.issuer, kakaoProps.clientId)
+    fun kakaoIdTokenDecoder(): JwtDecoder = buildDecoder(kakaoProps.issuer, listOf(kakaoProps.clientId))
 
     @Bean("googleIdTokenDecoder")
-    fun googleIdTokenDecoder(): JwtDecoder = buildDecoder(googleProps.issuer, googleProps.clientId)
+    fun googleIdTokenDecoder(): JwtDecoder = buildDecoder(googleProps.issuer, listOf(googleProps.clientId))
+
+    @Bean("appleIdTokenDecoder")
+    fun appleIdTokenDecoder(): JwtDecoder = buildDecoder(appleProps.issuer, appleProps.audiences)
 
     private fun buildDecoder(
         issuer: String,
-        clientId: String,
+        audiences: Collection<String>,
     ): JwtDecoder {
         val decoder = NimbusJwtDecoder.withIssuerLocation(issuer).build()
         decoder.setJwtValidator(
             DelegatingOAuth2TokenValidator(
                 JwtValidators.createDefaultWithIssuer(issuer),
-                audienceValidator(clientId),
+                audienceValidator(audiences),
             ),
         )
         return decoder
     }
 
-    private fun audienceValidator(expectedAud: String): OAuth2TokenValidator<Jwt> =
+    private fun audienceValidator(expectedAudiences: Collection<String>): OAuth2TokenValidator<Jwt> =
         OAuth2TokenValidator { jwt ->
-            if (jwt.audience.contains(expectedAud)) {
+            if (jwt.audience.any { it in expectedAudiences }) {
                 OAuth2TokenValidatorResult.success()
             } else {
                 OAuth2TokenValidatorResult.failure(
-                    OAuth2Error("invalid_token", "aud mismatch (expected=$expectedAud, actual=${jwt.audience})", null),
+                    OAuth2Error(
+                        "invalid_token",
+                        "aud mismatch (expected one of $expectedAudiences, actual=${jwt.audience})",
+                        null,
+                    ),
                 )
             }
         }

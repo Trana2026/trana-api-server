@@ -30,6 +30,17 @@ trana:
     google:
       issuer: https://accounts.google.com
       client-id: test-google-client-id
+    apple:
+      issuer: https://appleid.apple.com
+      bundle-id: test-apple-bundle-id
+      client-id: test-apple-services-id
+      team-id: TESTTEAMID
+      key-id: TESTKEYID01
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        TEST_PRIVATE_KEY_BODY
+        -----END PRIVATE KEY-----
+      android-package-name: com.trana.test
   kyc:
     ncp:
       id-card:
