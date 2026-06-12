@@ -6,8 +6,8 @@ import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DisputeState
-import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.service.ContractAccessGuard
+import com.trana.contract.service.CounterpartyResolver
 import com.trana.dispute.DisputeException
 import com.trana.dispute.entity.DisputeRecord
 import com.trana.dispute.entity.DisputeStatus
@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional
 class DisputeService(
     private val accessGuard: ContractAccessGuard,
     private val disputeRecordRepository: DisputeRecordRepository,
-    private val contractPartyRepository: ContractPartyRepository,
+    private val counterpartyResolver: CounterpartyResolver,
     private val userRepository: UserRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
@@ -157,7 +157,7 @@ class DisputeService(
         reporterUserId: Long,
         record: DisputeRecord,
     ) {
-        val recipientId = resolveCounterpartUserId(contract, reporterUserId)
+        val recipientId = counterpartyResolver.resolveCounterpartUserId(contract, reporterUserId)
         if (recipientId == null) {
             log.warn(
                 "[DISPUTE] 피신고자 미상 — 알림톡 skip (publicCode={}, reporterUserId={})",
@@ -184,18 +184,5 @@ class DisputeService(
                 detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
             ),
         )
-    }
-
-    private fun resolveCounterpartUserId(
-        contract: Contract,
-        reporterUserId: Long,
-    ): Long? {
-        if (contract.creatorUserId != reporterUserId) {
-            return contract.creatorUserId
-        }
-        return contractPartyRepository
-            .findAllByContractId(contract.id!!)
-            .firstOrNull { it.userId != reporterUserId }
-            ?.userId
     }
 }

@@ -2,7 +2,6 @@ package com.trana.contract.service
 
 import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.entity.Contract
-import com.trana.contract.repository.ContractPartyRepository
 import com.trana.dispute.repository.DisputeRecordRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
@@ -21,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Component
 class RiskSignalsCalculator(
-    private val contractPartyRepository: ContractPartyRepository,
+    private val counterpartyResolver: CounterpartyResolver,
     private val userRepository: UserRepository,
     private val disputeRecordRepository: DisputeRecordRepository,
 ) {
@@ -30,24 +29,11 @@ class RiskSignalsCalculator(
         contract: Contract,
         viewerUserId: Long,
     ): RiskSignalsResponse {
-        val counterpartId = resolveCounterpartUserId(contract, viewerUserId)
+        val counterpartId = counterpartyResolver.resolveCounterpartUserId(contract, viewerUserId)
         return RiskSignalsResponse(
             guardianNotConsented = isCounterpartGuardianNotConsented(counterpartId),
             hasReportHistory = counterpartId?.let { disputeRecordRepository.existsReportAgainstUser(it) } ?: false,
         )
-    }
-
-    private fun resolveCounterpartUserId(
-        contract: Contract,
-        viewerUserId: Long,
-    ): Long? {
-        if (contract.creatorUserId != viewerUserId) {
-            return contract.creatorUserId
-        }
-        return contractPartyRepository
-            .findAllByContractId(contract.id!!)
-            .firstOrNull { it.userId != viewerUserId }
-            ?.userId
     }
 
     private fun isCounterpartGuardianNotConsented(counterpartId: Long?): Boolean {

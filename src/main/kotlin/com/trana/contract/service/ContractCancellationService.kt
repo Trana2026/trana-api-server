@@ -9,7 +9,6 @@ import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractCancellationRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.repository.ContractCancellationRequestRepository
-import com.trana.contract.repository.ContractPartyRepository
 import com.trana.user.repository.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -29,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional
 class ContractCancellationService(
     private val accessGuard: ContractAccessGuard,
     private val cancellationRepository: ContractCancellationRequestRepository,
-    private val contractPartyRepository: ContractPartyRepository,
+    private val counterpartyResolver: CounterpartyResolver,
     private val userRepository: UserRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
@@ -178,7 +177,7 @@ class ContractCancellationService(
         requesterUserId: Long,
         record: ContractCancellationRequest,
     ) {
-        val recipientId = resolveCounterpartUserId(contract, requesterUserId)
+        val recipientId = counterpartyResolver.resolveCounterpartUserId(contract, requesterUserId)
         if (recipientId == null) {
             log.warn(
                 "[CANCEL] 피요청자 미상 — 알림톡 skip (publicCode={}, requesterUserId={})",
@@ -205,18 +204,5 @@ class ContractCancellationService(
                 detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
             ),
         )
-    }
-
-    private fun resolveCounterpartUserId(
-        contract: Contract,
-        requesterUserId: Long,
-    ): Long? {
-        if (contract.creatorUserId != requesterUserId) {
-            return contract.creatorUserId
-        }
-        return contractPartyRepository
-            .findAllByContractId(contract.id!!)
-            .firstOrNull { it.userId != requesterUserId }
-            ?.userId
     }
 }
