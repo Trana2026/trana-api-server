@@ -461,7 +461,7 @@ class ContractStatusService(
         publicCode: String,
         userId: Long,
     ): List<ContractStatusLog> {
-        val contract = accessGuard.loadOwned(publicCode, userId)
+        val contract = accessGuard.loadAccessible(publicCode, userId)
         return statusLogRepository.findAllByContractIdOrderByChangedAtAsc(contract.id!!)
     }
 

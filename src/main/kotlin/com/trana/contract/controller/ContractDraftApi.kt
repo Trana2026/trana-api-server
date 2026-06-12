@@ -1018,9 +1018,13 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         description = """
 본 계약의 모든 상태 전이 이력 — 시간순 정렬.
 
-    활용:
-    - 분쟁 시 "언제 누가 어떤 상태로 바꿨는지" 추적
-    - 첫 row 는 항상 INITIAL (fromStatus=null, toStatus=DRAFT)
+  권한:
+  - 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 양측 조회 가능
+  - 그 외 user 는 403 NOT_ACCESSIBLE
+
+  활용:
+  - 분쟁 시 "언제 누가 어떤 상태로 바꿨는지" 추적
+  - 첫 row 는 항상 INITIAL (fromStatus=null, toStatus=IN_PROGRESS)
                 """,
     )
     @ApiResponses(
@@ -1038,6 +1042,19 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
                     ),
                 ],
             ),
+            ApiResponse(
+                responseCode = "403",
+                description = "계약 참여자 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notAccessible", value = ContractExamples.NOT_ACCESSIBLE),
+                        ],
+                    ),
+                ],
+            ),
+
         ],
     )
     @GetMapping("/{publicCode}/status-logs")
