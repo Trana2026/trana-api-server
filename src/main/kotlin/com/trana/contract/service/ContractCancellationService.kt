@@ -12,6 +12,7 @@ import com.trana.contract.repository.ContractCancellationRequestRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.user.repository.UserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,6 +33,7 @@ class ContractCancellationService(
     private val userRepository: UserRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     /**
      * 취소 요청 접수.
@@ -54,6 +56,8 @@ class ContractCancellationService(
         ensureEligibleRequester(contract, requesterUserId)
         ensureNoActiveRequest(contract)
 
+        val fromStatus = contract.status
+
         val request =
             cancellationRepository.save(
                 ContractCancellationRequest(
@@ -66,6 +70,16 @@ class ContractCancellationService(
             )
 
         contract.markCancelRequested()
+
+        eventPublisher.publishEvent(
+            ContractStatusChangedEvent(
+                contractId = contract.id,
+                fromStatus = fromStatus,
+                toStatus = ContractStatus.CANCEL_REQUESTED,
+                actorUserId = requesterUserId,
+                reason = reason,
+            ),
+        )
 
         sendCancellationRequestedAlimtalk(contract, requesterUserId, request)
         return request
@@ -92,8 +106,20 @@ class ContractCancellationService(
             throw ContractCancellationException.SelfConfirm(publicCode, userId)
         }
 
+        val fromStatus = contract.status
+
         request.confirmByCounterparty(userId)
         contract.markCancelled()
+
+        eventPublisher.publishEvent(
+            ContractStatusChangedEvent(
+                contractId = contract.id,
+                fromStatus = fromStatus,
+                toStatus = ContractStatus.CANCELLED,
+                actorUserId = userId,
+                reason = "양측 취소 확정",
+            ),
+        )
     }
 
     /**

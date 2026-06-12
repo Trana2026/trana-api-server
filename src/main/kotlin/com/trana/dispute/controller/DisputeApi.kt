@@ -15,13 +15,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springframework.core.io.Resource
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
 @Tag(name = "Contract Dispute", description = "계약 신고 (W7) — 접수 / 본인 취소 / 조회")
 interface DisputeApi {
@@ -204,5 +204,5 @@ interface DisputeApi {
     fun evidencePackage(
         userId: Long,
         @PathVariable publicCode: String,
-    ): ResponseEntity<StreamingResponseBody>
+    ): ResponseEntity<Resource>
 }

@@ -7,6 +7,8 @@ import com.trana.dispute.service.DisputeService
 import com.trana.dispute.service.EvidencePackageService
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.io.ByteArrayOutputStream
 
 @RestController
 @RequestMapping("/v1/contracts")
@@ -63,16 +65,20 @@ class DisputeController(
     override fun evidencePackage(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
-    ): ResponseEntity<StreamingResponseBody> {
+    ): ResponseEntity<Resource> {
         val payload = evidencePackageService.authorizeAndCollect(publicCode = publicCode, userId = userId)
 
-        val body = StreamingResponseBody { output -> evidencePackageService.writeZip(payload, output) }
-        val filename = "evidence-${payload.publicCode}.zip"
+        val buffer = ByteArrayOutputStream()
+        evidencePackageService.writeZip(payload, buffer)
+        val bytes = buffer.toByteArray()
+        val resource = ByteArrayResource(bytes)
 
+        val filename = "evidence-${payload.publicCode}.zip"
         return ResponseEntity
             .ok()
             .header(HttpHeaders.CONTENT_TYPE, "application/zip")
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
-            .body(body)
+            .contentLength(bytes.size.toLong())
+            .body(resource)
     }
 }
