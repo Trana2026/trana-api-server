@@ -48,7 +48,12 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         if (errorCode.status.is5xxServerError) {
             log.error("DomainException [{}]: {}", errorCode.code, ex.message, ex)
         } else {
-            log.warn("DomainException [{}]: {}", errorCode.code, ex.message)
+            val causeMessage = ex.cause?.message
+            if (causeMessage != null) {
+                log.warn("DomainException [{}]: {} (cause: {})", errorCode.code, ex.message, causeMessage)
+            } else {
+                log.warn("DomainException [{}]: {}", errorCode.code, ex.message)
+            }
         }
 
         return ResponseEntity.status(errorCode.status).body(problemDetail)
