@@ -84,6 +84,7 @@ class ContractDraftController(
                 conditionDetails = request.conditionDetails,
                 tradingPlatform = request.tradingPlatform,
                 deliveryType = request.deliveryType,
+                warrantyPeriodDays = request.warrantyPeriodDays,
                 creatorRole = request.creatorRole,
             ).toResponse()
 
@@ -231,6 +232,7 @@ private fun ContractListView.toListItem(): ContractListItem =
         status = contract.status,
         title = contract.title,
         price = contract.price,
+        isCreator = isCreator,
         myRole = myRole,
         attachmentCount = attachmentCount,
         firstAttachmentUrl = firstAttachmentUrl,

@@ -150,6 +150,7 @@ internal object ContractExamples {
                 "conditionSummary": "사용감 적음",
                 "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                 "deliveryType": "SHIPPING",
+                "warrantyPeriodDays": 3
               }
           """
 
@@ -307,39 +308,42 @@ internal object ContractExamples {
             """
 
     const val LIST_RESPONSE = """
-                  [
-                    {
-                      "publicCode": "Vh7sK2x9Pq3R",
-                      "status": "REVISION_REQUESTED",
-                      "title": "에어팟 프로 2세대",
-                      "price": 180000,
-                      "myRole": "SELLER",
-                      "attachmentCount": 3,
-                      "firstAttachmentUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/attachments/abc-uuid?X-Amz-Algorithm=...&X-Amz-Signature=...",
-                      "updatedAt": "2026-05-29T10:07:00Z"
-                    },
-                    {
-                      "publicCode": "Kx2Mp9rT4Vbn",
-                      "status": "SHARED",
-                      "title": "갤럭시 S24 Ultra 256GB",
-                      "price": 850000,
-                      "myRole": "BUYER",
-                      "attachmentCount": 5,
-                      "firstAttachmentUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/Kx2Mp9rT4Vbn/attachments/xyz-uuid?X-Amz-Algorithm=...&X-Amz-Signature=...",
-                      "updatedAt": "2026-05-28T15:30:00Z"
-                    },
-                    {
-                      "publicCode": "Ab3Cd4Ef5Gh6",
-                      "status": "IN_PROGRESS",
-                      "title": null,
-                      "price": null,
-                      "myRole": "SELLER",
-                      "attachmentCount": 0,
-                      "firstAttachmentUrl": null,
-                      "updatedAt": "2026-05-29T09:00:00Z"
-                    }
-                  ]
-              """
+                [
+                  {
+                    "publicCode": "Vh7sK2x9Pq3R",
+                    "status": "REVISION_REQUESTED",
+                    "title": "에어팟 프로 2세대",
+                    "price": 180000,
+                    "isCreator": true,
+                    "myRole": "SELLER",
+                    "attachmentCount": 3,
+                    "firstAttachmentUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/Vh7sK2x9Pq3R/attachments/abc-uuid?X-Amz-Algorithm=...&X-Amz-Signature=...",
+                    "updatedAt": "2026-05-29T10:07:00Z"
+                  },
+                  {
+                    "publicCode": "Kx2Mp9rT4Vbn",
+                    "status": "SHARED",
+                    "title": "갤럭시 S24 Ultra 256GB",
+                    "price": 850000,
+                    "isCreator": false,
+                    "myRole": "BUYER",
+                    "attachmentCount": 5,
+                    "firstAttachmentUrl": "https://trana-contract-dev.s3.ap-northeast-2.amazonaws.com/contracts/Kx2Mp9rT4Vbn/attachments/xyz-uuid?X-Amz-Algorithm=...&X-Amz-Signature=...",
+                    "updatedAt": "2026-05-28T15:30:00Z"
+                  },
+                  {
+                    "publicCode": "Ab3Cd4Ef5Gh6",
+                    "status": "IN_PROGRESS",
+                    "title": null,
+                    "price": null,
+                    "isCreator": true,
+                    "myRole": "SELLER",
+                    "attachmentCount": 0,
+                    "firstAttachmentUrl": null,
+                    "updatedAt": "2026-05-29T09:00:00Z"
+                  }
+                ]
+            """
 
     // ───── 에러 (ProblemDetail) ─────
 

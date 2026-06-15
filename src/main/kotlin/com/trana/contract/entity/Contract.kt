@@ -67,7 +67,7 @@ class Contract(
     @Column(name = "condition_details", columnDefinition = "text")
     var conditionDetails: String? = null,
     @Column(name = "warranty_period_days", nullable = false)
-    val warrantyPeriodDays: Int = WARRANTY_DEFAULT_DAYS,
+    var warrantyPeriodDays: Int = WARRANTY_DEFAULT_DAYS,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -137,11 +137,16 @@ class Contract(
         conditionDetails: String? = null,
         tradingPlatform: String? = null,
         deliveryType: DeliveryType? = null,
+        warrantyPeriodDays: Int? = null,
     ) {
         check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
             "IN_PROGRESS / DRAFT 상태에서만 수정 가능 (current=$status)"
         }
         check(deletedAt == null) { "삭제된 계약은 수정 불가" }
+        warrantyPeriodDays?.let {
+            check(it >= 0) { "warrantyPeriodDays 는 0 이상 (0=미제공, 양수=제공 일수)" }
+            this.warrantyPeriodDays = it
+        }
         title?.let { this.title = it }
         price?.let { this.price = it }
         conditionSummary?.let { this.conditionSummary = it }

@@ -201,9 +201,11 @@
     <div class="clause-heading">제4조 (판매자 보증 제공 여부)</div>
     <div class="clause-body">
         <p>판매자는 제3조에 기재된 물품 상태 외의 중대한 하자가 발생할 경우에 대비하여, 다음과 같이 사후 보증(A/S 및 환불) 여부를 선택하여 구매자에게 제공한다.</p>
-        <p class="checkbox-row">[✓] <strong>보증 제공함:</strong> 물품 인도 후 <strong th:text="${warrantyPeriodDays}">3</strong>일이내에
+        <p class="checkbox-row"><span th:text="${warrantyProvidedMark}">[✓]</span> <strong>보증 제공함:</strong> 물품 인도 후
+            <strong th:text="${warrantyPeriodDays > 0 ? warrantyPeriodDays : 3}">3</strong>일이내에
             판매자가 고지하지 않은 기능적 하자가 발견될 경우, 판매자는 즉시 100% 환불 또는 배상할 의무를 진다.</p>
-        <p class="checkbox-row">[ ] <strong>보증 제공하지 않음 (현 상태 인도):</strong> 판매자는 사전에 고지한 물품 상태를 기준으로 양도하며, 구매자의 단순 변심이나
+        <p class="checkbox-row"><span th:text="${warrantyNotProvidedMark}">[ ]</span> <strong>보증 제공하지 않음 (현 상태
+            인도):</strong> 판매자는 사전에 고지한 물품 상태를 기준으로 양도하며, 구매자의 단순 변심이나
             사전에 합의된 하자를 이유로 한 환불 의무를 지지 않는다. (단, 제5조의 '기본 진술 및 보장'을 위반한 사기 행위는 본 항으로 면책되지 아니한다.)</p>
     </div>
 </div>

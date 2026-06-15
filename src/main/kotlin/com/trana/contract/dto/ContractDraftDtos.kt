@@ -61,6 +61,14 @@ data class UpdateContractDraftRequest(
     val conditionDetails: String? = null,
     @field:Schema(description = "거래 방식 (IN_PROGRESS 단계에서 미정 가능 — null). markReady 시점에 NOT NULL 강제.")
     val deliveryType: DeliveryType?,
+    @field:PositiveOrZero
+    @field:Schema(
+        description =
+            "보증 기간 (일). **판매자(SELLER) 의 보증 제공/미제공 체크박스에 매핑** — 체크 시 3, 해제 시 0. " +
+                "프론트는 SELLER 화면에서만 노출 (수신자/BUYER 는 선택 X). 0 = 미제공 → PDF 에 '보증 미제공' 표시.",
+        example = "3",
+    )
+    val warrantyPeriodDays: Int? = null,
     @field:Schema(
         description = """
 작성자 본인의 역할 (SELLER / BUYER) — 한 번만 설정 가능, 이미 설정된 후 변경 시 409.
@@ -130,6 +138,13 @@ data class ContractListItem(
     val status: ContractStatus,
     val title: String?,
     val price: Long?,
+    @field:Schema(
+        description =
+            "본인이 계약 생성자인지 (true=내가 만든 계약, false=수신받은 계약). " +
+                "프론트가 홈 화면 알림 배너에서 (isCreator, status) 조합으로 \"서명 요청 받음\" / \"수정 요청 받음\" 등 구분",
+        example = "false",
+    )
+    val isCreator: Boolean,
     @field:Schema(
         description =
             "본인의 역할 — SELLER 또는 BUYER. 프론트가 (myRole, status) 조합으로 " +

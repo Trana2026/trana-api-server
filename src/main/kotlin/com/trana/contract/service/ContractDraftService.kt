@@ -148,6 +148,7 @@ class ContractDraftService(
         conditionDetails: String? = null,
         tradingPlatform: String? = null,
         deliveryType: DeliveryType? = null,
+        warrantyPeriodDays: Int? = null,
         creatorRole: PartyType? = null,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
@@ -175,6 +176,7 @@ class ContractDraftService(
             conditionDetails = conditionDetails,
             tradingPlatform = tradingPlatform,
             deliveryType = deliveryType,
+            warrantyPeriodDays = warrantyPeriodDays,
         )
         if (contract.status != fromStatus) {
             eventPublisher.publishEvent(
@@ -232,6 +234,7 @@ class ContractDraftService(
             val first = attachments.minByOrNull { it.sortOrder }
             ContractListView(
                 contract = contract,
+                isCreator = contract.creatorUserId == userId,
                 myRole = party?.partyType,
                 attachmentCount = attachments.size,
                 firstAttachmentUrl = first?.let { attachmentStorage.presignGet(it.s3Key) },
@@ -259,6 +262,7 @@ data class PdfDownloadView(
 
 data class ContractListView(
     val contract: Contract,
+    val isCreator: Boolean,
     val myRole: PartyType?,
     val attachmentCount: Int,
     val firstAttachmentUrl: String?,
