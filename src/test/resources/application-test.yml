@@ -27,6 +27,7 @@ trana:
     kakao:
       issuer: https://kauth.kakao.com
       client-id: test-kakao-client-id
+      native-app-key: test-kakao-native-app-key
     google:
       issuer: https://accounts.google.com
       client-id: test-google-client-id

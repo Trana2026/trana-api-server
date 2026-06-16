@@ -28,7 +28,7 @@ class OidcDecoderConfig(
     private val appleProps: AppleOidcProperties,
 ) {
     @Bean("kakaoIdTokenDecoder")
-    fun kakaoIdTokenDecoder(): JwtDecoder = buildDecoder(kakaoProps.issuer, listOf(kakaoProps.clientId))
+    fun kakaoIdTokenDecoder(): JwtDecoder = buildDecoder(kakaoProps.issuer, kakaoProps.audiences)
 
     @Bean("googleIdTokenDecoder")
     fun googleIdTokenDecoder(): JwtDecoder = buildDecoder(googleProps.issuer, listOf(googleProps.clientId))
