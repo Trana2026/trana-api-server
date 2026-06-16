@@ -279,19 +279,13 @@ private data class BaseFields(
 )
 
 private fun parseDate(text: String): LocalDate? {
-    val normalized =
-        text
-            .trim()
-            .replace(Regex("[\\s./\\-]+"), ".")
-            .trim('.')
-
-    val patterns = listOf("yyyy.MM.dd", "yyyy.M.d", "yyyyMMdd")
-    for (pattern in patterns) {
-        runCatching {
-            return LocalDate.parse(normalized, DateTimeFormatter.ofPattern(pattern))
+    val fromYmd =
+        Regex("""(\d{4})\D{1,3}(\d{1,2})\D{1,3}(\d{1,2})""").find(text)?.destructured?.let { (yyyy, mm, dd) ->
+            runCatching { LocalDate.of(yyyy.toInt(), mm.toInt(), dd.toInt()) }.getOrNull()
         }
+    return fromYmd ?: Regex("""\b(\d{8})\b""").find(text)?.value?.let {
+        runCatching { LocalDate.parse(it, DateTimeFormatter.ofPattern("yyyyMMdd")) }.getOrNull()
     }
-    return null
 }
 
 private fun extractBaseFields(
@@ -300,7 +294,7 @@ private fun extractBaseFields(
     issueDateTexts: List<NcpText>?,
     idTypeLabel: String,
 ): BaseFields {
-    val rrnSanitized = rrnRaw.replace("-", "").trim()
+    val rrnSanitized = rrnRaw.replace(Regex("\\D"), "")
     val parsed = KoreanRrnParser.parse(rrnSanitized)
     val name = nameTexts.firstTextOrError("이름")
     val rawIssueDate = issueDateTexts.firstText()

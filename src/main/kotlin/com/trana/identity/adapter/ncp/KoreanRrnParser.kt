@@ -12,7 +12,7 @@ object KoreanRrnParser {
     )
 
     fun parse(rrn: String): Parsed {
-        val sanitized = rrn.replace("-", "").trim()
+        val sanitized = rrn.replace(Regex("\\D"), "")
         require(sanitized.length == RRN_LENGTH && sanitized.all { it.isDigit() }) {
             "잘못된 주민번호 형식"
         }
