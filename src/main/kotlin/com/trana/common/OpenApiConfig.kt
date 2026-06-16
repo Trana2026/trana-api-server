@@ -68,6 +68,7 @@ class OpenApiConfig {
                 "Guardian Identity",
                 "Guardian",
                 "User",
+                "Device Token",
                 "Contract Draft",
                 "Contract Attachment",
                 "Contract AI Extraction",
@@ -77,12 +78,13 @@ class OpenApiConfig {
                 "Contract Invitation",
                 "Contract Dispute",
                 "Contract Cancellation",
-                "Dev",
             )
+        val devTagName = "Dev"
         val originalTags = openApi.tags?.toList().orEmpty()
         val sorted = mutableListOf<io.swagger.v3.oas.models.tags.Tag>()
         order.forEach { name -> originalTags.find { it.name == name }?.let { sorted.add(it) } }
-        originalTags.forEach { if (it.name !in order) sorted.add(it) }
+        originalTags.forEach { if (it.name !in order && it.name != devTagName) sorted.add(it) }
+        originalTags.find { it.name == devTagName }?.let { sorted.add(it) }
         openApi.tags = sorted
     }
 
