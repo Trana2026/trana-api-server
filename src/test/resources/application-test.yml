@@ -81,3 +81,5 @@ trana:
       user-id: test-aligo-user
       sender-key: test-aligo-sender-key
       sender: 0212345678
+  fcm:
+    service-account-base64: ""

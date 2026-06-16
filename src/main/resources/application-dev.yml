@@ -84,6 +84,8 @@ trana:
       sender-key: ${TRANA_ALIGO_SENDER_KEY}
       sender: ${TRANA_ALIGO_SENDER}
       test-mode: true
+  fcm:
+    service-account-base64: ${FIREBASE_SERVICE_ACCOUNT_BASE64:}
 
 logging:
   level:

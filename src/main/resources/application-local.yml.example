@@ -85,3 +85,5 @@ trana:
          completed: UI_4037
          dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
          cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+  fcm:
+       service-account-base64: <base64 인코딩한 firebase-adminsdk-xxx.json 한 줄 — 비워두면 Mock>
