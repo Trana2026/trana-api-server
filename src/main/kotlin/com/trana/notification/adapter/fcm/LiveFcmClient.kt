@@ -8,6 +8,9 @@ import com.google.firebase.messaging.MulticastMessage
 import com.google.firebase.messaging.Notification
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Recover
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component
 
 /**
@@ -29,6 +32,11 @@ class LiveFcmClient(
     private val log = LoggerFactory.getLogger(javaClass)
     private val messaging = FirebaseMessaging.getInstance(firebaseApp)
 
+    @Retryable(
+        retryFor = [FirebaseMessagingException::class, java.io.IOException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 30_000),
+    )
     override fun send(message: FcmMessage): FcmSendResult {
         if (message.tokens.isEmpty()) {
             return FcmSendResult(successCount = 0, failureCount = 0)
@@ -64,6 +72,19 @@ class LiveFcmClient(
             successCount = batch.successCount,
             failureCount = batch.failureCount,
             invalidTokens = invalidTokens,
+        )
+    }
+
+    @Recover
+    @Suppress("UnusedPrivateMember")
+    fun recover(
+        ex: Exception,
+        message: FcmMessage,
+    ): FcmSendResult {
+        log.error("[FCM] 재시도 3회 실패 — silent return (명세서 E03 백그라운드 처리)", ex)
+        return FcmSendResult(
+            successCount = 0,
+            failureCount = message.tokens.size,
         )
     }
 
