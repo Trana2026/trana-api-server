@@ -3,11 +3,6 @@ package com.trana.contract.service
 import com.trana.common.util.TokenGenerator
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractException
-import com.trana.contract.adapter.kakao.ContractCompletedMessage
-import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
-import com.trana.contract.adapter.kakao.NewContractMessage
-import com.trana.contract.adapter.kakao.ReceiverSignedMessage
-import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
@@ -60,7 +55,7 @@ class ContractStatusService(
     private val tokenGenerator: TokenGenerator,
     private val contractRepository: ContractRepository,
     private val revisionRequestRepository: ContractRevisionRequestRepository,
-    private val kakaoAlimtalkClient: KakaoAlimtalkClient,
+    private val contractAlimtalkDispatcher: ContractAlimtalkDispatcher,
     private val userRepository: UserRepository,
     private val contractPartyRepository: ContractPartyRepository,
     private val pdfRenderer: ContractPdfRenderer,
@@ -132,7 +127,7 @@ class ContractStatusService(
         contract.markShared()
         publishStatusChanged(contract, from, userId, null)
 
-        sendNewContractAlimtalk(contract, userId, invitation)
+        contractAlimtalkDispatcher.sendNewContract(contract, userId, invitation)
         return contract
     }
 
@@ -168,7 +163,7 @@ class ContractStatusService(
         contract.markRevisionRequested()
         publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
 
-        sendRevisionRequestedAlimtalk(
+        contractAlimtalkDispatcher.sendRevisionRequested(
             contract,
             requesterUserId,
             titleReason,
@@ -266,7 +261,7 @@ class ContractStatusService(
             )
 
         // 4. 알림톡 (트랜잭션 밖)
-        sendReceiverSignedAlimtalk(result.contract, preview.receiverName)
+        contractAlimtalkDispatcher.sendReceiverSigned(result.contract, preview.receiverName)
 
         return ReceiverSignView(
             publicCode = result.contract.publicCode,
@@ -329,7 +324,7 @@ class ContractStatusService(
             )
 
         // 4. 알림톡 (트랜잭션 밖) — 양측에 거래 체결 완료 통보
-        sendCompletedAlimtalkBoth(result.contract, result.creator, result.receiver)
+        contractAlimtalkDispatcher.sendCompleted(result.contract, result.creator, result.receiver)
 
         return CreatorSignView(
             publicCode = result.contract.publicCode,
@@ -397,31 +392,6 @@ class ContractStatusService(
         )
     }
 
-    private fun sendCompletedAlimtalkBoth(
-        contract: Contract,
-        creator: User,
-        receiver: User,
-    ) {
-        val downloadUrl = webUrlBuilder.contractPdf(contract.publicCode)
-        listOf(creator, receiver).forEach { recipient ->
-            val recipientName = recipient.name ?: "Trana 사용자"
-            val recipientPhone = recipient.phone ?: "(unknown)"
-            kakaoAlimtalkClient.sendCompleted(
-                ContractCompletedMessage(
-                    recipientPhone = recipientPhone,
-                    recipientName = recipientName,
-                    contractTitle = contract.title ?: "(제목 없음)",
-                    price = requireNotNull(contract.price) { "price 누락 (COMPLETED 전이 후 invariant 위반)" },
-                    completedAt =
-                        requireNotNull(
-                            contract.pdfGeneratedAt,
-                        ) { "pdfGeneratedAt 누락 (SIGNED 전이 후 invariant 위반)" },
-                    downloadUrl = downloadUrl,
-                ),
-            )
-        }
-    }
-
     private fun toPartyRenderInfo(
         user: User,
         signatureBase64: String?,
@@ -432,29 +402,6 @@ class ContractStatusService(
             phone = user.phone ?: "(unknown)",
             signatureBase64 = signatureBase64,
         )
-
-    private fun sendReceiverSignedAlimtalk(
-        contract: Contract,
-        receiverName: String,
-    ) {
-        val creator =
-            userRepository.findById(contract.creatorUserId).orElseThrow {
-                IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
-            }
-        val creatorName = creator.name ?: "Trana 사용자"
-        val creatorPhone = creator.phone ?: "(unknown)"
-        val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
-        kakaoAlimtalkClient.sendReceiverSigned(
-            ReceiverSignedMessage(
-                creatorPhone = creatorPhone,
-                creatorName = creatorName,
-                receiverName = receiverName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                price = requireNotNull(contract.price) { "price 누락 (RECEIVER_SIGNED 전이 후 invariant 위반)" },
-                reviewUrl = reviewUrl,
-            ),
-        )
-    }
 
     @Transactional(readOnly = true)
     fun listStatusLogs(
@@ -507,77 +454,6 @@ class ContractStatusService(
             ),
         )
     }
-
-    private fun sendNewContractAlimtalk(
-        contract: Contract,
-        sellerUserId: Long,
-        invitation: ContractInvitation,
-    ) {
-        val seller =
-            userRepository.findById(sellerUserId).orElseThrow {
-                IllegalStateException("계약 작성자 user 조회 실패 (userId=$sellerUserId)")
-            }
-        val sellerName = seller.name ?: "Trana 사용자"
-        val invitationUrl = webUrlBuilder.contractInvitation(invitation.token)
-        kakaoAlimtalkClient.sendNewContract(
-            NewContractMessage(
-                receiverPhone = invitation.receiverPhone,
-                receiverName = invitation.receiverName,
-                sellerName = sellerName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
-                invitationUrl = invitationUrl,
-            ),
-        )
-    }
-
-    private fun sendRevisionRequestedAlimtalk(
-        contract: Contract,
-        requesterUserId: Long,
-        titleReason: String?,
-        priceReason: String?,
-        conditionSummaryReason: String?,
-        conditionDetailsReason: String?,
-    ) {
-        val creator =
-            userRepository.findById(contract.creatorUserId).orElseThrow {
-                IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
-            }
-        val requester =
-            userRepository.findById(requesterUserId).orElseThrow {
-                IllegalStateException("수정 요청자 조회 실패 (userId=$requesterUserId)")
-            }
-        val creatorName = creator.name ?: "Trana 사용자"
-        val creatorPhone = creator.phone ?: "(unknown)"
-        val requesterName = requester.name ?: "Trana 사용자"
-        val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
-        val revisionReason =
-            buildRevisionReason(titleReason, priceReason, conditionSummaryReason, conditionDetailsReason)
-        kakaoAlimtalkClient.sendRevisionRequested(
-            RevisionRequestedMessage(
-                creatorPhone = creatorPhone,
-                creatorName = creatorName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                requesterName = requesterName,
-                price = requireNotNull(contract.price) { "price 누락 (REVISION_REQUESTED 전이 후 invariant 위반)" },
-                revisionReason = revisionReason,
-                reviewUrl = reviewUrl,
-            ),
-        )
-    }
-
-    private fun buildRevisionReason(
-        titleReason: String?,
-        priceReason: String?,
-        conditionSummaryReason: String?,
-        conditionDetailsReason: String?,
-    ): String =
-        buildList {
-            titleReason?.let { add("제목: $it") }
-            priceReason?.let { add("가격: $it") }
-            conditionSummaryReason?.let { add("조건 요약: $it") }
-            conditionDetailsReason?.let { add("조건 상세: $it") }
-        }.joinToString("\n").ifBlank { "(사유 없음)" }
 
     @Suppress("ThrowsCount")
     private fun loadActiveInvitationOnSharedContract(token: String): ActiveInvitationContext {
