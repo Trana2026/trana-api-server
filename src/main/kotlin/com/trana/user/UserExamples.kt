@@ -58,4 +58,22 @@ object UserExamples {
   """
 
     const val MY_CONSENTS_EMPTY = """[]"""
+
+    const val PUSH_TOGGLE_OFF = """
+  {
+    "enabled": false
+  }
+  """
+
+    const val PUSH_TOGGLE_ON = """
+  {
+    "enabled": true
+  }
+  """
+
+    const val PUSH_TOGGLE_RESPONSE = """
+  {
+    "pushEnabled": false
+  }
+  """
 }

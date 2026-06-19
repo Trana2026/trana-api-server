@@ -18,7 +18,7 @@ import com.trana.identity.entity.IdentityVerification
 import com.trana.identity.entity.VerificationPurpose
 import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdentityVerificationRepository
-import com.trana.notification.service.FcmDispatchService
+import com.trana.notification.service.NotificationDispatchService
 import com.trana.user.entity.Gender
 import com.trana.user.repository.UserRepository
 import org.slf4j.LoggerFactory
@@ -52,7 +52,7 @@ class KycGuardianService(
     private val purger: IdentitySessionPurger,
     private val postCompareHandler: KycPostCompareHandler,
     private val identityFaceMatchProperties: IdentityFaceMatchProperties,
-    private val fcmDispatchService: FcmDispatchService,
+    private val notificationDispatchService: NotificationDispatchService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -172,7 +172,7 @@ class KycGuardianService(
         userRepository.save(minor)
 
         runCatching {
-            fcmDispatchService.sendToUser(
+            notificationDispatchService.sendToUser(
                 userId = minor.id!!,
                 title = "보호자 인증이 완료됐어요",
                 body = "이제 Trana 를 사용할 수 있어요",

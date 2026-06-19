@@ -8,6 +8,8 @@ import com.trana.user.dto.CreateInquiryRequest
 import com.trana.user.dto.InquiryDetailResponse
 import com.trana.user.dto.InquirySummaryResponse
 import com.trana.user.dto.MeResponse
+import com.trana.user.dto.PushEnabledResponse
+import com.trana.user.dto.UpdatePushEnabledRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -20,6 +22,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -279,4 +282,59 @@ JWT subject(userId) 기준으로 회원 탈퇴 처리.
         @Parameter(hidden = true) userId: Long,
         @PathVariable publicCode: String,
     ): InquiryDetailResponse
+
+    @Operation(
+        summary = "푸시 알림 토글",
+        description = """
+  마이페이지 "알림 설정" 화면에서 푸시 알림 수신 동의 변경. 멱등 — 같은 값 반복 호출 OK.
+
+  동작:
+  - User.pushEnabled 갱신
+  - NotificationDispatchService 가 발송 직전 이 값 검사 → false 면 FCM 발송 skip + 로그
+
+  운영 보류 (W9+):
+  - 카테고리별 토글 (예: 계약 알림 / 마케팅 / 시스템) — 현재는 전체 토글만
+          """,
+        requestBody =
+            io.swagger.v3.oas.annotations.parameters.RequestBody(
+                content = [
+                    Content(
+                        schema = Schema(implementation = UpdatePushEnabledRequest::class),
+                        examples = [
+                            ExampleObject(name = "off", value = UserExamples.PUSH_TOGGLE_OFF),
+                            ExampleObject(name = "on", value = UserExamples.PUSH_TOGGLE_ON),
+                        ],
+                    ),
+                ],
+            ),
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "변경 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = PushEnabledResponse::class),
+                        examples = [ExampleObject(name = "default", value = UserExamples.PUSH_TOGGLE_RESPONSE)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "토큰 없음 / 만료 / 위변조",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "사용자 없음 (USER_404)",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+        ],
+    )
+    @PatchMapping("/me/push-enabled")
+    fun changePushEnabled(
+        @Parameter(hidden = true) userId: Long,
+        @Valid @RequestBody request: UpdatePushEnabledRequest,
+    ): PushEnabledResponse
 }

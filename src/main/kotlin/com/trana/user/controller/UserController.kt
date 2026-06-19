@@ -6,6 +6,8 @@ import com.trana.user.dto.CreateInquiryRequest
 import com.trana.user.dto.InquiryDetailResponse
 import com.trana.user.dto.InquirySummaryResponse
 import com.trana.user.dto.MeResponse
+import com.trana.user.dto.PushEnabledResponse
+import com.trana.user.dto.UpdatePushEnabledRequest
 import com.trana.user.entity.User
 import com.trana.user.entity.UserInquiry
 import com.trana.user.service.UserInquiryService
@@ -60,6 +62,14 @@ class UserController(
         @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
     ): InquiryDetailResponse = userInquiryService.findByPublicCode(publicCode, userId).toDetail()
+
+    override fun changePushEnabled(
+        @AuthenticationPrincipal userId: Long,
+        @Valid @RequestBody request: UpdatePushEnabledRequest,
+    ): PushEnabledResponse {
+        val user = userService.changePushEnabled(userId, request.enabled)
+        return PushEnabledResponse(pushEnabled = user.pushEnabled)
+    }
 }
 
 private fun User.toMeResponse(): MeResponse =

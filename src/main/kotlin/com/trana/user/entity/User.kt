@@ -85,6 +85,11 @@ class User(
         this.guardianVerifiedAt = Instant.now()
     }
 
+    /** 마이페이지 푸시 토글 — PATCH /v1/users/me/push-enabled. */
+    fun changePushEnabled(enabled: Boolean) {
+        this.pushEnabled = enabled
+    }
+
     companion object {
         private const val NICKNAME_MIN_LENGTH = 2
         private const val NICKNAME_MAX_LENGTH = 20

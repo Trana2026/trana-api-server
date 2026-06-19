@@ -160,6 +160,16 @@ class UserService(
             entityId = userId,
         )
     }
+
+    /** 마이페이지 푸시 토글 — Entity 메서드 위임 (dirty checking 으로 자동 UPDATE). */
+    fun changePushEnabled(
+        userId: Long,
+        enabled: Boolean,
+    ): User {
+        val user = getById(userId)
+        user.changePushEnabled(enabled)
+        return user
+    }
 }
 
 private const val ENTITY_USER = "USER"
