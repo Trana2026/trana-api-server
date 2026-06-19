@@ -1,5 +1,7 @@
 package com.trana.user.controller
 
+import com.trana.terms.dto.MyConsentResponse
+import com.trana.terms.service.ConsentService
 import com.trana.user.dto.MeResponse
 import com.trana.user.entity.User
 import com.trana.user.service.UserService
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @SecurityRequirement(name = "bearerAuth")
 class UserController(
     private val userService: UserService,
+    private val consentService: ConsentService,
 ) : UserApi {
     override fun getMe(
         @AuthenticationPrincipal userId: Long,
@@ -23,6 +26,10 @@ class UserController(
     ) {
         userService.withdraw(userId)
     }
+
+    override fun getMyConsents(
+        @AuthenticationPrincipal userId: Long,
+    ): List<MyConsentResponse> = consentService.findMyConsents(userId)
 }
 
 private fun User.toMeResponse(): MeResponse =

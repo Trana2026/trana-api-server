@@ -3,8 +3,10 @@ package com.trana.terms.service
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.guardian.service.GuardianLinkService
+import com.trana.terms.dto.MyConsentResponse
 import com.trana.terms.entity.ConsentContextType
 import com.trana.terms.entity.UserConsent
+import com.trana.terms.repository.TermsVersionRepository
 import com.trana.terms.repository.UserConsentRepository
 import com.trana.user.entity.AgeGroup
 import org.springframework.stereotype.Service
@@ -22,6 +24,7 @@ import java.util.UUID
 @Transactional
 class ConsentService(
     private val userConsentRepository: UserConsentRepository,
+    private val termsVersionRepository: TermsVersionRepository,
     private val termsService: TermsService,
     private val guardianLinkService: GuardianLinkService,
     private val auditLogger: AuditLogger,
@@ -119,6 +122,33 @@ class ConsentService(
                 .filter { it.userId == null }
         toBackfill.forEach { it.assignUserId(userId) }
         return toBackfill.size
+    }
+
+    /** 마이페이지 — 본인의 가입 약관 동의 내역 (최신순). 미성년자는 빈 배열 (본인 동의 X, 보호자가 GUARDIAN_CONSENT 로 동의). */
+    @Transactional(readOnly = true)
+    fun findMyConsents(userId: Long): List<MyConsentResponse> {
+        val consents =
+            userConsentRepository.findAllByUserIdAndContextTypeOrderByAgreedAtDesc(
+                userId = userId,
+                contextType = ConsentContextType.SIGNUP,
+            )
+        if (consents.isEmpty()) return emptyList()
+
+        val termsIds = consents.map { it.termsVersionId }.distinct()
+        val termsById = termsVersionRepository.findAllById(termsIds).associateBy { it.id }
+
+        return consents.map { consent ->
+            val terms =
+                termsById[consent.termsVersionId]
+                    ?: error("Orphan user_consent: id=${consent.id}, termsVersionId=${consent.termsVersionId}")
+            MyConsentResponse(
+                termsId = consent.termsVersionId,
+                type = terms.type,
+                version = terms.version,
+                title = terms.title,
+                agreedAt = consent.agreedAt!!,
+            )
+        }
     }
 
     private fun resolveSignupSessionId(command: AgreeCommand): UUID? =
