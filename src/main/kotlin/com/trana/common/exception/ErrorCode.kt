@@ -34,6 +34,7 @@ enum class ErrorCode(
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
     USER_ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "USER_409_ALREADY_WITHDRAWN", "이미 탈퇴한 사용자입니다"),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY_404", "문의를 찾을 수 없습니다"),
+    DEVICE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_TOKEN_404", "기기를 찾을 수 없습니다"),
 
     // === 약관 (TERMS_*) ===
     TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_404", "약관을 찾을 수 없습니다"),

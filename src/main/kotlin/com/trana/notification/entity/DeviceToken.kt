@@ -20,6 +20,7 @@ import java.time.Instant
  * multi-device 지원 — 한 user 가 여러 row 보유.
  * 같은 단말이 다른 user 로 재로그인 시 token_hash 동일 → [reassignTo] 로 userId 갱신 (C-4 책임).
  * invalid 응답 시 (C-5) token_hash 로 row 삭제.
+ * - lastUsedAt: 마지막 FCM 발송 성공 시각 — 마이페이지 기기 관리 UX. 등록 직후 null
  */
 @Entity
 @Table(name = "device_tokens")
@@ -42,10 +43,19 @@ class DeviceToken(
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant? = null
 
+    @Column(name = "last_used_at")
+    var lastUsedAt: Instant? = null
+        protected set
+
     /** 같은 단말이 다른 user 로 재로그인 시 호출 — 기존 row 의 userId 갱신 (token_hash 는 동일). */
     fun reassignTo(newUserId: Long) {
         check(newUserId != userId) { "같은 user 로의 reassignTo 는 의미 없음" }
         this.userId = newUserId
+    }
+
+    /** Flutter 가 앱 foreground 진입 시 POST /v1/notifications/device-tokens/ping 호출. */
+    fun markUsed() {
+        this.lastUsedAt = Instant.now()
     }
 }
 

@@ -30,4 +30,19 @@ interface DeviceTokenRepository : JpaRepository<DeviceToken, Long> {
     fun deleteAllByTokenHashIn(
         @Param("hashes") hashes: Collection<String>,
     ): Int
+
+    /** 마이페이지 기기 목록 — 본인 단말, 최신 등록 순. */
+    fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<DeviceToken>
+
+    /** 마이페이지 강제 해제 — id + userId 매칭 (다른 user 의 id 추측 시 null → 404). */
+    fun findByIdAndUserId(
+        id: Long,
+        userId: Long,
+    ): DeviceToken?
+
+    /** ping endpoint 권한 검증 — 본인 token 만 갱신 (다른 user 의 token_hash 추측 차단). */
+    fun findByUserIdAndTokenHash(
+        userId: Long,
+        tokenHash: String,
+    ): DeviceToken?
 }

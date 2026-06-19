@@ -38,4 +38,40 @@ internal object DeviceTokenExamples {
                 ]
               }
           """
+
+    const val LIST_RESPONSE = """
+          [
+            {
+              "id": 12,
+              "platform": "ANDROID",
+              "createdAt": "2026-06-19T12:34:56Z",
+              "lastUsedAt": "2026-06-19T13:20:00Z"
+            },
+            {
+              "id": 8,
+              "platform": "IOS",
+              "createdAt": "2026-06-10T09:00:00Z",
+              "lastUsedAt": null
+            }
+          ]
+      """
+
+    const val LIST_EMPTY = """[]"""
+
+    const val PING_REQUEST = """
+          {
+            "token": "dXr8...실제FCM토큰...AB12"
+          }
+      """
+
+    const val DEVICE_NOT_FOUND = """
+            {
+              "type": "about:blank",
+              "title": "DEVICE_TOKEN_404",
+              "status": 404,
+              "detail": "기기를 찾을 수 없습니다 (id=99)",
+              "code": "DEVICE_TOKEN_404",
+              "timestamp": "2026-06-19T12:00:00Z"
+            }
+        """
 }
