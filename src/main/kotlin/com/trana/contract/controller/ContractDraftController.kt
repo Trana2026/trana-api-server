@@ -17,13 +17,11 @@ import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
-import com.trana.contract.service.ConfirmCompletionView
 import com.trana.contract.service.ContractDraftService
 import com.trana.contract.service.ContractListView
+import com.trana.contract.service.ContractSigningService
 import com.trana.contract.service.ContractStatusService
-import com.trana.contract.service.CreatorSignView
 import com.trana.contract.service.PdfDownloadView
-import com.trana.contract.service.ReceiverSignView
 import com.trana.contract.service.RiskSignalsCalculator
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.servlet.http.HttpServletRequest
@@ -44,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController
 class ContractDraftController(
     private val service: ContractDraftService,
     private val statusService: ContractStatusService,
+    private val signingService: ContractSigningService,
     private val riskSignalsCalculator: RiskSignalsCalculator,
 ) : ContractDraftApi {
     override fun createDraft(
@@ -137,7 +136,7 @@ class ContractDraftController(
     override fun acceptInvitation(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable token: String,
-    ): ContractResponse = statusService.acceptInvitation(token, userId).toResponse()
+    ): ContractResponse = signingService.acceptInvitation(token, userId).toResponse()
 
     override fun revertToDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -167,7 +166,7 @@ class ContractDraftController(
         @RequestBody @Valid request: ReceiverSignRequest,
         httpRequest: HttpServletRequest,
     ): ReceiverSignResponse =
-        statusService
+        signingService
             .receiverSign(
                 publicCode = publicCode,
                 userId = userId,
@@ -183,7 +182,7 @@ class ContractDraftController(
         @RequestBody @Valid request: CreatorSignRequest,
         httpRequest: HttpServletRequest,
     ): CreatorSignResponse =
-        statusService
+        signingService
             .creatorSign(
                 publicCode = publicCode,
                 userId = userId,
@@ -197,7 +196,7 @@ class ContractDraftController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
     ): ConfirmCompletionResponse =
-        statusService.confirmCompletion(publicCode = publicCode, userId = userId).toResponse()
+        signingService.confirmCompletion(publicCode = publicCode, userId = userId).toResponse()
 
     override fun pdfDownload(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -256,7 +255,7 @@ private fun PdfDownloadView.toResponse(): ContractPdfDownloadResponse =
         sha256 = sha256,
     )
 
-private fun ReceiverSignView.toResponse(): ReceiverSignResponse =
+private fun ContractSigningService.ReceiverSignView.toResponse(): ReceiverSignResponse =
     ReceiverSignResponse(
         publicCode = publicCode,
         status = status,
@@ -264,7 +263,7 @@ private fun ReceiverSignView.toResponse(): ReceiverSignResponse =
         receiverSignedAt = receiverSignedAt,
     )
 
-private fun CreatorSignView.toResponse(): CreatorSignResponse =
+private fun ContractSigningService.CreatorSignView.toResponse(): CreatorSignResponse =
     CreatorSignResponse(
         publicCode = publicCode,
         status = status,
@@ -272,7 +271,7 @@ private fun CreatorSignView.toResponse(): CreatorSignResponse =
         creatorSignedAt = creatorSignedAt,
     )
 
-private fun ConfirmCompletionView.toResponse(): ConfirmCompletionResponse =
+private fun ContractSigningService.ConfirmCompletionView.toResponse(): ConfirmCompletionResponse =
     ConfirmCompletionResponse(
         publicCode = publicCode,
         status = status,

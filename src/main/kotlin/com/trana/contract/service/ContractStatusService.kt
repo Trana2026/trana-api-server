@@ -1,36 +1,26 @@
 package com.trana.contract.service
 
 import com.trana.common.util.TokenGenerator
-import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
-import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
-import com.trana.contract.entity.PartyType
-import com.trana.contract.repository.ContractConsentRepository
 import com.trana.contract.repository.ContractInvitationRepository
-import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.contract.repository.ContractRevisionRequestRepository
-import com.trana.contract.repository.ContractSignatureRepository
 import com.trana.contract.repository.ContractStatusLogRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.entity.UserStatus
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.orm.ObjectOptimisticLockingFailureException
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
-import java.time.Instant
 
 /**
  * 계약 상태 전이 / 공유 / 서명 통합 서비스.
@@ -57,14 +47,10 @@ class ContractStatusService(
     private val revisionRequestRepository: ContractRevisionRequestRepository,
     private val contractAlimtalkDispatcher: ContractAlimtalkDispatcher,
     private val userRepository: UserRepository,
-    private val contractPartyRepository: ContractPartyRepository,
     private val pdfRenderer: ContractPdfRenderer,
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val eventPublisher: ApplicationEventPublisher,
-    private val contractSignatureRepository: ContractSignatureRepository,
-    private val contractConsentRepository: ContractConsentRepository,
     private val committer: ContractStatusCommitter,
-    private val webUrlBuilder: WebUrlBuilder,
 ) {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun transitionToReady(
@@ -175,223 +161,6 @@ class ContractStatusService(
         return contract
     }
 
-    @Suppress("ThrowsCount")
-    fun acceptInvitation(
-        token: String,
-        userId: Long,
-    ): Contract {
-        val (invitation, contract) = loadActiveInvitationOnSharedContract(token)
-
-        if (contract.creatorUserId == userId) {
-            throw ContractException.NotAccessible(contract.publicCode, userId)
-        }
-
-        validateUserReady(userId)
-
-        val existing = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
-        if (existing != null) {
-            return contract
-        }
-
-        val creatorParty =
-            contractPartyRepository.findFirstByContractIdAndUserId(contract.id, contract.creatorUserId)
-                ?: error("creator party 없음 — 데이터 무결성 위반 (contractId=${contract.id})")
-        val receiverPartyType =
-            when (creatorParty.partyType) {
-                PartyType.SELLER -> PartyType.BUYER
-                PartyType.BUYER -> PartyType.SELLER
-            }
-
-        val party =
-            ContractParty.create(
-                contractId = contract.id,
-                userId = userId,
-                partyType = receiverPartyType,
-            )
-        party.markValidated()
-        contractPartyRepository.save(party)
-
-        invitation.markUsed(userId)
-        return contract
-    }
-
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @Suppress("LongParameterList")
-    fun receiverSign(
-        publicCode: String,
-        userId: Long,
-        signatureBase64: String,
-        agreedTermIds: List<Long>,
-        signerIp: String?,
-        signerUserAgent: String?,
-    ): ReceiverSignView {
-        // 1. preview — committer 의 readOnly tx
-        val preview = committer.loadReceiverSignPreview(publicCode, userId, agreedTermIds)
-
-        // 2. 외부 I/O (트랜잭션 밖) — PDF v2 렌더링 + S3 PUT (refactor d)
-        val partyInfo =
-            PartyRenderInfo(
-                name = preview.receiverName,
-                birthDate = preview.receiverBirthDate,
-                phone = preview.receiverPhone,
-                signatureBase64 = signatureBase64,
-            )
-        val renderInput =
-            ContractPdfRenderInput(
-                contract = preview.contract,
-                seller = if (preview.partyType == PartyType.SELLER) partyInfo else null,
-                buyer = if (preview.partyType == PartyType.BUYER) partyInfo else null,
-            )
-        val pdfBytes = pdfRenderer.render(renderInput)
-        val pdfSha256 = sha256Hex(pdfBytes)
-        val pdfS3Key = buildPdfS3Key(publicCode)
-        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
-
-        // 3. commit — committer 의 rw tx
-        val result =
-            committer.commitReceiverSign(
-                publicCode = publicCode,
-                userId = userId,
-                signatureBase64 = signatureBase64,
-                expectedTerms = preview.expectedTerms,
-                signerIp = signerIp,
-                signerUserAgent = signerUserAgent,
-                pdfS3Key = pdfS3Key,
-                pdfSha256 = pdfSha256,
-            )
-
-        // 4. 알림톡 (트랜잭션 밖)
-        contractAlimtalkDispatcher.sendReceiverSigned(result.contract, preview.receiverName)
-
-        return ReceiverSignView(
-            publicCode = result.contract.publicCode,
-            status = result.contract.status,
-            pdfVersion = result.contract.version,
-            receiverSignedAt = result.receiverSignedAt,
-        )
-    }
-
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @Suppress("LongParameterList")
-    fun creatorSign(
-        publicCode: String,
-        userId: Long,
-        signatureBase64: String,
-        agreedTermIds: List<Long>,
-        signerIp: String?,
-        signerUserAgent: String?,
-    ): CreatorSignView {
-        // 1. preview — committer 의 readOnly tx
-        val preview = committer.loadCreatorSignPreview(publicCode, userId, agreedTermIds)
-
-        // 2. 외부 I/O (트랜잭션 밖) — PDF v3 렌더링 (양측 박스 채움) + S3 PUT (refactor d)
-        val creatorInfo =
-            PartyRenderInfo(
-                name = preview.creator.name,
-                birthDate = preview.creator.birthDate,
-                phone = preview.creator.phone,
-                signatureBase64 = signatureBase64,
-            )
-        val receiverInfo =
-            PartyRenderInfo(
-                name = preview.receiver.name,
-                birthDate = preview.receiver.birthDate,
-                phone = preview.receiver.phone,
-                signatureBase64 = preview.receiverSignatureBase64,
-            )
-        val renderInput =
-            ContractPdfRenderInput(
-                contract = preview.contract,
-                seller = if (preview.creatorPartyType == PartyType.SELLER) creatorInfo else receiverInfo,
-                buyer = if (preview.creatorPartyType == PartyType.BUYER) creatorInfo else receiverInfo,
-            )
-        val pdfBytes = pdfRenderer.render(renderInput)
-        val pdfSha256 = sha256Hex(pdfBytes)
-        val pdfS3Key = buildPdfS3Key(publicCode)
-        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
-
-        // 3. commit — committer 의 rw tx
-        val result =
-            committer.commitCreatorSign(
-                publicCode = publicCode,
-                userId = userId,
-                signatureBase64 = signatureBase64,
-                expectedTerms = preview.expectedTerms,
-                signerIp = signerIp,
-                signerUserAgent = signerUserAgent,
-                pdfS3Key = pdfS3Key,
-                pdfSha256 = pdfSha256,
-            )
-
-        // 4. 알림톡 (트랜잭션 밖) — 양측에 거래 체결 완료 통보
-        contractAlimtalkDispatcher.sendCompleted(result.contract, result.creator, result.receiver)
-
-        return CreatorSignView(
-            publicCode = result.contract.publicCode,
-            status = result.contract.status,
-            pdfVersion = result.contract.version,
-            creatorSignedAt = result.creatorSignedAt,
-        )
-    }
-
-    /**
-     * 거래 완료 확인 (W7).
-     *
-     * - 양측 (SELLER + BUYER) 각자 호출 → contract_parties.completed_at 채움
-     * - 두 번째 클릭 시점에 contract.markCompleted() 자동 호출 (SIGNED → COMPLETED + completed_at)
-     * - 보증기간(3일) 시작 기준 = contract.completed_at
-     * - 멱등 X — 본인이 이미 클릭했으면 409 (AlreadyCompletedByParty)
-     *
-     * 흐름:
-     * 1. accessGuard.loadAccessible 로 권한 확인 (creator OR party 만)
-     * 2. status != SIGNED → NotInSignedState (DRAFT/READY/SHARED/RECEIVER_SIGNED/COMPLETED 등 모두 차단)
-     * 3. 본인의 ContractParty 조회 → completedAt 검사 → markCompleted()
-     * 4. 양측 ContractParty 모두 completedAt != null 이면 contract.markCompleted() + status log
-     *
-     * 알림톡: W7 분쟁 흐름과 함께 결정 (현재는 status log 만).
-     */
-    @Retryable(
-        retryFor = [ObjectOptimisticLockingFailureException::class],
-        maxAttempts = 3,
-        backoff = Backoff(delay = 50),
-    )
-    @Suppress("ThrowsCount")
-    fun confirmCompletion(
-        publicCode: String,
-        userId: Long,
-    ): ConfirmCompletionView {
-        val contract = accessGuard.loadAccessible(publicCode, userId)
-        if (contract.status != ContractStatus.SIGNED) {
-            throw ContractException.NotInSignedState(publicCode, contract.status.name)
-        }
-
-        val myParty =
-            contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
-                ?: throw ContractException.NotAccessible(publicCode, userId)
-        if (myParty.completedAt != null) {
-            throw ContractException.AlreadyCompletedByParty(publicCode, userId)
-        }
-        myParty.markCompleted()
-
-        val parties = contractPartyRepository.findAllByContractId(contract.id!!)
-        val bothCompleted = parties.size == 2 && parties.all { it.completedAt != null }
-        if (bothCompleted) {
-            val from = contract.status
-            contract.markCompleted()
-            publishStatusChanged(contract, from, userId, "양측 거래 완료 확정")
-        }
-
-        val seller = parties.firstOrNull { it.partyType == PartyType.SELLER }
-        val buyer = parties.firstOrNull { it.partyType == PartyType.BUYER }
-        return ConfirmCompletionView(
-            publicCode = contract.publicCode,
-            status = contract.status,
-            sellerCompletedAt = seller?.completedAt,
-            buyerCompletedAt = buyer?.completedAt,
-            completedAt = contract.completedAt,
-        )
-    }
-
     private fun toPartyRenderInfo(
         user: User,
         signatureBase64: String?,
@@ -498,25 +267,3 @@ class ContractStatusService(
 
     private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
 }
-
-data class ReceiverSignView(
-    val publicCode: String,
-    val status: ContractStatus,
-    val pdfVersion: Int,
-    val receiverSignedAt: Instant,
-)
-
-data class CreatorSignView(
-    val publicCode: String,
-    val status: ContractStatus,
-    val pdfVersion: Int,
-    val creatorSignedAt: Instant,
-)
-
-data class ConfirmCompletionView(
-    val publicCode: String,
-    val status: ContractStatus,
-    val sellerCompletedAt: Instant?,
-    val buyerCompletedAt: Instant?,
-    val completedAt: Instant?,
-)
