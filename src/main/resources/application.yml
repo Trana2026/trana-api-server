@@ -75,3 +75,5 @@ trana:
         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
       test-mode: true
+  slack:
+    webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}

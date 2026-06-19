@@ -86,6 +86,8 @@ trana:
       test-mode: true
   fcm:
     service-account-base64: ${FIREBASE_SERVICE_ACCOUNT_BASE64:}
+  slack:
+    webhook-url: ${TRANA_SLACK_WEBHOOK_URL}
 
 logging:
   level:

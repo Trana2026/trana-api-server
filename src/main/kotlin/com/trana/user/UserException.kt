@@ -21,4 +21,11 @@ sealed class UserException(
             errorCode = ErrorCode.USER_ALREADY_WITHDRAWN,
             message = "이미 탈퇴한 사용자입니다 (userId=$userId)",
         )
+
+    class InquiryNotFound(
+        publicCode: String,
+    ) : UserException(
+            errorCode = ErrorCode.INQUIRY_NOT_FOUND,
+            message = "문의를 찾을 수 없습니다 (publicCode=$publicCode)",
+        )
 }

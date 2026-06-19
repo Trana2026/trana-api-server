@@ -24,15 +24,16 @@ enum class ErrorCode(
     NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON_404", "요청한 리소스를 찾을 수 없습니다"),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_405", "허용되지 않은 메서드입니다"),
 
-    // === 인증 (AUTH_*) — W2 도입 시 활성화 ===
+    // === 인증 (AUTH_*) ===
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH_401", "인증이 필요합니다"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_TOKEN", "유효하지 않은 토큰입니다"),
     INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_SOCIAL", "소셜 공급자 토큰 검증 실패"),
     UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_400_PROVIDER", "지원하지 않는 소셜 공급자입니다"),
 
-    // === 사용자 (USER_*) — W2 도입 시 ===
+    // === 사용자 (USER_*) ===
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
     USER_ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "USER_409_ALREADY_WITHDRAWN", "이미 탈퇴한 사용자입니다"),
+    INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY_404", "문의를 찾을 수 없습니다"),
 
     // === 약관 (TERMS_*) ===
     TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_404", "약관을 찾을 수 없습니다"),

@@ -83,3 +83,6 @@ trana:
       sender: 0212345678
   fcm:
     service-account-base64: ""
+  slack:
+    webhook-url: https://hooks.slack.com/services/test-dummy
+
