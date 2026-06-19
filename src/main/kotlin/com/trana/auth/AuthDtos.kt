@@ -58,3 +58,17 @@ data class RefreshRequest(
     @NotBlank(message = "refreshToken은 필수입니다")
     val refreshToken: String,
 )
+
+@Schema(description = "로그아웃 요청 — deviceToken 제공 시 해당 단말의 FCM 등록 같이 정리")
+data class LogoutRequest(
+    @Schema(
+        description =
+            "본인 단말의 FCM token. 제공 시 백엔드가 SHA-256 hash 매칭 후 device_tokens row 삭제 (멱등). " +
+                "Flutter 가 단말 push 수신 중단 처리도 같이 원할 때 전송. " +
+                "JWT 무효화는 X (stateless 정책, access 15분 자연 만료). audit 로그는 항상 기록.",
+        example = "dXr8...실제FCM토큰...AB12",
+        nullable = true,
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+    )
+    val deviceToken: String? = null,
+)

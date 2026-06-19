@@ -72,4 +72,14 @@ internal object AuthExamples {
             "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFuYSI..."
           }
       """
+
+    const val LOGOUT_WITH_DEVICE_TOKEN = """
+        {
+          "deviceToken": "dXr8...실제FCM토큰...AB12"
+        }
+    """
+
+    const val LOGOUT_AUDIT_ONLY = """
+        {}
+    """
 }

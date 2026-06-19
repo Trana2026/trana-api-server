@@ -54,6 +54,8 @@ class SecurityConfig(
                 auth
                     .requestMatchers(HttpMethod.POST, "/v1/contracts/guardian-consent/approve")
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/v1/auth/logout")
+                    .authenticated()
                     .requestMatchers(
                         "/v1/auth/**",
                         "/v1/terms/**",

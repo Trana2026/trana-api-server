@@ -5,6 +5,7 @@ import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialAuthAdapter
 import com.trana.auth.oauth.SocialProvider
 import com.trana.common.security.JwtProvider
+import com.trana.notification.service.DeviceTokenService
 import com.trana.user.entity.AgeGroup
 import com.trana.user.service.UserService
 import org.springframework.stereotype.Service
@@ -17,6 +18,7 @@ class SocialSignInService(
     private val userService: UserService,
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,
+    private val deviceTokenService: DeviceTokenService,
 ) {
     private val adaptersByProvider: Map<SocialProvider, SocialAuthAdapter> =
         socialAuthAdapters.associateBy { it.provider }
@@ -85,5 +87,27 @@ class SocialSignInService(
             refreshToken = jwtProvider.createRefreshToken(userId),
             publicCode = user.publicCode,
         )
+    }
+
+    /**
+     * 로그아웃 — audit 기록 + 선택적 device token 정리.
+     *
+     * - JWT 무효화는 X (stateless 정책, access 15분 자연 만료)
+     * - deviceToken 제공 시 본인 token 매칭 row 삭제 (멱등 — 기존 DeviceTokenService.unregister 재활용)
+     * - audit 는 항상 기록 (IP/UA 는 RequestMdcFilter 가 MDC 자동 채움)
+     */
+    fun logout(
+        userId: Long,
+        deviceToken: String?,
+    ) {
+        auditLogger.log(
+            eventType = AuditEvent.USER_SIGNED_OUT,
+            actorUserId = userId,
+            entityType = "USER",
+            entityId = userId,
+        )
+        if (deviceToken != null) {
+            deviceTokenService.unregister(userId, deviceToken)
+        }
     }
 }
