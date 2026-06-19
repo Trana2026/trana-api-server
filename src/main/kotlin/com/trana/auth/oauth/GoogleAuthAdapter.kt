@@ -39,7 +39,7 @@ class GoogleAuthAdapter(
             provider = SocialProvider.GOOGLE,
             providerUserId = sub,
             email = jwt.getClaimAsString("email"),
-            nickname = jwt.getClaimAsString("name"),
+            name = jwt.getClaimAsString("name"),
         )
     }
 }

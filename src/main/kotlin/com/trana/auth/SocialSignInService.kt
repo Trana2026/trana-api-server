@@ -45,7 +45,7 @@ class SocialSignInService(
                 provider = socialUser.provider,
                 providerUserId = socialUser.providerUserId,
                 email = socialUser.email,
-                nickname = socialUser.nickname,
+                name = socialUser.name,
                 ageGroup = request.ageGroup,
             )
 

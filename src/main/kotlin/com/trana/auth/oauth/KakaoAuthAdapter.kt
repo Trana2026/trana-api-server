@@ -39,7 +39,7 @@ class KakaoAuthAdapter(
             provider = SocialProvider.KAKAO,
             providerUserId = sub,
             email = jwt.getClaimAsString("email"),
-            nickname = jwt.getClaimAsString("nickname"),
+            name = jwt.getClaimAsString("nickname"),
         )
     }
 }

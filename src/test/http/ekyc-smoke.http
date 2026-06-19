@@ -1,0 +1,14 @@
+### NCP CLOVA eKYC 통합 API — 1차 호출
+POST {{ekycUrl}}/ekyc
+X-EKYC-SECRET: {{ekycSecret}}
+Content-Type: application/json
+
+< C:/Users/jtoth/AppData/Local/Temp/ekyc-body.json
+
+
+### NCP CLOVA eKYC 통합 API — 2차 호출 (uid stability 확인, 같은 body 재사용)
+POST {{ekycUrl}}/ekyc
+X-EKYC-SECRET: {{ekycSecret}}
+Content-Type: application/json
+
+< C:/Users/jtoth/AppData/Local/Temp/ekyc-body.json

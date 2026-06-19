@@ -29,7 +29,6 @@ private fun User.toMeResponse(): MeResponse =
     MeResponse(
         publicCode = publicCode,
         email = email,
-        nickname = nickname,
         status = status,
         ageGroup = ageGroup,
         guardianVerifiedAt = guardianVerifiedAt,

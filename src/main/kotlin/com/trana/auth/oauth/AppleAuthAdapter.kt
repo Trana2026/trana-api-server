@@ -27,7 +27,7 @@ import java.security.MessageDigest
  * - is_private_email: 문자열 "true" 면 사용자가 hide my email 선택
  *
  * 이름은 id_token 에 없음 — OAuth `user` 객체 (최초 로그인 1회) 로만 옴.
- * MVP: nickname null. 후속 작업 (Apple-6 callback endpoint) 에서 user 객체로 nickname 처리.
+ * MVP: name null. 후속 작업 (Apple-6 callback endpoint) 에서 user 객체로 name 처리.
  */
 @Component
 class AppleAuthAdapter(
@@ -49,7 +49,7 @@ class AppleAuthAdapter(
             provider = SocialProvider.APPLE,
             providerUserId = sub,
             email = jwt.getClaimAsString("email"),
-            nickname = null,
+            name = null,
         )
     }
 

@@ -11,8 +11,6 @@ data class MeResponse(
     val publicCode: String,
     @Schema(description = "이메일", nullable = true)
     val email: String?,
-    @Schema(description = "닉네임", nullable = true)
-    val nickname: String?,
     @Schema(description = "사용자 상태", example = "ACTIVE")
     val status: UserStatus,
     @Schema(description = "연령대 (KYC 또는 소셜 가입 시 결정). null=가입 미완", nullable = true)

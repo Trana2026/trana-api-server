@@ -38,7 +38,7 @@ class UserService(
         provider: SocialProvider,
         providerUserId: String,
         email: String? = null,
-        nickname: String? = null,
+        name: String? = null,
         ageGroup: AgeGroup,
     ): User {
         val existing = socialAccountRepository.findByProviderAndProviderUserId(provider, providerUserId)
@@ -61,7 +61,7 @@ class UserService(
             User(
                 publicCode = tokenGenerator.generatePublicCode(),
                 email = email,
-                nickname = nickname,
+                name = name,
                 ageGroup = ageGroup,
             )
         userRepository.save(newUser)

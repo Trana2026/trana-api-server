@@ -404,7 +404,7 @@ class ContractStatusService(
     ) {
         val downloadUrl = webUrlBuilder.contractPdf(contract.publicCode)
         listOf(creator, receiver).forEach { recipient ->
-            val recipientName = recipient.name ?: recipient.nickname ?: "Trana 사용자"
+            val recipientName = recipient.name ?: "Trana 사용자"
             val recipientPhone = recipient.phone ?: "(unknown)"
             kakaoAlimtalkClient.sendCompleted(
                 ContractCompletedMessage(
@@ -441,7 +441,7 @@ class ContractStatusService(
             userRepository.findById(contract.creatorUserId).orElseThrow {
                 IllegalStateException("계약 작성자 조회 실패 (userId=${contract.creatorUserId})")
             }
-        val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
+        val creatorName = creator.name ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
         val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
         kakaoAlimtalkClient.sendReceiverSigned(
@@ -517,7 +517,7 @@ class ContractStatusService(
             userRepository.findById(sellerUserId).orElseThrow {
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$sellerUserId)")
             }
-        val sellerName = seller.name ?: seller.nickname ?: "Trana 사용자"
+        val sellerName = seller.name ?: "Trana 사용자"
         val invitationUrl = webUrlBuilder.contractInvitation(invitation.token)
         kakaoAlimtalkClient.sendNewContract(
             NewContractMessage(
@@ -547,9 +547,9 @@ class ContractStatusService(
             userRepository.findById(requesterUserId).orElseThrow {
                 IllegalStateException("수정 요청자 조회 실패 (userId=$requesterUserId)")
             }
-        val creatorName = creator.name ?: creator.nickname ?: "Trana 사용자"
+        val creatorName = creator.name ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
-        val requesterName = requester.name ?: requester.nickname ?: "Trana 사용자"
+        val requesterName = requester.name ?: "Trana 사용자"
         val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
         val revisionReason =
             buildRevisionReason(titleReason, priceReason, conditionSummaryReason, conditionDetailsReason)

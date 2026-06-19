@@ -16,7 +16,7 @@ import java.time.Instant
  * 사용자 — 성인/미성년자 통합 Entity.
  *
  * - 성인 가입: 본인 KYC SUCCESS 시점에 INSERT (publicCode + name/birthDate/gender/phone + ageGroup=ADULT)
- * - 미성년자 가입: 소셜 로그인 시점에 INSERT (publicCode + email/nickname + ageGroup=MINOR)
+ * - 미성년자 가입: 소셜 로그인 시점에 INSERT (publicCode + email/name + ageGroup=MINOR)
  *   → 보호자 KYC SUCCESS 시 markGuardianVerified() 호출 = 가입 완료
  *
  * 가입 완료 판정:
@@ -30,8 +30,6 @@ class User(
     val publicCode: String,
     @Column(unique = true, length = 255)
     var email: String? = null,
-    @Column(length = 50)
-    var nickname: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "age_group", length = 10)
     var ageGroup: AgeGroup? = null,
@@ -79,7 +77,6 @@ class User(
         // PII 마스킹 — 재가입 시 email unique 충돌 회피 + 개인정보 최소화
         // name/phone(성인 KYC)은 audit 가치라 W7+ 운영 정교화 시 결정
         this.email = null
-        this.nickname = null
     }
 
     fun markGuardianVerified() {
