@@ -6,13 +6,6 @@
 -- - contracts.dispute_state CHECK 제약 보강 (NONE / REPORTED 만)
 
 -- ============================================================
--- contracts.dispute_state CHECK (V7 누락분, NONE / REPORTED 만 사용)
--- ============================================================
-ALTER TABLE contracts
-    ADD CONSTRAINT chk_contracts_dispute_state
-        CHECK (dispute_state IN ('NONE', 'REPORTED'));
-
--- ============================================================
 -- dispute_records
 -- ============================================================
 CREATE TABLE dispute_records

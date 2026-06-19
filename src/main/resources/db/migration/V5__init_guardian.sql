@@ -33,17 +33,28 @@ COMMENT ON COLUMN guardians.identifier_hash IS 'SHA-256 (보호자 주민번호/
 -- =========================================
 CREATE TABLE guardian_links
 (
-    token      VARCHAR(64) PRIMARY KEY,
-    user_id    BIGINT      NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    used_at    TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    token       VARCHAR(64) PRIMARY KEY,
+    user_id     BIGINT      NOT NULL,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    used_at     TIMESTAMPTZ,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    purpose     VARCHAR(30) NOT NULL DEFAULT 'SIGNUP',
+    contract_id BIGINT,
+    CONSTRAINT chk_guardian_links_purpose_contract
+        CHECK (
+            (purpose = 'SIGNUP' AND contract_id IS NULL)
+                OR (purpose = 'CONTRACT_CONSENT' AND contract_id IS NOT NULL)
+            )
 );
 
 CREATE INDEX idx_guardian_links_user ON guardian_links (user_id, created_at DESC);
 CREATE INDEX idx_guardian_links_expires_unused ON guardian_links (expires_at) WHERE used_at IS NULL;
+CREATE INDEX idx_guardian_links_contract
+    ON guardian_links (contract_id) WHERE purpose = 'CONTRACT_CONSENT';
 
 COMMENT ON TABLE guardian_links IS '미성년자→보호자 일회용 토큰 (3일 TTL)';
 COMMENT ON COLUMN guardian_links.token IS 'jnanoid 21자 (URL 노출용)';
 COMMENT ON COLUMN guardian_links.user_id IS '미성년자 user_id (논리 FK — cascade 사고 방지)';
 COMMENT ON COLUMN guardian_links.used_at IS '보호자 KYC 완료 시각 (NULL = 미사용)';
+COMMENT ON COLUMN guardian_links.purpose IS 'SIGNUP (미성년 가입) | CONTRACT_CONSENT (계약 보호자 동의, W4+)';
+COMMENT ON COLUMN guardian_links.contract_id IS 'CONTRACT_CONSENT 일 때만 NOT NULL (CHECK 제약)';

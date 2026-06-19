@@ -16,6 +16,7 @@ CREATE TABLE device_tokens
     token_hash      VARCHAR(64) NOT NULL,
     platform        VARCHAR(16) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at    TIMESTAMPTZ,
 
     CONSTRAINT chk_device_tokens_platform
         CHECK (platform IN ('ANDROID', 'IOS')),
@@ -40,3 +41,5 @@ COMMENT ON INDEX idx_device_tokens_user_id IS
     '한 user 의 모든 활성 토큰 일괄 조회 (멀티캐스트 발송 시점)';
 COMMENT ON INDEX uq_device_tokens_hash IS
     '같은 단말이 재로그인해도 token_hash 동일 → row 1개 유지 (C-4 가 user_id 갱신 또는 delete+insert 결정)';
+COMMENT ON COLUMN device_tokens.last_used_at IS
+    '마이페이지 기기 관리 "최근 활동 시각" — Flutter ping endpoint / FCM 발송 성공 시 갱신';

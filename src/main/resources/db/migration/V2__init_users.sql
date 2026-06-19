@@ -11,7 +11,6 @@ CREATE TABLE users
     id                   BIGSERIAL PRIMARY KEY,
     public_code          VARCHAR(20) NOT NULL UNIQUE,
     email                VARCHAR(255) UNIQUE,
-    nickname             VARCHAR(50),
     age_group            VARCHAR(10),
     status               VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     name                 VARCHAR(255),
@@ -31,7 +30,7 @@ COMMENT ON COLUMN users.public_code IS '외부 노출용 식별자 (nanoid 12자
 COMMENT ON COLUMN users.email IS '소셜 로그인 시 공급자 제공 (미성년자만, 성인은 null 가능)';
 COMMENT ON COLUMN users.age_group IS 'ADULT | MINOR — 가입 흐름에서 결정. NULL = 가입 미완 임시 상태';
 COMMENT ON COLUMN users.status IS 'ACTIVE | WITHDRAWN';
-COMMENT ON COLUMN users.name IS 'KYC OCR 결과 (성인) 또는 NULL (미성년자)';
+COMMENT ON COLUMN users.name IS '표시명 — 성인: KYC 실명 / 미성년: 소셜 표시명 (V14 nickname 통합)';
 COMMENT ON COLUMN users.birth_date IS 'KYC OCR 결과 — yyyy-MM-dd';
 COMMENT ON COLUMN users.gender IS 'MALE | FEMALE | OTHER';
 COMMENT ON COLUMN users.phone IS 'Verify 단계 사용자 입력 (성인) 또는 NULL (미성년자)';
@@ -57,3 +56,21 @@ CREATE INDEX idx_social_accounts_user ON social_accounts (user_id);
 
 COMMENT ON COLUMN social_accounts.provider IS 'KAKAO | GOOGLE | APPLE';
 COMMENT ON COLUMN social_accounts.provider_user_id IS '공급자 발급 사용자 ID (변경 불가)';
+
+-- 1:1 문의 (단방향) — 사용자 → 운영자.
+-- 운영자 회신은 Slack 채널 + 사용자 입력 이메일로 직접 회신 (DB 저장 X).
+-- 첨부파일 / 상태 / 답변 컬럼 X — 단순 audit 용.
+
+CREATE TABLE user_inquiries
+(
+    id          BIGSERIAL PRIMARY KEY,
+    public_code VARCHAR(20)  NOT NULL UNIQUE,
+    user_id     BIGINT       NOT NULL,
+    email       VARCHAR(255) NOT NULL,
+    title       VARCHAR(100) NOT NULL,
+    content     TEXT         NOT NULL,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_user_inquiries_user_created
+    ON user_inquiries (user_id, created_at DESC);

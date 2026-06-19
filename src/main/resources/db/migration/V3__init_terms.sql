@@ -18,7 +18,7 @@ CREATE TABLE terms_versions
 
 CREATE INDEX idx_terms_versions_type_effective ON terms_versions (type, effective_at DESC);
 
-COMMENT ON COLUMN terms_versions.type IS 'SERVICE | PRIVACY | MARKETING | LOCATION';
+COMMENT ON COLUMN terms_versions.type IS 'SERVICE | PRIVACY | MARKETING | LOCATION | CONTRACT_AGREEMENT | ELECTRONIC_SIGNATURE';
 COMMENT ON COLUMN terms_versions.version IS '시맨틱 버전 (1.0, 1.1, 2.0)';
 COMMENT ON COLUMN terms_versions.content_url IS '약관 본문 위치 (S3 또는 CDN)';
 COMMENT ON COLUMN terms_versions.content_hash IS '본문 SHA-256 (변조 방지)';
@@ -62,3 +62,26 @@ COMMENT ON COLUMN user_consents.ip IS '동의 시점 IP (법적 증거 — NOT N
 CREATE UNIQUE INDEX uq_user_consents_guardian_link_term
     ON user_consents (guardian_link_token, terms_version_id)
     WHERE guardian_link_token IS NOT NULL;
+
+-- terms_versions seed (V4 + V10 통합)
+-- 가입 단계 4종 + 계약 단계 2종 = 총 6 row
+INSERT INTO terms_versions (type, version, title, content_url, content_hash, effective_at)
+VALUES ('SERVICE', '1.0', 'TRANA 서비스 이용약관',
+        'https://example.com/terms/service-1.0.html',
+        repeat('a', 64), now()),
+       ('PRIVACY', '1.0', 'TRANA 개인정보 처리방침',
+        'https://example.com/terms/privacy-1.0.html',
+        repeat('b', 64), now()),
+       ('MARKETING', '1.0', '마케팅 정보 수신 동의 (선택)',
+        'https://example.com/terms/marketing-1.0.html',
+        repeat('c', 64), now()),
+       ('LOCATION', '1.0', '위치정보 이용 동의 (선택)',
+        'https://example.com/terms/location-1.0.html',
+        repeat('d', 64), now()),
+       ('CONTRACT_AGREEMENT', '1.0', 'TRANA 거래 계약 동의',
+        'https://example.com/terms/contract-agreement-1.0.html',
+        repeat('e', 64), now()),
+       ('ELECTRONIC_SIGNATURE', '1.0', 'TRANA 전자서명 동의',
+        'https://example.com/terms/electronic-signature-1.0.html',
+        repeat('f', 64), now());
+
