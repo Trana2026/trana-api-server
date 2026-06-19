@@ -1,10 +1,12 @@
 package com.trana.user.controller
 
 import com.trana.common.exception.ProblemDetailResponse
+import com.trana.user.UserExamples
 import com.trana.user.dto.MeResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -18,11 +20,37 @@ import org.springframework.web.bind.annotation.ResponseStatus
 interface UserApi {
     @Operation(
         summary = "본인 정보 조회",
-        description = "JWT subject(userId) 기준으로 본인 정보 반환. 미성년자 가입 완료 폴링용 guardianVerifiedAt 포함.",
+        description = """
+JWT subject(userId) 기준으로 본인 정보 반환. 마이페이지 화면 + 헤더 표시명에 활용.
+
+응답 필드:
+- 시스템: publicCode / status / ageGroup / guardianVerifiedAt
+- 본인정보: name / birthDate / gender / phone / email
+- 푸시 동의: pushEnabled (PATCH /v1/users/me/push-enabled 로 변경)
+
+채움 정책:
+- 성인 (ADULT): KYC SUCCESS 시 name/birthDate/gender/phone 모두 채움. email 은 KYC 흐름 미수집 → null
+- 미성년 (MINOR, 보호자 인증 완료): name = 소셜 표시명 (provider 자동). birthDate/gender/phone 은 본인 KYC 없어 null
+- 미성년 (MINOR, 보호자 인증 미완): guardianVerifiedAt=null. 마이페이지 진입 차단 또는 보호자 인증 유도 화면
+
+미성년자 가입 완료 폴링은 guardianVerifiedAt 필드로 판정.
+      """,
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "조회 성공"),
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = MeResponse::class),
+                        examples = [
+                            ExampleObject(name = "adult", value = UserExamples.ME_ADULT),
+                            ExampleObject(name = "minor", value = UserExamples.ME_MINOR),
+                        ],
+                    ),
+                ],
+            ),
             ApiResponse(
                 responseCode = "401",
                 description = "토큰 없음 / 만료 / 위변조",

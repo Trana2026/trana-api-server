@@ -32,4 +32,9 @@ private fun User.toMeResponse(): MeResponse =
         status = status,
         ageGroup = ageGroup,
         guardianVerifiedAt = guardianVerifiedAt,
+        name = name,
+        birthDate = birthDate,
+        gender = gender,
+        phone = phone,
+        pushEnabled = pushEnabled,
     )
