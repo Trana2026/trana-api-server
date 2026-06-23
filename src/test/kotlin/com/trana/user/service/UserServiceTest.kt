@@ -3,6 +3,7 @@ package com.trana.user.service
 import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialProvider
 import com.trana.common.util.TokenGenerator
+import com.trana.trustscore.service.FraudUserHashService
 import com.trana.user.UserException
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.SocialAccount
@@ -24,6 +25,7 @@ class UserServiceTest {
     private val socialAccountRepository: SocialAccountRepository = mockk()
     private val tokenGenerator: TokenGenerator = mockk()
     private val auditLogger: AuditLogger = mockk(relaxed = true)
+    private val fraudUserHashService: FraudUserHashService = mockk(relaxed = true)
 
     private val service =
         UserService(
@@ -31,6 +33,7 @@ class UserServiceTest {
             socialAccountRepository = socialAccountRepository,
             tokenGenerator = tokenGenerator,
             auditLogger = auditLogger,
+            fraudUserHashService = fraudUserHashService,
         )
 
     // ───── withdraw ─────

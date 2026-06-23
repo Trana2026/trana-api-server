@@ -71,6 +71,7 @@ class OpenApiConfig {
                 "User Consent",
                 "User Inquiry",
                 "User Preference",
+                "Trust Score",
                 "Device Token",
                 "Contract Draft",
                 "Contract Attachment",
