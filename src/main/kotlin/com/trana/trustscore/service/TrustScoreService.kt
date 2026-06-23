@@ -5,8 +5,10 @@ import com.trana.trustscore.entity.TrustScoreEvent
 import com.trana.trustscore.entity.TrustScoreEventType
 import com.trana.trustscore.repository.TrustScoreEventRepository
 import com.trana.user.UserException
+import com.trana.user.entity.TrustGrade
 import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 class TrustScoreService(
     private val userRepository: UserRepository,
     private val eventRepository: TrustScoreEventRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     /** 본인 신뢰 점수 카드 조회 — GET /v1/users/me/trust-score */
     fun getMyTrustScore(userId: Long): TrustScoreResponse {
@@ -96,6 +99,7 @@ class TrustScoreService(
                 reason = "양측 서명 완료",
             ),
         )
+        publishChanged(userId, TrustScoreEventType.BOTH_SIGNED, BOTH_SIGNED_DELTA, before, after)
     }
 
     private fun applyWarrantyProvidedForSeller(
@@ -127,6 +131,7 @@ class TrustScoreService(
                 reason = "판매자 보증 제공",
             ),
         )
+        publishChanged(sellerId, TrustScoreEventType.WARRANTY_PROVIDED, WARRANTY_PROVIDED_DELTA, before, after)
     }
 
     /**
@@ -164,6 +169,13 @@ class TrustScoreService(
                 disputeId = disputeId,
                 reason = "신고 사기 확인 (신고자 적립)",
             ),
+        )
+        publishChanged(
+            reporterUserId,
+            TrustScoreEventType.FRAUD_REPORT_FILED_CONFIRMED,
+            FRAUD_REPORT_FILED_DELTA,
+            before,
+            after,
         )
     }
 
@@ -204,6 +216,7 @@ class TrustScoreService(
                 reason = "신고 사기 확인 (신고 대상 차감)",
             ),
         )
+        publishChanged(reportedUserId, TrustScoreEventType.MIN_FLOOR, 0, User.MIN_TRUST_SCORE, User.MIN_TRUST_SCORE)
         if (before > User.MIN_TRUST_SCORE && after == User.MIN_TRUST_SCORE) {
             eventRepository.save(
                 TrustScoreEvent(
@@ -217,6 +230,26 @@ class TrustScoreService(
                 ),
             )
         }
+    }
+
+    private fun publishChanged(
+        userId: Long,
+        eventType: TrustScoreEventType,
+        delta: Int,
+        before: Int,
+        after: Int,
+    ) {
+        eventPublisher.publishEvent(
+            TrustScoreChangedEvent(
+                userId = userId,
+                eventType = eventType,
+                delta = delta,
+                beforeScore = before,
+                afterScore = after,
+                beforeGrade = TrustGrade.fromScore(before),
+                afterGrade = TrustGrade.fromScore(after),
+            ),
+        )
     }
 
     companion object {
