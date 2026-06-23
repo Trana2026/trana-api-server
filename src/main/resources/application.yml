@@ -74,6 +74,10 @@ trana:
         completed: UI_4037
         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+        emtitle-new-contract: "안전 거래 계약 서명 요청"
+        emtitle-receiver-signed: "최종 서명 요청"
+        emtitle-revision-requested: "안전 거래 계약 수정 요청"
+        emtitle-completed: "안전 거래 계약 최종 완료"
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}
