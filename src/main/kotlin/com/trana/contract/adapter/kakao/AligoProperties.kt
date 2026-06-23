@@ -41,5 +41,13 @@ data class AligoProperties(
         val disputeReported: String,
         /** UI_???? — 취소 요청 접수 시 피요청자에게 (A'-8 등록 신청 후 templateId 반영). */
         val cancellationRequested: String,
+        /** UI_4032 강조 타이틀 (강조 표기형 템플릿 필수). */
+        val emtitleNewContract: String,
+        /** UI_4033 강조 타이틀. */
+        val emtitleReceiverSigned: String,
+        /** UI_4034 강조 타이틀. */
+        val emtitleRevisionRequested: String,
+        /** UI_4037 강조 타이틀. */
+        val emtitleCompleted: String,
     )
 }

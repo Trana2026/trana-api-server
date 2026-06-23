@@ -77,10 +77,22 @@ trana:
       base-url: https://test.trana.app
   alimtalk:
     aligo:
-      api-key: test-aligo-api-key
-      user-id: test-aligo-user
-      sender-key: test-aligo-sender-key
-      sender: 0212345678
+      api-key: test-key
+      user-id: test-id
+      sender-key: test-sender-key
+      sender: "01012345678"
+      test-mode: true
+      tpl-code:
+        new-contract: UI_4032
+        receiver-signed: UI_4033
+        revision-requested: UI_4034
+        completed: UI_4037
+        dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
+        cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+        emtitle-new-contract: "안전 거래 계약 서명 요청"
+        emtitle-receiver-signed: "최종 서명 요청"
+        emtitle-revision-requested: "안전 거래 계약 수정 요청"
+        emtitle-completed: "안전 거래 계약 최종 완료"
   fcm:
     service-account-base64: ""
   slack:

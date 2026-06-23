@@ -61,12 +61,12 @@ class LiveAligoAlimtalkClient(
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
-            ※ 계약 내용을 꼼꼼히 확인하신 후 서명해 주시기 바랍니다.
             """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.newContract)
+                add("emtitle_1", aligoProperties.tplCode.emtitleNewContract)
                 add("receiver_1", normalizePhone(message.receiverPhone))
                 add("subject_1", "안전 거래 계약 서명 요청")
                 add("message_1", body)
@@ -90,6 +90,7 @@ class LiveAligoAlimtalkClient(
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.receiverSigned)
+                add("emtitle_1", aligoProperties.tplCode.emtitleReceiverSigned)
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "최종 서명 요청")
                 add("message_1", body)
@@ -114,6 +115,7 @@ class LiveAligoAlimtalkClient(
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.revisionRequested)
+                add("emtitle_1", aligoProperties.tplCode.emtitleRevisionRequested)
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "안전 거래 계약 수정 요청")
                 add("message_1", body)
@@ -140,6 +142,7 @@ class LiveAligoAlimtalkClient(
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.completed)
+                add("emtitle_1", aligoProperties.tplCode.emtitleCompleted)
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "안전 거래 계약 최종 완료")
                 add("message_1", body)
