@@ -4,6 +4,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Component
 @Profile("local", "dev", "prod")
@@ -12,6 +14,10 @@ class LiveSlackWebhookClient(
 ) : SlackWebhookClient {
     private val log = LoggerFactory.getLogger(LiveSlackWebhookClient::class.java)
     private val restClient = RestClient.create(properties.webhookUrl)
+    private val createdAtFormatter: DateTimeFormatter =
+        DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(ZoneId.of("Asia/Seoul"))
 
     override fun sendInquiry(payload: SlackInquiryPayload) {
         val body =
@@ -34,7 +40,10 @@ class LiveSlackWebhookClient(
                                     mapOf("type" to "mrkdwn", "text" to "*문의 ID*\n`${payload.publicCode}`"),
                                     mapOf("type" to "mrkdwn", "text" to "*회신 이메일*\n${payload.email}"),
                                     mapOf("type" to "mrkdwn", "text" to "*제목*\n${payload.title}"),
-                                    mapOf("type" to "mrkdwn", "text" to "*작성 시각*\n${payload.createdAt}"),
+                                    mapOf(
+                                        "type" to "mrkdwn",
+                                        "text" to "*작성 시각*\n${createdAtFormatter.format(payload.createdAt)}",
+                                    ),
                                 ),
                         ),
                         mapOf("type" to "divider"),
