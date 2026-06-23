@@ -5,6 +5,7 @@ import com.trana.trustscore.entity.TrustScoreEvent
 import com.trana.trustscore.entity.TrustScoreEventType
 import com.trana.trustscore.repository.TrustScoreEventRepository
 import com.trana.user.UserException
+import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -128,8 +129,100 @@ class TrustScoreService(
         )
     }
 
+    /**
+     * 사기 확인 판정 — 신고자 +5.
+     *
+     * - 동일 (user, eventType, dispute) 멱등 차단
+     * - 신고자 점수 +5 + fraudReportFiledCount ++
+     */
+    @Transactional
+    fun applyFraudReportFiledConfirmed(
+        reporterUserId: Long,
+        disputeId: Long,
+    ) {
+        if (eventRepository.existsByUserIdAndEventTypeAndDisputeId(
+                reporterUserId,
+                TrustScoreEventType.FRAUD_REPORT_FILED_CONFIRMED,
+                disputeId,
+            )
+        ) {
+            return
+        }
+        val user =
+            userRepository.findById(reporterUserId).orElseThrow {
+                UserException.NotFound(reporterUserId.toString())
+            }
+        val (before, after) = user.applyTrustScoreDelta(FRAUD_REPORT_FILED_DELTA)
+        user.incrementFraudReportFiledCount()
+        eventRepository.save(
+            TrustScoreEvent(
+                userId = reporterUserId,
+                eventType = TrustScoreEventType.FRAUD_REPORT_FILED_CONFIRMED,
+                delta = FRAUD_REPORT_FILED_DELTA,
+                beforeScore = before,
+                afterScore = after,
+                disputeId = disputeId,
+                reason = "신고 사기 확인 (신고자 적립)",
+            ),
+        )
+    }
+
+    /**
+     * 사기 확인 판정 — 신고 대상 -15. 0점 floor 도달 시 MIN_FLOOR audit event 추가.
+     *
+     * - 동일 (user, eventType, dispute) 멱등 차단
+     * - 신고 대상 점수 -15 (0점 floor) + fraudReportReceivedCount ++
+     * - before > 0 + after == 0 시 MIN_FLOOR audit event 추가 (사용자 알림 trigger 용, Phase 4)
+     */
+    @Transactional
+    fun applyFraudReportReceivedConfirmed(
+        reportedUserId: Long,
+        disputeId: Long,
+    ) {
+        if (eventRepository.existsByUserIdAndEventTypeAndDisputeId(
+                reportedUserId,
+                TrustScoreEventType.FRAUD_REPORT_RECEIVED_CONFIRMED,
+                disputeId,
+            )
+        ) {
+            return
+        }
+        val user =
+            userRepository.findById(reportedUserId).orElseThrow {
+                UserException.NotFound(reportedUserId.toString())
+            }
+        val (before, after) = user.applyTrustScoreDelta(FRAUD_REPORT_RECEIVED_DELTA)
+        user.incrementFraudReportReceivedCount()
+        eventRepository.save(
+            TrustScoreEvent(
+                userId = reportedUserId,
+                eventType = TrustScoreEventType.FRAUD_REPORT_RECEIVED_CONFIRMED,
+                delta = FRAUD_REPORT_RECEIVED_DELTA,
+                beforeScore = before,
+                afterScore = after,
+                disputeId = disputeId,
+                reason = "신고 사기 확인 (신고 대상 차감)",
+            ),
+        )
+        if (before > User.MIN_TRUST_SCORE && after == User.MIN_TRUST_SCORE) {
+            eventRepository.save(
+                TrustScoreEvent(
+                    userId = reportedUserId,
+                    eventType = TrustScoreEventType.MIN_FLOOR,
+                    delta = 0,
+                    beforeScore = User.MIN_TRUST_SCORE,
+                    afterScore = User.MIN_TRUST_SCORE,
+                    disputeId = disputeId,
+                    reason = "최솟값 도달",
+                ),
+            )
+        }
+    }
+
     companion object {
         private const val BOTH_SIGNED_DELTA = 2
         private const val WARRANTY_PROVIDED_DELTA = 3
+        private const val FRAUD_REPORT_FILED_DELTA = 5
+        private const val FRAUD_REPORT_RECEIVED_DELTA = -15
     }
 }

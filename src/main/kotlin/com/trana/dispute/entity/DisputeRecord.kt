@@ -52,6 +52,23 @@ class DisputeRecord(
     var cancelledAt: Instant? = null
         protected set
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resolution", nullable = false, length = 32)
+    var resolution: DisputeResolution = DisputeResolution.PENDING
+        protected set
+
+    @Column(name = "resolved_at")
+    var resolvedAt: Instant? = null
+        protected set
+
+    @Column(name = "resolved_by_admin_user_id")
+    var resolvedByAdminUserId: Long? = null
+        protected set
+
+    @Column(name = "resolution_reason", columnDefinition = "text")
+    var resolutionReason: String? = null
+        protected set
+
     /**
      * 신고자 본인이 신고 취소.
      * REPORTED 상태에서만 가능. 취소 후 같은 계약에 재신고 가능 (partial UNIQUE 가 활성만 막음).
@@ -62,6 +79,48 @@ class DisputeRecord(
         }
         this.status = DisputeStatus.CANCELLED_BY_REPORTER
         this.cancelledAt = Instant.now()
+    }
+
+    /**
+     * 운영팀 사기 확인 판정.
+     * - REPORTED + PENDING 일 때만 가능. 재판정 X.
+     * - 신고자 +5 / 신고 대상 -15 점수 트리거 (TrustScoreDisputeListener).
+     */
+    fun markFraudConfirmed(
+        adminUserId: Long,
+        reason: String,
+    ) {
+        check(status == DisputeStatus.REPORTED) {
+            "사기 판정은 REPORTED 상태에서만 가능 (current=$status)"
+        }
+        check(resolution == DisputeResolution.PENDING) {
+            "이미 판정된 신고 (current=$resolution)"
+        }
+        this.resolution = DisputeResolution.FRAUD_CONFIRMED
+        this.resolvedAt = Instant.now()
+        this.resolvedByAdminUserId = adminUserId
+        this.resolutionReason = reason
+    }
+
+    /**
+     * 운영팀 "사기 아님" 판정.
+     * - REPORTED + PENDING 일 때만 가능. 재판정 X.
+     * - 점수 변동 없음 (명세).
+     */
+    fun markFraudDismissed(
+        adminUserId: Long,
+        reason: String,
+    ) {
+        check(status == DisputeStatus.REPORTED) {
+            "사기 판정은 REPORTED 상태에서만 가능 (current=$status)"
+        }
+        check(resolution == DisputeResolution.PENDING) {
+            "이미 판정된 신고 (current=$resolution)"
+        }
+        this.resolution = DisputeResolution.FRAUD_DISMISSED
+        this.resolvedAt = Instant.now()
+        this.resolvedByAdminUserId = adminUserId
+        this.resolutionReason = reason
     }
 
     companion object {
@@ -76,4 +135,15 @@ enum class DisputeStatus {
 
     /** 신고자 본인이 취소. */
     CANCELLED_BY_REPORTER,
+}
+
+enum class DisputeResolution {
+    /** 미판정 (default — 운영팀 검토 대기). */
+    PENDING,
+
+    /** 운영팀 검토 결과 사기 확인 — 신고자 +5, 신고 대상 -15. */
+    FRAUD_CONFIRMED,
+
+    /** 운영팀 검토 결과 사기 아님 — 점수 변동 없음. */
+    FRAUD_DISMISSED,
 }

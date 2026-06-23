@@ -17,4 +17,17 @@ interface TrustScoreEventRepository : JpaRepository<TrustScoreEvent, Long> {
         eventType: TrustScoreEventType,
         contractId: Long,
     ): Boolean
+
+    /**
+     * 동일 (user, eventType, dispute) 이벤트 중복 차단.
+     *
+     * 사용:
+     * - FRAUD_REPORT_FILED_CONFIRMED : 한 신고 사기 확인 시 신고자 1회만 +5
+     * - FRAUD_REPORT_RECEIVED_CONFIRMED : 한 신고 사기 확인 시 신고 대상 1회만 -15
+     */
+    fun existsByUserIdAndEventTypeAndDisputeId(
+        userId: Long,
+        eventType: TrustScoreEventType,
+        disputeId: Long,
+    ): Boolean
 }

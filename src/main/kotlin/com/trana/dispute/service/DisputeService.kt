@@ -6,6 +6,7 @@ import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DisputeState
+import com.trana.contract.repository.ContractRepository
 import com.trana.contract.service.ContractAccessGuard
 import com.trana.contract.service.CounterpartyResolver
 import com.trana.dispute.DisputeException
@@ -14,6 +15,7 @@ import com.trana.dispute.entity.DisputeStatus
 import com.trana.dispute.repository.DisputeRecordRepository
 import com.trana.user.repository.UserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -34,6 +36,8 @@ class DisputeService(
     private val userRepository: UserRepository,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
+    private val contractRepository: ContractRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     /**
      * 신고 접수.
@@ -113,6 +117,55 @@ class DisputeService(
     ): List<DisputeRecord> {
         val contract = accessGuard.loadAccessible(publicCode, userId)
         return disputeRecordRepository.findByContractIdOrderByReportedAtDesc(contract.id!!)
+    }
+
+    /**
+     * 운영팀 사기 판정 — `markFraudConfirmed` 또는 `markFraudDismissed` + 이벤트 발행.
+     *
+     * @param disputeId 판정 대상 신고 ID
+     * @param fraud true = 사기 확인 (FRAUD_CONFIRMED, 신고자 +5 / 신고 대상 -15) / false = 사기 아님 (FRAUD_DISMISSED, 점수 변동 X)
+     * @param adminUserId 판정 운영자 ID (W7 RBAC 도입 전까지 dev endpoint = 임의 user)
+     * @param reason 판정 사유 (자유 텍스트, audit 영구 보존)
+     *
+     * 호출:
+     * - 임시 dev endpoint (W7 RBAC 전까지) — POST /v1/dev/disputes/{id}/resolve?fraud=...
+     * - W7+ admin endpoint 로 교체
+     */
+    fun resolve(
+        disputeId: Long,
+        fraud: Boolean,
+        adminUserId: Long,
+        reason: String,
+    ) {
+        val dispute =
+            disputeRecordRepository.findById(disputeId).orElseThrow {
+                DisputeException.NotFound(disputeId)
+            }
+        val contract =
+            contractRepository.findById(dispute.contractId).orElseThrow {
+                IllegalStateException("계약 조회 실패 (contractId=${dispute.contractId})")
+            }
+        val reportedUserId =
+            counterpartyResolver.resolveCounterpartUserId(contract, dispute.reporterUserId)
+                ?: error("신고 대상 user 미상 (disputeId=$disputeId, reporterUserId=${dispute.reporterUserId})")
+
+        if (fraud) {
+            dispute.markFraudConfirmed(adminUserId, reason)
+        } else {
+            dispute.markFraudDismissed(adminUserId, reason)
+        }
+
+        eventPublisher.publishEvent(
+            DisputeResolvedEvent(
+                disputeId = dispute.id!!,
+                contractId = contract.id!!,
+                reporterUserId = dispute.reporterUserId,
+                reportedUserId = reportedUserId,
+                resolution = dispute.resolution,
+                resolvedByAdminUserId = adminUserId,
+                resolvedAt = dispute.resolvedAt!!,
+            ),
+        )
     }
 
     private fun restoreContractIfNoActiveReport(
