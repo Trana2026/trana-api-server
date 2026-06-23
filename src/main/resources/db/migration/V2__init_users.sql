@@ -8,20 +8,30 @@
 -- =========================================
 CREATE TABLE users
 (
-    id                   BIGSERIAL PRIMARY KEY,
-    public_code          VARCHAR(20) NOT NULL UNIQUE,
-    email                VARCHAR(255) UNIQUE,
-    age_group            VARCHAR(10),
-    status               VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    name                 VARCHAR(255),
-    birth_date           VARCHAR(50),
-    gender               VARCHAR(10),
-    phone                VARCHAR(255),
-    guardian_verified_at TIMESTAMPTZ,
-    push_enabled         BOOLEAN     NOT NULL DEFAULT TRUE,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-    withdrawn_at         TIMESTAMPTZ
+    id                          BIGSERIAL PRIMARY KEY,
+    public_code                 VARCHAR(20) NOT NULL UNIQUE,
+    email                       VARCHAR(255) UNIQUE,
+    age_group                   VARCHAR(10),
+    status                      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    name                        VARCHAR(255),
+    birth_date                  VARCHAR(50),
+    gender                      VARCHAR(10),
+    phone                       VARCHAR(255),
+    guardian_verified_at        TIMESTAMPTZ,
+    push_enabled                BOOLEAN     NOT NULL DEFAULT TRUE,
+    trust_score                 INT         NOT NULL DEFAULT 35
+        CHECK (trust_score BETWEEN 0 AND 100),
+    completed_contract_count    INT         NOT NULL DEFAULT 0
+        CHECK (completed_contract_count >= 0),
+    warranty_provided_count     INT         NOT NULL DEFAULT 0
+        CHECK (warranty_provided_count >= 0),
+    fraud_report_filed_count    INT         NOT NULL DEFAULT 0
+        CHECK (fraud_report_filed_count >= 0),
+    fraud_report_received_count INT         NOT NULL DEFAULT 0
+        CHECK (fraud_report_received_count >= 0),
+    created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    withdrawn_at                TIMESTAMPTZ
 );
 
 CREATE INDEX idx_users_public_code ON users (public_code);
@@ -36,6 +46,11 @@ COMMENT ON COLUMN users.gender IS 'MALE | FEMALE | OTHER';
 COMMENT ON COLUMN users.phone IS 'Verify 단계 사용자 입력 (성인) 또는 NULL (미성년자)';
 COMMENT ON COLUMN users.guardian_verified_at IS '보호자 인증 완료 시각 (MINOR만). NULL이면 미인증';
 COMMENT ON COLUMN users.push_enabled IS 'FCM 알림 수신 여부';
+COMMENT ON COLUMN users.trust_score IS '신뢰 점수 (0~100). 신규 가입 default 35. SOT = trust_score_events';
+COMMENT ON COLUMN users.completed_contract_count IS '양측 서명 완료 (SIGNED) 계약 누적 (캐시, 마이페이지 통계)';
+COMMENT ON COLUMN users.warranty_provided_count IS '판매자 보증 제공 + SIGNED 누적 (캐시, 마이페이지 통계)';
+COMMENT ON COLUMN users.fraud_report_filed_count IS '본인이 신고한 건 중 사기 확인 누적';
+COMMENT ON COLUMN users.fraud_report_received_count IS '본인이 신고 당한 건 중 사기 확인 누적 (마이페이지 통계의 "분쟁 여부")';
 COMMENT ON COLUMN users.withdrawn_at IS '탈퇴 시각. NULL이면 활성';
 
 -- =========================================

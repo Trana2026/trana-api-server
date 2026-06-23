@@ -48,6 +48,26 @@ class User(
     @Column(name = "push_enabled", nullable = false)
     var pushEnabled: Boolean = true,
 ) {
+    @Column(name = "trust_score", nullable = false)
+    var trustScore: Int = INITIAL_TRUST_SCORE
+        protected set
+
+    @Column(name = "completed_contract_count", nullable = false)
+    var completedContractCount: Int = 0
+        protected set
+
+    @Column(name = "warranty_provided_count", nullable = false)
+    var warrantyProvidedCount: Int = 0
+        protected set
+
+    @Column(name = "fraud_report_filed_count", nullable = false)
+    var fraudReportFiledCount: Int = 0
+        protected set
+
+    @Column(name = "fraud_report_received_count", nullable = false)
+    var fraudReportReceivedCount: Int = 0
+        protected set
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
@@ -90,9 +110,43 @@ class User(
         this.pushEnabled = enabled
     }
 
+    /**
+     * 신뢰 점수 변동. 0~100 clamp.
+     * @return Pair(before, after) — 호출자가 trust_score_events 에 기록
+     */
+    fun applyTrustScoreDelta(delta: Int): Pair<Int, Int> {
+        val before = this.trustScore
+        val after = (before + delta).coerceIn(MIN_TRUST_SCORE, MAX_TRUST_SCORE)
+        this.trustScore = after
+        return before to after
+    }
+
+    fun incrementCompletedContractCount() {
+        this.completedContractCount++
+    }
+
+    fun incrementWarrantyProvidedCount() {
+        this.warrantyProvidedCount++
+    }
+
+    fun incrementFraudReportFiledCount() {
+        this.fraudReportFiledCount++
+    }
+
+    fun incrementFraudReportReceivedCount() {
+        this.fraudReportReceivedCount++
+    }
+
+    /** 점수 → 등급 계산 (SOT = trustScore, 등급은 derived). */
+    val trustGrade: TrustGrade
+        get() = TrustGrade.fromScore(trustScore)
+
     companion object {
         private const val NICKNAME_MIN_LENGTH = 2
         private const val NICKNAME_MAX_LENGTH = 20
+        const val INITIAL_TRUST_SCORE = 35
+        const val MIN_TRUST_SCORE = 0
+        const val MAX_TRUST_SCORE = 100
     }
 }
 
@@ -101,3 +155,29 @@ enum class UserStatus { ACTIVE, WITHDRAWN }
 enum class AgeGroup { ADULT, MINOR }
 
 enum class Gender { MALE, FEMALE, OTHER }
+
+/**
+ * 신뢰 점수 등급 (점수 → 등급 derived).
+ *
+ * - NEWBIE   (0~34)   : 기본 수수료
+ * - NORMAL   (35~54)  : 기본 수수료 (가입 default)
+ * - TRUST    (55~74)  : 면제 티켓 월 1회
+ * - EXCELLENT(75~89)  : 면제 티켓 월 3회
+ * - BEST     (90~100) : 건당 수수료 할인 + 무제한 면제 티켓 (row 발급 X)
+ */
+enum class TrustGrade(
+    val minScore: Int,
+    val maxScore: Int,
+    val label: String,
+) {
+    NEWBIE(0, 34, "새내기"),
+    NORMAL(35, 54, "일반"),
+    TRUST(55, 74, "신뢰"),
+    EXCELLENT(75, 89, "우수"),
+    BEST(90, 100, "최우수"),
+    ;
+
+    companion object {
+        fun fromScore(score: Int): TrustGrade = entries.first { score in it.minScore..it.maxScore }
+    }
+}
