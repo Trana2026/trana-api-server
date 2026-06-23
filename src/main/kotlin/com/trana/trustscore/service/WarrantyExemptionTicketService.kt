@@ -1,6 +1,7 @@
 package com.trana.trustscore.service
 
 import com.trana.notification.service.NotificationDispatchService
+import com.trana.trustscore.TrustScoreException
 import com.trana.trustscore.entity.IssueReason
 import com.trana.trustscore.entity.TicketStatus
 import com.trana.trustscore.entity.WarrantyExemptionTicket
@@ -129,6 +130,29 @@ class WarrantyExemptionTicketService(
     /** 본인 보유 UNUSED 티켓 수 — 마이페이지 / RiskSignals 응답용. */
     @Transactional(readOnly = true)
     fun countUnusedTickets(userId: Long): Long = ticketRepository.countByUserIdAndStatus(userId, TicketStatus.UNUSED)
+
+    /**
+     * 면제 티켓 1장 사용 (UNUSED → USED). FIFO — 가장 빠른 expires_at 우선.
+     *
+     * 호출:
+     * - (W10+) 결제 endpoint — 계약 생성 수수료 결제 직전 사용자가 "면제 티켓 사용하기" 탭
+     * - 결제 시스템 X — 일단 service 메서드 + dev endpoint 만 (실 결제 통합은 결제 도메인 도입 시)
+     *
+     * @throws TrustScoreException.NoUnusedTicket 보유 UNUSED 티켓이 없음 (명세 E03)
+     */
+    fun useTicket(
+        userId: Long,
+        contractId: Long,
+    ): WarrantyExemptionTicket {
+        val ticket =
+            ticketRepository.findFirstByUserIdAndStatusOrderByExpiresAtAsc(
+                userId,
+                TicketStatus.UNUSED,
+            )
+                ?: throw TrustScoreException.NoUnusedTicket(userId)
+        ticket.markUsed(contractId)
+        return ticket
+    }
 
     private fun issueIfNotAlreadyThisMonth(
         user: User,

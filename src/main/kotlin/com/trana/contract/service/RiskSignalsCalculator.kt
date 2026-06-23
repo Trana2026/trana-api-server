@@ -10,13 +10,18 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 서명 시 위험 신호 계산 (W7 Phase A').
+ * 서명 시 위험 신호 + 거래 상대방 신뢰 정보 계산.
  *
- * - guardianNotConsented: 상대가 미성년 + user.guardianVerifiedAt == null
- * - hasReportHistory: 상대가 다른 계약에서 활성(REPORTED) 신고 받은 적 있음
+ * 위험 신호:
+ * - guardianNotConsented : 상대 미성년 + guardianVerifiedAt == null
+ * - hasReportHistory : 상대가 다른 계약에서 활성 신고 받은 적 있음
+ * - trustScoreZero : 상대 trust_score == 0 ("주의 거래자" 배지, 명세 2.5.1)
  *
- * 호출 사이트:
- * - getDetail (계약 상세 응답에 포함) — frontend 가 서명 팝업 경고 + 취소 CTA 활성 결정
+ * 상대방 신뢰 정보 (명세 1.목적 3 — 거래 전 신뢰도 판단):
+ * - counterpartyTrustScore : 0~100 (counterparty 없는 단계면 null)
+ * - counterpartyTrustGrade : NEWBIE/NORMAL/TRUST/EXCELLENT/BEST (counterparty 없으면 null)
+ *
+ * 호출: getDetail (Contract 상세 응답에 포함) — frontend 가 서명 팝업 경고 + 신뢰도 표시.
  */
 @Component
 class RiskSignalsCalculator(
@@ -30,15 +35,18 @@ class RiskSignalsCalculator(
         viewerUserId: Long,
     ): RiskSignalsResponse {
         val counterpartId = counterpartyResolver.resolveCounterpartUserId(contract, viewerUserId)
+        val counterpart: User? = counterpartId?.let { userRepository.findById(it).orElse(null) }
         return RiskSignalsResponse(
-            guardianNotConsented = isCounterpartGuardianNotConsented(counterpartId),
+            guardianNotConsented = isGuardianNotConsented(counterpart),
             hasReportHistory = counterpartId?.let { disputeRecordRepository.existsReportAgainstUser(it) } ?: false,
+            trustScoreZero = counterpart?.trustScore == 0,
+            counterpartyTrustScore = counterpart?.trustScore,
+            counterpartyTrustGrade = counterpart?.trustGrade,
         )
     }
 
-    private fun isCounterpartGuardianNotConsented(counterpartId: Long?): Boolean {
-        val counterpart: User =
-            counterpartId?.let { userRepository.findById(it).orElse(null) } ?: return false
-        return counterpart.ageGroup == AgeGroup.MINOR && counterpart.guardianVerifiedAt == null
-    }
+    private fun isGuardianNotConsented(counterpart: User?): Boolean =
+        counterpart != null &&
+            counterpart.ageGroup == AgeGroup.MINOR &&
+            counterpart.guardianVerifiedAt == null
 }

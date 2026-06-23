@@ -5,6 +5,7 @@ import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.DisputeState
 import com.trana.contract.entity.PartyType
+import com.trana.user.entity.TrustGrade
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotBlank
@@ -91,6 +92,25 @@ data class RiskSignalsResponse(
         example = "false",
     )
     val hasReportHistory: Boolean,
+    @field:Schema(
+        description =
+            "상대방 신뢰 점수가 0점 — \"주의 거래자\" 배지 노출 (명세 2.5.1). " +
+                "counterparty 가 없는 단계 (DRAFT/READY) 면 false",
+        example = "false",
+    )
+    val trustScoreZero: Boolean,
+    @field:Schema(
+        description =
+            "상대방 신뢰 점수 (0~100) — 계약서 화면에 거래 전 신뢰도 표시 (명세 1.목적 3). " +
+                "counterparty 없는 단계면 null",
+        example = "67",
+    )
+    val counterpartyTrustScore: Int?,
+    @field:Schema(
+        description = "상대방 신뢰 등급 (NEWBIE/NORMAL/TRUST/EXCELLENT/BEST). counterparty 없는 단계면 null",
+        example = "TRUST",
+    )
+    val counterpartyTrustGrade: TrustGrade?,
 )
 
 @Schema(description = "계약 단건 응답")

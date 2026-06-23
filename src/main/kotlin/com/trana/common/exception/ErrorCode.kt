@@ -219,4 +219,11 @@ enum class ErrorCode(
         "CONTRACT_CANCELLATION_403_SELF_CONFIRM",
         "취소 요청자 본인은 자기 요청을 확정할 수 없습니다",
     ),
+
+    // === 신뢰 점수 (TRUST_SCORE_*) ===
+    TRUST_SCORE_NO_UNUSED_TICKET(
+        HttpStatus.CONFLICT,
+        "TRUST_SCORE_409_NO_TICKET",
+        "보유한 면제 티켓이 없습니다",
+    ),
 }

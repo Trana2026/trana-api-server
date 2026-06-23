@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -62,4 +63,34 @@ class DevTicketController(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "X-Dev-Token-Key 헤더 검증 실패")
         }
     }
+
+    @Operation(
+        summary = "면제 티켓 1장 사용 (dev only)",
+        description =
+            "결제 시스템 도입 전 임시 — 보유 UNUSED 티켓 1장을 contractId 에 매핑해 USED 처리. " +
+                "보유 티켓 없으면 409 TRUST_SCORE_409_NO_TICKET. " +
+                "W10+ 결제 endpoint 도입 시 이 endpoint 제거.",
+    )
+    @PostMapping("/use")
+    fun use(
+        @RequestHeader(value = "X-Dev-Token-Key", required = false) providedKey: String?,
+        @RequestBody request: DevUseTicketRequest,
+    ): DevUseTicketResponse {
+        verifyKey(providedKey)
+        val ticket = ticketService.useTicket(userId = request.userId, contractId = request.contractId)
+        return DevUseTicketResponse(
+            ticketId = requireNotNull(ticket.id),
+            usedContractId = ticket.usedContractId,
+        )
+    }
 }
+
+data class DevUseTicketRequest(
+    val userId: Long,
+    val contractId: Long,
+)
+
+data class DevUseTicketResponse(
+    val ticketId: Long,
+    val usedContractId: Long?,
+)
