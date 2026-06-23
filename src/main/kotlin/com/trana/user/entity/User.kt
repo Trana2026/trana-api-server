@@ -99,6 +99,17 @@ class User(
         this.email = null
     }
 
+    /**
+     * 사기 확인 사용자 탈퇴 시 추가 PII 마스킹.
+     * 명세 부록 — 원본 개인정보 (이름/전화) 즉시 삭제 + SHA-256 hash 만 영구 보존 (fraud_user_hashes).
+     * [withdraw] 호출 이후 조합 (UserService 가 사기 확인 시 분기).
+     */
+    fun maskFraudPii() {
+        check(status == UserStatus.WITHDRAWN) { "탈퇴 후에만 호출 가능" }
+        this.name = null
+        this.phone = null
+    }
+
     fun markGuardianVerified() {
         check(ageGroup == AgeGroup.MINOR) { "보호자 인증은 미성년자만 가능" }
         check(guardianVerifiedAt == null) { "이미 보호자 인증된 사용자" }

@@ -38,8 +38,10 @@ CREATE INDEX idx_trust_score_events_user_id_created_at
 CREATE INDEX idx_trust_score_events_contract_id
     ON trust_score_events (contract_id) WHERE contract_id IS NOT NULL;
 
+-- WORM trigger — UPDATE 차단 (audit immutability), DELETE 는 cleanup batch 허용
+-- 정책 (명세 부록): 탈퇴 1년 경과 + 사기 X user 의 점수 변동 이력 자동 삭제 (TrustScoreCleanupTask)
 CREATE TRIGGER trg_trust_score_events_worm
-    BEFORE UPDATE OR DELETE
+    BEFORE UPDATE
     ON trust_score_events
     FOR EACH ROW
 EXECUTE FUNCTION worm_protect();
@@ -96,7 +98,7 @@ COMMENT ON COLUMN warranty_exemption_tickets.expiry_notified_at IS '만료 3일 
 CREATE TABLE fraud_user_hashes
 (
     id                            BIGSERIAL PRIMARY KEY,
-    user_id_hash                  CHAR(64)    NOT NULL UNIQUE,
+    user_id_hash                  VARCHAR(64) NOT NULL UNIQUE,
     reporter_id_hashes            JSONB,
     fraud_confirmed_at            TIMESTAMPTZ NOT NULL,
     reason                        TEXT        NOT NULL,

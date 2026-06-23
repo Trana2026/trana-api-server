@@ -4,6 +4,7 @@ import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.auth.oauth.SocialProvider
 import com.trana.common.util.TokenGenerator
+import com.trana.trustscore.service.FraudUserHashService
 import com.trana.user.UserException
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.Gender
@@ -29,6 +30,7 @@ class UserService(
     private val socialAccountRepository: SocialAccountRepository,
     private val tokenGenerator: TokenGenerator,
     private val auditLogger: AuditLogger,
+    private val fraudUserHashService: FraudUserHashService,
 ) {
     /**
      * 소셜 로그인: 기존 매핑이 있으면 ACTIVE user 반환, WITHDRAWN이면 신규 user 생성 (재가입).
@@ -152,7 +154,12 @@ class UserService(
         if (user.status == UserStatus.WITHDRAWN) {
             throw UserException.AlreadyWithdrawn(userId)
         }
+        val isFraudConfirmed = user.fraudReportReceivedCount > 0
         user.withdraw()
+        if (isFraudConfirmed) {
+            fraudUserHashService.handleWithdrawal(user)
+            user.maskFraudPii()
+        }
         auditLogger.log(
             eventType = AuditEvent.USER_WITHDRAWN,
             actorUserId = userId,

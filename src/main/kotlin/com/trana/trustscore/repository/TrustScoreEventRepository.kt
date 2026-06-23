@@ -30,4 +30,10 @@ interface TrustScoreEventRepository : JpaRepository<TrustScoreEvent, Long> {
         eventType: TrustScoreEventType,
         disputeId: Long,
     ): Boolean
+
+    /**
+     * 사용자 IDs 일괄 cleanup — 탈퇴 1년 경과 + 사기 X user 의 점수 변동 이력 삭제.
+     * 호출: TrustScoreCleanupTask (cron daily).
+     */
+    fun deleteAllByUserIdIn(userIds: Collection<Long>)
 }
