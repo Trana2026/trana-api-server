@@ -6,6 +6,7 @@ import com.trana.contract.ContractException
 import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.guardian.entity.GuardianLink
 import com.trana.guardian.entity.LinkPurpose
@@ -13,8 +14,11 @@ import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.entity.VerificationPurpose
 import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdentityVerificationRepository
+import com.trana.user.entity.AgeGroup
+import com.trana.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 /**
  * 미성년자 계약 보호자 동의 흐름.
@@ -47,6 +51,8 @@ class ContractGuardianConsentService(
     private val identityVerificationRepository: IdentityVerificationRepository,
     private val accessGuard: ContractAccessGuard,
     private val auditLogger: AuditLogger,
+    private val contractPartyRepository: ContractPartyRepository,
+    private val userRepository: UserRepository,
 ) {
     fun requestConsent(
         publicCode: String,
@@ -65,8 +71,43 @@ class ContractGuardianConsentService(
         )
     }
 
+    /**
+     * 미성년 receiver(party 멤버) 가 본인 계약 단위 보호자 동의 토큰 발급.
+     * - 호출자: 미성년 receiver (invitation accept 완료 후, 서명 전)
+     * - 권한: party 멤버 (creator 본인 호출은 requestConsent 사용)
+     * - 미성년 user 만 가능 (성인 party 는 차단)
+     * - party.guardianConsentAt 이미 채워져 있으면 409
+     */
     @Suppress("ThrowsCount")
-    fun approveConsent(token: String): Contract {
+    fun requestPartyConsent(
+        publicCode: String,
+        minorUserId: Long,
+    ): GuardianLink {
+        val contract = accessGuard.loadAccessible(publicCode, minorUserId)
+        if (contract.creatorUserId == minorUserId) {
+            throw ContractException.NotAccessible(publicCode, minorUserId)
+        }
+        val party =
+            contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, minorUserId)
+                ?: throw ContractException.NotAccessible(publicCode, minorUserId)
+        val user =
+            userRepository.findById(minorUserId).orElseThrow {
+                IllegalStateException("party user 조회 실패 (userId=$minorUserId)")
+            }
+        if (user.ageGroup != AgeGroup.MINOR) {
+            throw ContractException.InvalidConsentType("성인 party 는 보호자 동의가 불필요합니다")
+        }
+        if (party.guardianConsentAt != null) {
+            throw ContractException.GuardianConsentAlready(publicCode)
+        }
+        return guardianLinkService.createForContract(
+            minorUserId = minorUserId,
+            contractId = contract.id,
+        )
+    }
+
+    @Suppress("ThrowsCount")
+    fun approveConsent(token: String): GuardianConsentApproveResult {
         val link = guardianLinkService.findActive(token)
         if (link.purpose != LinkPurpose.CONTRACT_CONSENT) {
             throw ContractException.InvalidConsentType(
@@ -86,17 +127,32 @@ class ContractGuardianConsentService(
         if (contract.deletedAt != null) {
             throw ContractException.AlreadyDeleted(contract.publicCode)
         }
-        if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
-            throw ContractException.InvalidConsentType(
-                "보호자 동의가 불필요한 계약 (consentType=${contract.consentType})",
-            )
-        }
-        if (contract.guardianConsentAt != null) {
-            throw ContractException.GuardianConsentAlready(contract.publicCode)
-        }
 
         val guardianId = resolveGuardianId(minorUserId = link.userId, publicCode = contract.publicCode)
-        contract.markGuardianConsented(guardianId)
+
+        val (consentedAt, targetType) =
+            if (link.userId == contract.creatorUserId) {
+                if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
+                    throw ContractException.InvalidConsentType(
+                        "보호자 동의가 불필요한 계약 (consentType=${contract.consentType})",
+                    )
+                }
+                if (contract.guardianConsentAt != null) {
+                    throw ContractException.GuardianConsentAlready(contract.publicCode)
+                }
+                contract.markGuardianConsented(guardianId)
+                requireNotNull(contract.guardianConsentAt) to "CREATOR"
+            } else {
+                val party =
+                    contractPartyRepository.findFirstByContractIdAndUserId(contractId, link.userId)
+                        ?: throw ContractException.NotAccessible(contract.publicCode, link.userId)
+                if (party.guardianConsentAt != null) {
+                    throw ContractException.GuardianConsentAlready(contract.publicCode)
+                }
+                party.markGuardianConsented(guardianId)
+                requireNotNull(party.guardianConsentAt) to "PARTY"
+            }
+
         guardianLinkService.markUsed(token)
 
         auditLogger.log(
@@ -109,10 +165,11 @@ class ContractGuardianConsentService(
                     "publicCode" to contract.publicCode,
                     "minorUserId" to link.userId,
                     "tokenPrefix" to token.take(8),
+                    "target" to targetType,
                 ),
         )
 
-        return contract
+        return GuardianConsentApproveResult(contract = contract, consentedAt = consentedAt)
     }
 
     private fun resolveGuardianId(
@@ -131,3 +188,8 @@ class ContractGuardianConsentService(
             )
     }
 }
+
+data class GuardianConsentApproveResult(
+    val contract: Contract,
+    val consentedAt: Instant,
+)

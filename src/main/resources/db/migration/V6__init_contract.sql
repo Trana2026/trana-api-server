@@ -90,14 +90,16 @@ COMMENT ON COLUMN contracts.deleted_at IS 'soft delete (DRAFT 만 허용)';
 -- ============================================================
 CREATE TABLE contract_parties
 (
-    id           BIGSERIAL PRIMARY KEY,
-    contract_id  BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE CASCADE,
-    user_id      BIGINT      NOT NULL,
-    party_type   VARCHAR(20) NOT NULL,
-    validated    BOOLEAN     NOT NULL DEFAULT FALSE,
-    validated_at TIMESTAMPTZ,
-    joined_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-    completed_at TIMESTAMPTZ NULL,
+    id                  BIGSERIAL PRIMARY KEY,
+    contract_id         BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE CASCADE,
+    user_id             BIGINT      NOT NULL,
+    party_type          VARCHAR(20) NOT NULL,
+    validated           BOOLEAN     NOT NULL DEFAULT FALSE,
+    validated_at        TIMESTAMPTZ,
+    guardian_consent_at TIMESTAMPTZ,
+    guardian_user_id    BIGINT,
+    joined_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at        TIMESTAMPTZ NULL,
     UNIQUE (contract_id, party_type)
 );
 
@@ -107,6 +109,8 @@ CREATE INDEX idx_contract_parties_user ON contract_parties (user_id, joined_at D
 COMMENT ON COLUMN contract_parties.party_type IS 'SELLER | BUYER';
 COMMENT ON COLUMN contract_parties.validated IS '본인 확인(KYC SUCCESS + ACTIVE user) 통과 여부';
 COMMENT ON COLUMN contract_parties.completed_at IS '거래 완료 클릭 시점 (양측 각자, W7)';
+COMMENT ON COLUMN contract_parties.guardian_consent_at IS '미성년 party 의 계약 단위 보호자 동의 시점 (가입 단계 보호자 KYC 와 별도 — 계약마다 동의 필요)';
+COMMENT ON COLUMN contract_parties.guardian_user_id IS '동의한 보호자 user ID (가입 단계 보호자 verification 의 guardian_id 매핑, 논리 FK)';
 
 -- ============================================================
 -- contract_attachments

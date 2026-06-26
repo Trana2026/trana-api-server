@@ -6,6 +6,7 @@ import com.trana.contract.dto.ApproveContractGuardianConsentRequest
 import com.trana.contract.dto.ContractGuardianConsentApprovedResponse
 import com.trana.contract.dto.ContractGuardianConsentLinkResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
@@ -94,6 +95,90 @@ interface ContractGuardianConsentApi {
     @PostMapping("/{publicCode}/guardian-consent")
     fun request(
         userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractGuardianConsentLinkResponse
+
+    @Operation(
+        operationId = "contractReceiverGuardianConsentRequest",
+        summary = "보호자 동의 링크 발급 (수신자 미성년 party)",
+        description = """
+미성년 receiver(party 멤버) 가 본인 계약의 보호자 동의 토큰 발급. invitation accept 후 ~ 서명 전 단계에서 호출.
+
+흐름:
+- 수신자(미성년) 가 본 endpoint 호출 → token 발급
+- token URL 을 본인 보호자에게 공유
+- 보호자가 web 에서 token 클릭 → 약관 동의 → `POST /v1/contracts/guardian-consent/approve` (기존 endpoint)
+- approve 시 보호자 신원은 receiver(미성년) 의 가입 단계 보호자 KYC verification 자동 매핑 → `contract_parties.guardian_consent_at` + `guardian_user_id` 채움
+- 이후 수신자가 서명 endpoint 호출 → backend 가 본인 party.guardianConsentAt != null 검증
+
+권한:
+- 본인이 contract_parties 멤버 (creator 본인 호출 시 403 → 기존 `/guardian-consent` endpoint 사용)
+- 본인이 미성년 (성인 party 호출 시 400 InvalidConsentType)
+- party.guardianConsentAt 이미 채워져 있으면 409 GuardianConsentAlready
+                """,
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "링크 발급 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractGuardianConsentLinkResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "issued",
+                                value = ContractExamples.GUARDIAN_CONSENT_LINK_CREATED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "성인 party 가 호출 (보호자 동의 불요)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "invalidConsentType",
+                                value = ContractExamples.GUARDIAN_CONSENT_INVALID_CONSENT_TYPE,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "party 멤버 아님 또는 creator 본인 호출",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notAccessible", value = ContractExamples.NOT_ACCESSIBLE),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "이미 동의됨",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "already", value = ContractExamples.GUARDIAN_CONSENT_ALREADY),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/receiver-guardian-consent")
+    fun requestReceiverConsent(
+        @Parameter(hidden = true) userId: Long,
         @PathVariable publicCode: String,
     ): ContractGuardianConsentLinkResponse
 

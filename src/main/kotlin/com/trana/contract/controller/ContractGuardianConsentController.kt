@@ -31,8 +31,19 @@ class ContractGuardianConsentController(
     override fun approve(
         @RequestBody request: ApproveContractGuardianConsentRequest,
     ): ContractGuardianConsentApprovedResponse {
-        val contract = service.approveConsent(token = request.token)
-        return contract.toApprovedResponse()
+        val result = service.approveConsent(token = request.token)
+        return ContractGuardianConsentApprovedResponse(
+            publicCode = result.contract.publicCode,
+            guardianConsentAt = result.consentedAt,
+        )
+    }
+
+    override fun requestReceiverConsent(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractGuardianConsentLinkResponse {
+        val link = service.requestPartyConsent(publicCode = publicCode, minorUserId = userId)
+        return link.toLinkResponse(webUrlBuilder)
     }
 }
 
