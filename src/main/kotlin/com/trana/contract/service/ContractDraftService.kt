@@ -152,7 +152,7 @@ class ContractDraftService(
         creatorRole: PartyType? = null,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
-        accessGuard.ensureEditable(contract)
+        accessGuard.ensureUpdatable(contract)
 
         if (creatorRole != null) {
             val existing = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)

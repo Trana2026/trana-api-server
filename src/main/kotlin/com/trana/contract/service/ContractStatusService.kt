@@ -185,6 +185,29 @@ class ContractStatusService(
         return contract
     }
 
+    /**
+     * 생성자가 REVISION_REQUESTED 단계에서 본문 수정 완료 → SHARED 직접 전이 (DRAFT 경유 X).
+     * - PATCH `/v1/contracts/{publicCode}` 로 본문 수정 후 호출
+     * - PDF v1' 재생성 + S3 덮어쓰기 (S3 Versioning 으로 옛 v1 보존) + version += 1
+     * - 새 invitation token 발급 + 기존 1번 템플릿 (sendNewContract) 재사용 — 수신자에게 "다시 확인" 알림톡
+     * - 수신자는 새 token URL 클릭 → acceptInvitation (idempotent, 이미 party 면 그대로)
+     * 트랜잭션 분리 (transitionToReady 동일 패턴).
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun reshare(
+        publicCode: String,
+        userId: Long,
+    ): Contract {
+        val preview = committer.loadReshareReadyPreview(publicCode, userId)
+        val pdfBytes = pdfRenderer.render(preview)
+        val pdfSha256 = sha256Hex(pdfBytes)
+        val pdfS3Key = buildPdfS3Key(publicCode)
+        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+        val result = committer.commitReshare(publicCode, userId, pdfS3Key, pdfSha256)
+        contractAlimtalkDispatcher.sendNewContract(result.contract, userId, result.invitation)
+        return result.contract
+    }
+
     @Transactional(readOnly = true)
     fun getLatestRevisionRequest(
         publicCode: String,

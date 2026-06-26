@@ -667,6 +667,39 @@ internal object ContractExamples {
                     }
                 """
 
+    // ───── 재공유 (RESHARE) ─────
+
+    const val RESHARE_RESPONSE = """
+                      {
+                        "publicCode": "Vh7sK2x9Pq3R",
+                        "status": "SHARED",
+                        "disputeState": "NONE",
+                        "deliveryType": "DIRECT",
+                        "consentType": "NOT_APPLICABLE",
+                        "title": "에어팟 프로 2세대 (수정됨)",
+                        "price": 150000,
+                        "conditionSummary": "사용감 적음",
+                        "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상. 박스 손상 없음.",
+                        "warrantyPeriodDays": 3,
+                        "guardianConsentAt": null,
+                        "version": 2,
+                        "contentHash": "a2c8d44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "createdAt": "2026-05-20T10:00:00Z",
+                        "updatedAt": "2026-05-28T16:30:00Z"
+                      }
+                  """
+
+    const val NOT_IN_REVISION_REQUESTED_STATE = """
+                    {
+                      "type": "about:blank",
+                      "title": "CONTRACT_409_NOT_REVISION_REQUESTED",
+                      "status": 409,
+                      "detail": "현재 REVISION_REQUESTED 상태가 아닙니다 (publicCode=Vh7sK2x9Pq3R, status=SHARED)",
+                      "code": "CONTRACT_409_NOT_REVISION_REQUESTED",
+                      "timestamp": "2026-05-28T16:30:00Z"
+                    }
+                """
+
     const val INVITATION_NOT_FOUND = """
                   {
                     "type": "about:blank",

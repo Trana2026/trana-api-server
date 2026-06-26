@@ -30,6 +30,7 @@ import java.time.Instant
  * - applyReceiverWarranty → SHARED 단계에서 수신자(SELLER) 보증기간 PATCH (PDF v1' 재생성, W7+)
  * - markRevisionRequested → SHARED → REVISION_REQUESTED (수신자 수정 요청, W6)
  * - markRevertToDraft → READY 또는 REVISION_REQUESTED → DRAFT (PDF 폐기 + 수정 모드, W6)
+ * - markReshared → REVISION_REQUESTED → SHARED 직접 전이 (수정 완료 + PDF v1' 재생성 + 수신자 재 알림톡, W7+)
  * - markReceiverSigned → SHARED → RECEIVER_SIGNED (PDF v2 갱신, 수신자 서명, W6)
  * - markSigned → RECEIVER_SIGNED → SIGNED (PDF v3 양측 박스 채움, 생성자 최종 서명, W6)
  * - markCompleted → SIGNED → COMPLETED 전이 (양측 각자 markCompleted() 후 자동 호출, W7)
@@ -140,8 +141,12 @@ class Contract(
         deliveryType: DeliveryType? = null,
         warrantyPeriodDays: Int? = null,
     ) {
-        check(status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
-            "IN_PROGRESS / DRAFT 상태에서만 수정 가능 (current=$status)"
+        check(
+            status == ContractStatus.IN_PROGRESS ||
+                status == ContractStatus.DRAFT ||
+                status == ContractStatus.REVISION_REQUESTED,
+        ) {
+            "IN_PROGRESS / DRAFT / REVISION_REQUESTED 상태에서만 수정 가능 (current=$status)"
         }
         check(deletedAt == null) { "삭제된 계약은 수정 불가" }
         warrantyPeriodDays?.let {
@@ -154,7 +159,10 @@ class Contract(
         conditionDetails?.let { this.conditionDetails = it }
         tradingPlatform?.let { this.tradingPlatform = it }
         deliveryType?.let { this.deliveryType = it }
-        this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
+        // REVISION_REQUESTED 는 status 유지 (reshare 시 markReshared 가 SHARED 로 전이)
+        if (status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
+            this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
+        }
     }
 
     private fun allRequiredFieldsFilled(): Boolean =
@@ -240,6 +248,36 @@ class Contract(
         check(deletedAt == null) { "삭제된 계약은 변경 불가" }
         check(days >= 0) { "warrantyPeriodDays 는 0 이상 (0=미제공, 양수=제공 일수)" }
         this.warrantyPeriodDays = days
+        this.pdfS3Key = pdfS3Key
+        this.contentHash = pdfSha256
+        this.pdfGeneratedAt = Instant.now()
+        this.version += 1
+    }
+
+    /**
+     * 생성자가 REVISION_REQUESTED 단계에서 본문 수정 완료 → SHARED 로 직접 전이 (DRAFT 경유 X).
+     * - PDF v1' 재생성 (양측에 새 본문 노출) + version += 1
+     * - status REVISION_REQUESTED → SHARED → 수신자에게 알림톡 재발송 (Service 책임)
+     *
+     * 필수 필드 invariant: markReady 와 동일 검증 (title/price/conditionSummary/conditionDetails/tradingPlatform + GUARDIAN_REQUIRED 면 동의 완료).
+     */
+    fun markReshared(
+        pdfS3Key: String,
+        pdfSha256: String,
+    ) {
+        check(status == ContractStatus.REVISION_REQUESTED) {
+            "REVISION_REQUESTED 상태에서만 reshare 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 전이 불가" }
+        check(title != null) { "title 미입력" }
+        check(price != null) { "price 미입력" }
+        check(conditionSummary != null) { "conditionSummary 미입력" }
+        check(conditionDetails != null) { "conditionDetails 미입력" }
+        check(tradingPlatform != null) { "tradingPlatform 미입력" }
+        if (consentType == ConsentType.GUARDIAN_REQUIRED) {
+            check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
+        }
+        this.status = ContractStatus.SHARED
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()

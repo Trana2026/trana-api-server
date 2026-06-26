@@ -90,6 +90,20 @@ class ContractAccessGuard(
         }
     }
 
+    /**
+     * 수정 가능 상태 검증 (IN_PROGRESS / DRAFT / REVISION_REQUESTED) — updateDraft 진입 시.
+     * REVISION_REQUESTED 허용: 수정 후 reshare 흐름 (DRAFT 경유 X).
+     * ensureEditable 는 softDelete 등 다른 흐름용 — IN_PROGRESS/DRAFT 만.
+     */
+    fun ensureUpdatable(contract: Contract) {
+        if (contract.status != ContractStatus.IN_PROGRESS &&
+            contract.status != ContractStatus.DRAFT &&
+            contract.status != ContractStatus.REVISION_REQUESTED
+        ) {
+            throw ContractException.NotDraft(contract.publicCode, contract.status.name)
+        }
+    }
+
     /** READY 전이 가능 검증 (markReady / previewPdf 공통) */
     fun validateReadyEligible(contract: Contract) {
         val missing = mutableListOf<String>()

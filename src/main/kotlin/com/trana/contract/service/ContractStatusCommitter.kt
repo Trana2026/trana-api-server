@@ -1,12 +1,15 @@
 package com.trana.contract.service
 
+import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractConsent
+import com.trana.contract.entity.ContractInvitation
 import com.trana.contract.entity.ContractSignature
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.PartyType
 import com.trana.contract.repository.ContractConsentRepository
+import com.trana.contract.repository.ContractInvitationRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractSignatureRepository
 import com.trana.terms.entity.TermsVersion
@@ -36,6 +39,8 @@ class ContractStatusCommitter(
     private val contractConsentRepository: ContractConsentRepository,
     private val contractSignatureRepository: ContractSignatureRepository,
     private val termsLoader: ContractTermsLoader,
+    private val invitationRepository: ContractInvitationRepository,
+    private val tokenGenerator: TokenGenerator,
 ) {
     /** transitionToReady 의 외부 I/O 진입 전 preview — pre-check + PDF 렌더 input 생성. */
     @Transactional(readOnly = true)
@@ -238,6 +243,59 @@ class ContractStatusCommitter(
 
     @Suppress("ThrowsCount")
     @Transactional(readOnly = true)
+    fun loadReshareReadyPreview(
+        publicCode: String,
+        userId: Long,
+    ): ContractPdfRenderInput {
+        val contract = accessGuard.loadOwned(publicCode, userId)
+        if (contract.status != ContractStatus.REVISION_REQUESTED) {
+            throw ContractException.NotInRevisionRequestedState(publicCode, contract.status.name)
+        }
+        accessGuard.validateReadyEligible(contract)
+        return ContractPdfRenderInput(contract)
+    }
+
+    @Suppress("ThrowsCount")
+    @Transactional
+    fun commitReshare(
+        publicCode: String,
+        userId: Long,
+        pdfS3Key: String,
+        pdfSha256: String,
+    ): ReshareCommitResult {
+        val contract = accessGuard.loadOwned(publicCode, userId)
+        // preview ~ commit 사이 상태 변동 재검증
+        if (contract.status != ContractStatus.REVISION_REQUESTED) {
+            throw ContractException.NotInRevisionRequestedState(publicCode, contract.status.name)
+        }
+        val previousInvitation =
+            invitationRepository.findFirstByContractIdOrderByIdDesc(contract.id!!)
+                ?: error("REVISION_REQUESTED 상태인데 이전 invitation row 가 없음 (contractId=${contract.id})")
+        val newInvitation =
+            invitationRepository.save(
+                ContractInvitation.create(
+                    contractId = contract.id,
+                    token = tokenGenerator.generateContractInvitation(),
+                    receiverName = previousInvitation.receiverName,
+                    receiverPhone = previousInvitation.receiverPhone,
+                ),
+            )
+        val from = contract.status
+        contract.markReshared(pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256)
+        eventPublisher.publishEvent(
+            ContractStatusChangedEvent(
+                contractId = contract.id,
+                fromStatus = from,
+                toStatus = contract.status,
+                actorUserId = userId,
+                reason = "수정 완료 → 재공유",
+            ),
+        )
+        return ReshareCommitResult(contract = contract, invitation = newInvitation)
+    }
+
+    @Suppress("ThrowsCount")
+    @Transactional(readOnly = true)
     fun loadCreatorSignPreview(
         publicCode: String,
         userId: Long,
@@ -431,4 +489,9 @@ data class CreatorSignCommitResult(
     val creator: User,
     val receiver: User,
     val creatorSignedAt: Instant,
+)
+
+data class ReshareCommitResult(
+    val contract: Contract,
+    val invitation: ContractInvitation,
 )

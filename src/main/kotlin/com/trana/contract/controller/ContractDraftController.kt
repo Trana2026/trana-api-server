@@ -155,6 +155,11 @@ class ContractDraftController(
                 days = request.warrantyPeriodDays,
             ).toResponse()
 
+    override fun reshare(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractResponse = statusService.reshare(publicCode, userId).toResponse()
+
     override fun acceptInvitation(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable token: String,
