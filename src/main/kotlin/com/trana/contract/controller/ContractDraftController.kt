@@ -15,6 +15,7 @@ import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
+import com.trana.contract.dto.UpdateReceiverWarrantyRequest
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
@@ -141,6 +142,18 @@ class ContractDraftController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
     ): ContractRevisionRequestResponse = statusService.getLatestRevisionRequest(publicCode, userId).toResponse()
+
+    override fun updateReceiverWarranty(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: UpdateReceiverWarrantyRequest,
+    ): ContractResponse =
+        statusService
+            .updateReceiverWarranty(
+                publicCode = publicCode,
+                userId = userId,
+                days = request.warrantyPeriodDays,
+            ).toResponse()
 
     override fun acceptInvitation(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,

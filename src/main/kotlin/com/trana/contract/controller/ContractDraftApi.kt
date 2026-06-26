@@ -16,6 +16,7 @@ import com.trana.contract.dto.ReceiverSignResponse
 import com.trana.contract.dto.RequestRevisionRequest
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
+import com.trana.contract.dto.UpdateReceiverWarrantyRequest
 import com.trana.contract.entity.ContractStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -614,6 +615,97 @@ deliveryTypeReason / tradingPlatformReason / titleReason / priceReason / conditi
         @Parameter(hidden = true) userId: Long,
         @PathVariable publicCode: String,
     ): ContractRevisionRequestResponse
+
+    @Tag(name = "Contract Invitation", description = "전자계약 수신자 흐름 (token 기반 — accept / 수정요청)")
+    @Operation(
+        operationId = "contractUpdateReceiverWarranty",
+        summary = "수신자(SELLER) 보증기간 변경 — SHARED 단계 즉시 PDF v1' 재생성",
+        description = """
+SHARED 상태 계약에 대해 수신자가 본인 역할 = SELLER 인 경우 보증기간 제공 여부 선택.
+
+흐름:
+- 수신자가 수신 계약 확인 시 보증 체크박스 ON/OFF 선택 → 즉시 PATCH 호출
+- 백엔드가 PDF v1' 재생성 + S3 덮어쓰기 (S3 Versioning 으로 옛 v1 보존)
+- contracts.warranty_period_days + version + content_hash + pdf_generated_at 갱신
+- 양측 (creator + receiver) 가 보는 inline PDF 즉시 새 값 반영
+
+전제:
+- 권한: 본인이 contract_parties 멤버 + partyType = SELLER (creator 가 SELLER 인 경우는 createDraft 단계 일반 PATCH 사용)
+- 계약 status = SHARED (REVISION_REQUESTED / RECEIVER_SIGNED 이상이면 409)
+- warrantyPeriodDays >= 0 (0 = 미제공)
+
+검증 실패:
+- 403 NOT_RECEIVER_SELLER : creator 본인 호출 또는 SELLER 가 아닌 BUYER party 호출
+- 409 NOT_SHARED          : 현재 SHARED 상태 아님
+                  """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "보증기간 변경 + PDF v1' 재생성 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "warrantyUpdated",
+                                value = ContractExamples.WARRANTY_UPDATE_RESPONSE_PROVIDED,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "warrantyPeriodDays 음수",
+                content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "수신자(SELLER) 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "notReceiverSeller",
+                                value = ContractExamples.WARRANTY_NOT_RECEIVER_SELLER,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "계약 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notFound", value = ContractExamples.NOT_FOUND)],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "SHARED 상태 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notShared", value = ContractExamples.NOT_IN_SHARED_STATE),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PatchMapping("/{publicCode}/receiver-warranty")
+    fun updateReceiverWarranty(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+        @RequestBody @Valid request: UpdateReceiverWarrantyRequest,
+    ): ContractResponse
 
     @Tag(name = "Contract Invitation")
     @Operation(

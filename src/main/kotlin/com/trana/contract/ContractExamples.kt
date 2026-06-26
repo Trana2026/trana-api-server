@@ -628,6 +628,45 @@ internal object ContractExamples {
                     }
                 """
 
+    // ───── 수신자 보증기간 (RECEIVER WARRANTY) ─────
+
+    const val WARRANTY_UPDATE_REQUEST_BODY = """
+                    {
+                      "warrantyPeriodDays": 3
+                    }
+                """
+
+    const val WARRANTY_UPDATE_RESPONSE_PROVIDED = """
+                      {
+                        "publicCode": "Vh7sK2x9Pq3R",
+                        "status": "SHARED",
+                        "disputeState": "NONE",
+                        "deliveryType": "DIRECT",
+                        "consentType": "NOT_APPLICABLE",
+                        "title": "에어팟 프로 2세대",
+                        "price": 180000,
+                        "conditionSummary": "사용감 적음",
+                        "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
+                        "warrantyPeriodDays": 3,
+                        "guardianConsentAt": null,
+                        "version": 2,
+                        "contentHash": "f1b9d44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "createdAt": "2026-05-20T10:00:00Z",
+                        "updatedAt": "2026-05-28T16:00:00Z"
+                      }
+                  """
+
+    const val WARRANTY_NOT_RECEIVER_SELLER = """
+                    {
+                      "type": "about:blank",
+                      "title": "CONTRACT_403_NOT_RECEIVER_SELLER",
+                      "status": 403,
+                      "detail": "수신자(SELLER)만 보증기간을 변경할 수 있습니다 (publicCode=Vh7sK2x9Pq3R, userId=42)",
+                      "code": "CONTRACT_403_NOT_RECEIVER_SELLER",
+                      "timestamp": "2026-05-28T16:00:00Z"
+                    }
+                """
+
     const val INVITATION_NOT_FOUND = """
                   {
                     "type": "about:blank",

@@ -150,6 +150,11 @@ enum class ErrorCode(
         "CONTRACT_403_NOT_RECEIVER",
         "수신자만 호출할 수 있는 endpoint 입니다",
     ),
+    CONTRACT_NOT_RECEIVER_SELLER(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_NOT_RECEIVER_SELLER",
+        "수신자(SELLER)만 호출할 수 있는 endpoint 입니다",
+    ),
     CONTRACT_TERMS_MISMATCH(
         HttpStatus.BAD_REQUEST,
         "CONTRACT_400_TERMS",

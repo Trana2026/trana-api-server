@@ -222,6 +222,14 @@ sealed class ContractException(
             "수신자만 서명할 수 있습니다 (publicCode=$publicCode, userId=$userId)",
         )
 
+    class NotReceiverSeller(
+        publicCode: String,
+        userId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_RECEIVER_SELLER,
+            "수신자(SELLER)만 보증기간을 변경할 수 있습니다 (publicCode=$publicCode, userId=$userId)",
+        )
+
     class TermsMismatch(
         expected: String,
         actual: List<Long>,

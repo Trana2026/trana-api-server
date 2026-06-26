@@ -32,7 +32,8 @@ class ContractPdfRenderer(
     fun render(input: ContractPdfRenderInput): ByteArray {
         val contract = input.contract
         val deliveryType = contract.deliveryType
-        val warrantyProvided = contract.warrantyPeriodDays > 0
+        val warrantyDays = input.warrantyDaysOverride ?: contract.warrantyPeriodDays
+        val warrantyProvided = warrantyDays > 0
         val context =
             Context(Locale.KOREA).apply {
                 setVariable("tradingPlatform", contract.tradingPlatform ?: PLACEHOLDER)
@@ -47,7 +48,7 @@ class ContractPdfRenderer(
                 setVariable("directMark", if (deliveryType == DeliveryType.DIRECT) CHECK_MARK else EMPTY_MARK)
                 setVariable("warrantyProvidedMark", if (warrantyProvided) CHECK_MARK else EMPTY_MARK)
                 setVariable("warrantyNotProvidedMark", if (warrantyProvided) EMPTY_MARK else CHECK_MARK)
-                setVariable("warrantyPeriodDays", contract.warrantyPeriodDays)
+                setVariable("warrantyPeriodDays", warrantyDays)
                 setPartyVariables("seller", input.seller)
                 setPartyVariables("buyer", input.buyer)
             }
@@ -113,6 +114,7 @@ data class ContractPdfRenderInput(
     val contract: Contract,
     val seller: PartyRenderInfo? = null,
     val buyer: PartyRenderInfo? = null,
+    val warrantyDaysOverride: Int? = null,
 )
 
 data class PartyRenderInfo(

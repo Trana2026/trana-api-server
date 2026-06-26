@@ -117,6 +117,24 @@ class ContractStatusService(
         return contract
     }
 
+    /**
+     * 수신자(SELLER) 가 SHARED 단계에서 보증기간 변경 — PDF v1' 즉시 재생성 (양측 일치).
+     * 트랜잭션 분리 (transitionToReady 와 동일 패턴) — preview readOnly tx → render/upload (no tx) → commit rw tx.
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun updateReceiverWarranty(
+        publicCode: String,
+        userId: Long,
+        days: Int,
+    ): Contract {
+        val preview = committer.loadReceiverWarrantyPreview(publicCode, userId, days)
+        val pdfBytes = pdfRenderer.render(preview)
+        val pdfSha256 = sha256Hex(pdfBytes)
+        val pdfS3Key = buildPdfS3Key(publicCode)
+        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+        return committer.commitReceiverWarranty(publicCode, userId, days, pdfS3Key, pdfSha256)
+    }
+
     @Suppress("ThrowsCount")
     fun requestRevision(
         publicCode: String,

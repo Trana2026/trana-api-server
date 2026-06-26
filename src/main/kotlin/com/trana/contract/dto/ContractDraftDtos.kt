@@ -391,6 +391,19 @@ data class ContractRevisionRequestResponse(
     val requestedAt: Instant,
 )
 
+@Schema(description = "수신자(SELLER) 보증기간 변경 요청 — SHARED 단계, 즉시 PDF v1' 재생성")
+data class UpdateReceiverWarrantyRequest(
+    @field:PositiveOrZero
+    @field:Schema(
+        description =
+            "보증 기간 (일). **수신자=SELLER 인 경우만 호출 가능**. " +
+                "체크 시 양수 (default 3), 해제 시 0 (미제공). 양측 PDF 즉시 갱신.",
+        example = "3",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
+    val warrantyPeriodDays: Int,
+)
+
 private const val TITLE_MAX_LENGTH = 200
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"

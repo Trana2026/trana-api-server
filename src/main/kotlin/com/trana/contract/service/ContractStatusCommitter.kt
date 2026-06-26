@@ -188,6 +188,56 @@ class ContractStatusCommitter(
 
     @Suppress("ThrowsCount")
     @Transactional(readOnly = true)
+    fun loadReceiverWarrantyPreview(
+        publicCode: String,
+        userId: Long,
+        days: Int,
+    ): ContractPdfRenderInput {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        if (contract.creatorUserId == userId) {
+            throw ContractException.NotReceiverSeller(publicCode, userId)
+        }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(publicCode, contract.status.name)
+        }
+        val party =
+            contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+                ?: throw ContractException.NotReceiverSeller(publicCode, userId)
+        if (party.partyType != PartyType.SELLER) {
+            throw ContractException.NotReceiverSeller(publicCode, userId)
+        }
+        return ContractPdfRenderInput(contract = contract, warrantyDaysOverride = days)
+    }
+
+    @Suppress("ThrowsCount")
+    @Transactional
+    fun commitReceiverWarranty(
+        publicCode: String,
+        userId: Long,
+        days: Int,
+        pdfS3Key: String,
+        pdfSha256: String,
+    ): Contract {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        // preview ~ commit 사이 상태 변동 재검증
+        if (contract.creatorUserId == userId) {
+            throw ContractException.NotReceiverSeller(publicCode, userId)
+        }
+        if (contract.status != ContractStatus.SHARED) {
+            throw ContractException.NotInSharedState(publicCode, contract.status.name)
+        }
+        val party =
+            contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
+                ?: throw ContractException.NotReceiverSeller(publicCode, userId)
+        if (party.partyType != PartyType.SELLER) {
+            throw ContractException.NotReceiverSeller(publicCode, userId)
+        }
+        contract.applyReceiverWarranty(days = days, pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256)
+        return contract
+    }
+
+    @Suppress("ThrowsCount")
+    @Transactional(readOnly = true)
     fun loadCreatorSignPreview(
         publicCode: String,
         userId: Long,

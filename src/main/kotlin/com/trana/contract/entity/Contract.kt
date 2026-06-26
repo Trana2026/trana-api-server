@@ -27,6 +27,7 @@ import java.time.Instant
  *   하나라도 비면 자동 IN_PROGRESS
  * - markReady → DRAFT → READY 전이 (PDF v1 생성, W5)
  * - markShared → READY → SHARED 전이 (수신자에게 알림톡 발송, W6)
+ * - applyReceiverWarranty → SHARED 단계에서 수신자(SELLER) 보증기간 PATCH (PDF v1' 재생성, W7+)
  * - markRevisionRequested → SHARED → REVISION_REQUESTED (수신자 수정 요청, W6)
  * - markRevertToDraft → READY 또는 REVISION_REQUESTED → DRAFT (PDF 폐기 + 수정 모드, W6)
  * - markReceiverSigned → SHARED → RECEIVER_SIGNED (PDF v2 갱신, 수신자 서명, W6)
@@ -218,6 +219,31 @@ class Contract(
         this.pdfS3Key = null
         this.contentHash = null
         this.pdfGeneratedAt = null
+    }
+
+    /**
+     * 수신자(SELLER) 가 SHARED 단계에서 보증기간 제공 여부 결정.
+     * PDF v1 → v1' 재생성 (양측이 보는 PDF 일치 보장) + version += 1.
+     * - days = 0 : 보증 미제공
+     * - days > 0 : 보증 일수 (default 3)
+     *
+     * 권한 검증 (party.partyType == SELLER + party.userId == receiverUserId) 은 Service 책임.
+     */
+    fun applyReceiverWarranty(
+        days: Int,
+        pdfS3Key: String,
+        pdfSha256: String,
+    ) {
+        check(status == ContractStatus.SHARED) {
+            "SHARED 상태에서만 수신자 보증기간 변경 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 변경 불가" }
+        check(days >= 0) { "warrantyPeriodDays 는 0 이상 (0=미제공, 양수=제공 일수)" }
+        this.warrantyPeriodDays = days
+        this.pdfS3Key = pdfS3Key
+        this.contentHash = pdfSha256
+        this.pdfGeneratedAt = Instant.now()
+        this.version += 1
     }
 
     fun markReceiverSigned(
