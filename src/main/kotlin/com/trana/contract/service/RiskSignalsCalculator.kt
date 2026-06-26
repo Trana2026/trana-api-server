@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional
  * 서명 시 위험 신호 + 거래 상대방 신뢰 정보 계산.
  *
  * 위험 신호:
- * - guardianNotConsented : 상대 미성년 + guardianVerifiedAt == null
+ * - guardianNotConsented : 상대 미성년 creator + contract.guardianConsentAt == null
+ *                          (NOT_APPLICABLE 또는 GUARDIAN_REQUIRED 미동의)
  * - hasReportHistory : 상대가 다른 계약에서 활성 신고 받은 적 있음
  * - trustScoreZero : 상대 trust_score == 0 ("주의 거래자" 배지, 명세 2.5.1)
  *
@@ -37,7 +38,7 @@ class RiskSignalsCalculator(
         val counterpartId = counterpartyResolver.resolveCounterpartUserId(contract, viewerUserId)
         val counterpart: User? = counterpartId?.let { userRepository.findById(it).orElse(null) }
         return RiskSignalsResponse(
-            guardianNotConsented = isGuardianNotConsented(counterpart),
+            guardianNotConsented = isGuardianNotConsented(contract, counterpart),
             hasReportHistory = counterpartId?.let { disputeRecordRepository.existsReportAgainstUser(it) } ?: false,
             trustScoreZero = counterpart?.trustScore == 0,
             counterpartyTrustScore = counterpart?.trustScore,
@@ -45,8 +46,18 @@ class RiskSignalsCalculator(
         )
     }
 
-    private fun isGuardianNotConsented(counterpart: User?): Boolean =
+    /**
+     * "상대방이 미성년 creator + 본 계약에서 보호자 동의 안 받음" → true.
+     * 의도: 미성년이 NOT_APPLICABLE 자유 선택한 경우 receiver 화면에 경고 표시.
+     * - viewer 가 creator 면 counterpart 는 receiver → 항상 false (receiver 보호자 동의는 backend 가 서명 시 강제)
+     * - viewer 가 receiver 면 counterpart 는 creator → 미성년 + guardianConsentAt 비어있으면 true
+     */
+    private fun isGuardianNotConsented(
+        contract: Contract,
+        counterpart: User?,
+    ): Boolean =
         counterpart != null &&
+            counterpart.id == contract.creatorUserId &&
             counterpart.ageGroup == AgeGroup.MINOR &&
-            counterpart.guardianVerifiedAt == null
+            contract.guardianConsentAt == null
 }

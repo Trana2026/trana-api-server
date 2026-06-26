@@ -259,7 +259,8 @@ class Contract(
      * - PDF v1' 재생성 (양측에 새 본문 노출) + version += 1
      * - status REVISION_REQUESTED → SHARED → 수신자에게 알림톡 재발송 (Service 책임)
      *
-     * 필수 필드 invariant: markReady 와 동일 검증 (title/price/conditionSummary/conditionDetails/tradingPlatform + GUARDIAN_REQUIRED 면 동의 완료).
+     * 필수 필드 invariant: markReady 와 동일 검증
+     * (title/price/conditionSummary/conditionDetails/tradingPlatform + GUARDIAN_REQUIRED 면 동의 완료).
      */
     fun markReshared(
         pdfS3Key: String,

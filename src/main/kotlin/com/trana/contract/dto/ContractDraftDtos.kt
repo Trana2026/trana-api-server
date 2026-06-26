@@ -83,7 +83,9 @@ data class UpdateContractDraftRequest(
 @Schema(description = "서명 시 위험 신호 (서명 팝업 경고 문구 활성화 기준)")
 data class RiskSignalsResponse(
     @field:Schema(
-        description = "상대방이 미성년 + 법정대리인 인증 미완료 — 경고 문구 노출 (W7)",
+        description =
+            "상대방 미성년 creator + 본 계약에서 보호자 동의 안 받은 상태 — " +
+                "receiver 화면 경고 표시. (creator 측에서 본 receiver 보호자 동의는 backend 가 서명 시 강제)",
         example = "false",
     )
     val guardianNotConsented: Boolean,
