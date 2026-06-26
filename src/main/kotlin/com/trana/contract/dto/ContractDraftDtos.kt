@@ -229,18 +229,32 @@ data class ShareContractRequest(
     val receiverPhone: String,
 )
 
-@Schema(description = "수신자 수정 요청 — 필드별 reason (최소 1개 필수)")
+@Schema(description = "수신자 수정 요청 — 6 필드별 reason (최소 1개 필수, 화면 입력 순서)")
 data class RequestRevisionRequest(
     @field:Size(max = REVISION_REASON_MAX_LENGTH)
     @field:Schema(
-        description = "거래 물품명 수정 이유",
+        description = "거래 방식 (대면/택배) 수정 이유",
+        example = "택배 거래로 변경 부탁드립니다",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val deliveryTypeReason: String? = null,
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "거래 발견 플랫폼 수정 이유",
+        example = "당근마켓이 아니라 번개장터에서 봤어요",
+        maxLength = REVISION_REASON_MAX_LENGTH,
+    )
+    val tradingPlatformReason: String? = null,
+    @field:Size(max = REVISION_REASON_MAX_LENGTH)
+    @field:Schema(
+        description = "물품명 수정 이유",
         example = "상품명을 더 정확히 작성해주세요",
         maxLength = REVISION_REASON_MAX_LENGTH,
     )
     val titleReason: String? = null,
     @field:Size(max = REVISION_REASON_MAX_LENGTH)
     @field:Schema(
-        description = "거래 금액 수정 이유",
+        description = "가격 수정 이유",
         example = "150,000원으로 조정 부탁드립니다",
         maxLength = REVISION_REASON_MAX_LENGTH,
     )
@@ -248,12 +262,14 @@ data class RequestRevisionRequest(
     @field:Size(max = REVISION_REASON_MAX_LENGTH)
     @field:Schema(
         description = "상품 상태 수정 이유",
+        example = "미개봉이 아니라 사용감 있다고 들었어요",
         maxLength = REVISION_REASON_MAX_LENGTH,
     )
     val conditionSummaryReason: String? = null,
     @field:Size(max = REVISION_REASON_MAX_LENGTH)
     @field:Schema(
         description = "상품 상세 설명 수정 이유",
+        example = "박스 손상 여부 추가 부탁드립니다",
         maxLength = REVISION_REASON_MAX_LENGTH,
     )
     val conditionDetailsReason: String? = null,
@@ -261,7 +277,9 @@ data class RequestRevisionRequest(
     @AssertTrue(message = "최소 1개 필드의 reason 은 채워야 합니다")
     @Schema(hidden = true)
     fun isAtLeastOneReasonPresent(): Boolean =
-        !titleReason.isNullOrBlank() ||
+        !deliveryTypeReason.isNullOrBlank() ||
+            !tradingPlatformReason.isNullOrBlank() ||
+            !titleReason.isNullOrBlank() ||
             !priceReason.isNullOrBlank() ||
             !conditionSummaryReason.isNullOrBlank() ||
             !conditionDetailsReason.isNullOrBlank()
@@ -351,6 +369,26 @@ data class ConfirmCompletionResponse(
     val buyerCompletedAt: Instant?,
     @field:Schema(description = "양측 모두 완료된 시각 (UTC), 보증기간 시작 기준점. 한쪽만 완료면 null")
     val completedAt: Instant?,
+)
+
+@Schema(description = "수정 요청 1건의 audit 정보 — 화면 입력 순서 6 필드별 reason. 가장 최근 요청 반환.")
+data class ContractRevisionRequestResponse(
+    @field:Schema(description = "수정 요청한 user ID (수신자)", example = "42")
+    val requesterUserId: Long,
+    @field:Schema(description = "거래 방식 수정 이유 (없으면 null)", example = "택배 거래로 변경 부탁드립니다")
+    val deliveryTypeReason: String?,
+    @field:Schema(description = "플랫폼 수정 이유 (없으면 null)", example = "당근마켓이 아니라 번개장터에서 봤어요")
+    val tradingPlatformReason: String?,
+    @field:Schema(description = "물품명 수정 이유 (없으면 null)", example = "상품명을 더 정확히 작성해주세요")
+    val titleReason: String?,
+    @field:Schema(description = "가격 수정 이유 (없으면 null)", example = "150,000원으로 조정 부탁드립니다")
+    val priceReason: String?,
+    @field:Schema(description = "상품 상태 수정 이유 (없으면 null)", example = "미개봉이 아니라 사용감 있다고 들었어요")
+    val conditionSummaryReason: String?,
+    @field:Schema(description = "상품 상세 설명 수정 이유 (없으면 null)", example = "박스 손상 여부 추가 부탁드립니다")
+    val conditionDetailsReason: String?,
+    @field:Schema(description = "요청 시각 (UTC)")
+    val requestedAt: Instant,
 )
 
 private const val TITLE_MAX_LENGTH = 200

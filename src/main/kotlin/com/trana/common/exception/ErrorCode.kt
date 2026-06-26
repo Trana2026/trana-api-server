@@ -100,6 +100,11 @@ enum class ErrorCode(
         "CONTRACT_404_AI_EXTRACTION",
         "AI 추출 결과를 찾을 수 없습니다",
     ),
+    CONTRACT_REVISION_REQUEST_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CONTRACT_404_REVISION_REQUEST",
+        "수정 요청 이력이 없습니다",
+    ),
     CONTRACT_INVITATION_NOT_FOUND(
         HttpStatus.NOT_FOUND,
         "CONTRACT_404_INVITATION",

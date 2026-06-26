@@ -23,6 +23,10 @@ class ContractRevisionRequest(
     val contractId: Long,
     @Column(name = "requester_user_id", nullable = false)
     val requesterUserId: Long,
+    @Column(name = "delivery_type_reason", columnDefinition = "text")
+    val deliveryTypeReason: String? = null,
+    @Column(name = "trading_platform_reason", columnDefinition = "text")
+    val tradingPlatformReason: String? = null,
     @Column(name = "title_reason", columnDefinition = "text")
     val titleReason: String? = null,
     @Column(name = "price_reason", columnDefinition = "text")
@@ -42,7 +46,9 @@ class ContractRevisionRequest(
 
     init {
         require(
-            titleReason != null ||
+            deliveryTypeReason != null ||
+                tradingPlatformReason != null ||
+                titleReason != null ||
                 priceReason != null ||
                 conditionSummaryReason != null ||
                 conditionDetailsReason != null,
@@ -53,6 +59,8 @@ class ContractRevisionRequest(
         fun create(
             contractId: Long,
             requesterUserId: Long,
+            deliveryTypeReason: String? = null,
+            tradingPlatformReason: String? = null,
             titleReason: String? = null,
             priceReason: String? = null,
             conditionSummaryReason: String? = null,
@@ -61,6 +69,8 @@ class ContractRevisionRequest(
             ContractRevisionRequest(
                 contractId = contractId,
                 requesterUserId = requesterUserId,
+                deliveryTypeReason = deliveryTypeReason,
+                tradingPlatformReason = tradingPlatformReason,
                 titleReason = titleReason,
                 priceReason = priceReason,
                 conditionSummaryReason = conditionSummaryReason,

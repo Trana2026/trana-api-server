@@ -563,11 +563,15 @@ internal object ContractExamples {
     // ───── 수정 요청 (REVISION) ─────
 
     const val REVISION_REQUEST_BODY = """
-                  {
-                    "titleReason": "상품명을 더 정확히 작성해주세요",
-                    "priceReason": "150,000원으로 조정 부탁드립니다"
-                  }
-              """
+                    {
+                      "deliveryTypeReason": "택배 거래로 변경 부탁드립니다",
+                      "tradingPlatformReason": null,
+                      "titleReason": "상품명을 더 정확히 작성해주세요",
+                      "priceReason": "150,000원으로 조정 부탁드립니다",
+                      "conditionSummaryReason": null,
+                      "conditionDetailsReason": null
+                    }
+                """
 
     const val REVISION_REQUESTED_RESPONSE = """
                     {
@@ -599,6 +603,30 @@ internal object ContractExamples {
                     "timestamp": "2026-05-28T15:30:00Z"
                   }
               """
+
+    const val REVISION_LATEST_RESPONSE = """
+                    {
+                      "requesterUserId": 42,
+                      "deliveryTypeReason": "택배 거래로 변경 부탁드립니다",
+                      "tradingPlatformReason": null,
+                      "titleReason": "상품명을 더 정확히 작성해주세요",
+                      "priceReason": null,
+                      "conditionSummaryReason": null,
+                      "conditionDetailsReason": "박스 손상 여부 추가 부탁드립니다",
+                      "requestedAt": "2026-05-28T15:30:00Z"
+                    }
+                """
+
+    const val REVISION_REQUEST_NOT_FOUND = """
+                    {
+                      "type": "about:blank",
+                      "title": "CONTRACT_404_REVISION_REQUEST",
+                      "status": 404,
+                      "detail": "수정 요청 이력이 없습니다 (publicCode=Vh7sK2x9Pq3R)",
+                      "code": "CONTRACT_404_REVISION_REQUEST",
+                      "timestamp": "2026-05-28T15:30:00Z"
+                    }
+                """
 
     const val INVITATION_NOT_FOUND = """
                   {

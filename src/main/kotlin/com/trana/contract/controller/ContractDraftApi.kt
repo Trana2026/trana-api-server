@@ -6,6 +6,7 @@ import com.trana.contract.dto.ConfirmCompletionResponse
 import com.trana.contract.dto.ContractListItem
 import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
+import com.trana.contract.dto.ContractRevisionRequestResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
 import com.trana.contract.dto.CreatorSignRequest
@@ -453,7 +454,8 @@ SHARED 상태 계약에 대해 수신자(accept 한 BUYER party)가 필드별 �
 - invitation accept 가 선행되어야 함 (`POST /v1/contracts/invitations/{token}/accept`) — accept 시점에 BUYER party 등록됨
 - 권한: 본인이 contract_parties 멤버 (수신자 = BUYER) 여야 함. 생성자 본인이 호출하면 403
 - 계약 status 가 SHARED 여야 함 (이미 REVISION_REQUESTED 또는 RECEIVER_SIGNED 면 409)
-- 최소 1개 필드의 reason 필수 (Bean Validation)
+- 최소 1개 필드의 reason 필수 (Bean Validation). 필드 6종 (화면 입력 순서):
+deliveryTypeReason / tradingPlatformReason / titleReason / priceReason / conditionSummaryReason / conditionDetailsReason
 
 효과:
 - contract_revision_requests row INSERT (필드별 reason audit)
@@ -464,7 +466,7 @@ SHARED 상태 계약에 대해 수신자(accept 한 BUYER party)가 필드별 �
 후속:
 - 생성자가 알림 보고 "계약서 수정하기" 누름 → POST /v1/contracts/{publicCode}/revert (REVISION_REQUESTED → DRAFT)
 - 수정 후 markReady → share 재호출 (재 알림톡)
-          """,
+            """,
     )
     @ApiResponses(
         value = [
@@ -545,6 +547,73 @@ SHARED 상태 계약에 대해 수신자(accept 한 BUYER party)가 필드별 �
         @PathVariable publicCode: String,
         @RequestBody @Valid request: RequestRevisionRequest,
     ): ContractResponse
+
+    @Tag(name = "Contract Invitation", description = "전자계약 수신자 흐름 (token 기반 — accept / 수정요청)")
+    @Operation(
+        operationId = "contractGetLatestRevisionRequest",
+        summary = "가장 최근 수정 요청 1건 조회",
+        description = """
+  계약의 가장 최근 수정 요청 (`contract_revision_requests` 최신 row) 1건 조회.
+
+  용도:
+  - 생성자(creator): 수정 모드 진입 시 6 필드 prefill — receiver 가 보낸 reason 화면 표시
+  - 수신자(receiver): 본인이 보낸 수정 요청 검토 / 재요청 시 이전 내용 확인
+
+  권한:
+  - creator 또는 contract_parties 멤버(수신자) 둘 다 조회 가능 — 그 외 403
+  - 계약 상태 제약 X (REVISION_REQUESTED 가 아닌 다른 상태에서도 audit 조회 허용)
+  - 수정 요청 row 가 한 건도 없으면 404
+              """,
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "최신 수정 요청 1건 (화면 입력 순서 6 필드별 reason)",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ContractRevisionRequestResponse::class),
+                        examples = [
+                            ExampleObject(name = "latest", value = ContractExamples.REVISION_LATEST_RESPONSE),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "계약 참여자 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notAccessible", value = ContractExamples.NOT_ACCESSIBLE),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "계약 없음 또는 수정 요청 이력 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notFound", value = ContractExamples.NOT_FOUND),
+                            ExampleObject(
+                                name = "revisionNotFound",
+                                value = ContractExamples.REVISION_REQUEST_NOT_FOUND,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/{publicCode}/revisions/latest")
+    fun getLatestRevision(
+        @Parameter(hidden = true) userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractRevisionRequestResponse
 
     @Tag(name = "Contract Invitation")
     @Operation(

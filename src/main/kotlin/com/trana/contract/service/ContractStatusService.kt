@@ -121,6 +121,8 @@ class ContractStatusService(
     fun requestRevision(
         publicCode: String,
         requesterUserId: Long,
+        deliveryTypeReason: String? = null,
+        tradingPlatformReason: String? = null,
         titleReason: String? = null,
         priceReason: String? = null,
         conditionSummaryReason: String? = null,
@@ -138,6 +140,8 @@ class ContractStatusService(
             ContractRevisionRequest.create(
                 contractId = contract.id!!,
                 requesterUserId = requesterUserId,
+                deliveryTypeReason = deliveryTypeReason,
+                tradingPlatformReason = tradingPlatformReason,
                 titleReason = titleReason,
                 priceReason = priceReason,
                 conditionSummaryReason = conditionSummaryReason,
@@ -152,6 +156,8 @@ class ContractStatusService(
         contractAlimtalkDispatcher.sendRevisionRequested(
             contract,
             requesterUserId,
+            deliveryTypeReason,
+            tradingPlatformReason,
             titleReason,
             priceReason,
             conditionSummaryReason,
@@ -159,6 +165,18 @@ class ContractStatusService(
         )
 
         return contract
+    }
+
+    @Transactional(readOnly = true)
+    fun getLatestRevisionRequest(
+        publicCode: String,
+        userId: Long,
+    ): ContractRevisionRequest {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        return revisionRequestRepository
+            .findAllByContractIdOrderByRequestedAtDesc(contract.id!!)
+            .firstOrNull()
+            ?: throw ContractException.RevisionRequestNotFound(publicCode)
     }
 
     private fun toPartyRenderInfo(

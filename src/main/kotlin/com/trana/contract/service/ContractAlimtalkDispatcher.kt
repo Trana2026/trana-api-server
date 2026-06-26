@@ -101,6 +101,8 @@ class ContractAlimtalkDispatcher(
     fun sendRevisionRequested(
         contract: Contract,
         requesterUserId: Long,
+        deliveryTypeReason: String?,
+        tradingPlatformReason: String?,
         titleReason: String?,
         priceReason: String?,
         conditionSummaryReason: String?,
@@ -119,7 +121,14 @@ class ContractAlimtalkDispatcher(
         val requesterName = requester.name ?: "Trana 사용자"
         val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
         val revisionReason =
-            buildRevisionReason(titleReason, priceReason, conditionSummaryReason, conditionDetailsReason)
+            buildRevisionReason(
+                deliveryTypeReason,
+                tradingPlatformReason,
+                titleReason,
+                priceReason,
+                conditionSummaryReason,
+                conditionDetailsReason,
+            )
         kakaoAlimtalkClient.sendRevisionRequested(
             RevisionRequestedMessage(
                 creatorPhone = creatorPhone,
@@ -134,15 +143,19 @@ class ContractAlimtalkDispatcher(
     }
 
     private fun buildRevisionReason(
+        deliveryTypeReason: String?,
+        tradingPlatformReason: String?,
         titleReason: String?,
         priceReason: String?,
         conditionSummaryReason: String?,
         conditionDetailsReason: String?,
     ): String =
         buildList {
-            titleReason?.let { add("제목: $it") }
+            deliveryTypeReason?.let { add("거래 방식: $it") }
+            tradingPlatformReason?.let { add("플랫폼: $it") }
+            titleReason?.let { add("물품명: $it") }
             priceReason?.let { add("가격: $it") }
-            conditionSummaryReason?.let { add("조건 요약: $it") }
-            conditionDetailsReason?.let { add("조건 상세: $it") }
+            conditionSummaryReason?.let { add("상태: $it") }
+            conditionDetailsReason?.let { add("상세설명: $it") }
         }.joinToString("\n").ifBlank { "(사유 없음)" }
 }

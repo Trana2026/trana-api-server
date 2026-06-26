@@ -313,6 +313,8 @@ CREATE TABLE contract_revision_requests
     id                       BIGSERIAL PRIMARY KEY,
     contract_id              BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE RESTRICT,
     requester_user_id        BIGINT      NOT NULL,
+    delivery_type_reason     TEXT,
+    trading_platform_reason  TEXT,
     title_reason             TEXT,
     price_reason             TEXT,
     condition_summary_reason TEXT,
@@ -321,7 +323,9 @@ CREATE TABLE contract_revision_requests
 
     CONSTRAINT chk_contract_revision_at_least_one_reason
         CHECK (
-            title_reason IS NOT NULL
+            delivery_type_reason IS NOT NULL
+                OR trading_platform_reason IS NOT NULL
+                OR title_reason IS NOT NULL
                 OR price_reason IS NOT NULL
                 OR condition_summary_reason IS NOT NULL
                 OR condition_details_reason IS NOT NULL
@@ -333,6 +337,8 @@ CREATE INDEX idx_contract_revision_requests_contract
 
 COMMENT ON TABLE contract_revision_requests IS '수신자 수정 요청 audit (WORM). 한 계약에 여러 row 가능 (재요청)';
 COMMENT ON COLUMN contract_revision_requests.requester_user_id IS '수정 요청한 수신자 user (논리 FK)';
+COMMENT ON COLUMN contract_revision_requests.delivery_type_reason IS '거래 방식 (대면/택배) 수정 이유';
+COMMENT ON COLUMN contract_revision_requests.trading_platform_reason IS '거래 발견 플랫폼 수정 이유';
 COMMENT ON COLUMN contract_revision_requests.title_reason IS '거래 물품명 수정 이유 (nullable — 해당 필드 수정 안 원하면 NULL)';
 COMMENT ON COLUMN contract_revision_requests.price_reason IS '거래 금액 수정 이유';
 COMMENT ON COLUMN contract_revision_requests.condition_summary_reason IS '상품 상태 수정 이유';

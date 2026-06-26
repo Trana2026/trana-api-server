@@ -4,6 +4,7 @@ import com.trana.contract.dto.ConfirmCompletionResponse
 import com.trana.contract.dto.ContractListItem
 import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
+import com.trana.contract.dto.ContractRevisionRequestResponse
 import com.trana.contract.dto.ContractStatusLogResponse
 import com.trana.contract.dto.CreateContractDraftRequest
 import com.trana.contract.dto.CreatorSignRequest
@@ -15,6 +16,7 @@ import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.dto.ShareContractRequest
 import com.trana.contract.dto.UpdateContractDraftRequest
 import com.trana.contract.entity.Contract
+import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
 import com.trana.contract.service.ContractDraftService
@@ -127,11 +129,18 @@ class ContractDraftController(
             .requestRevision(
                 publicCode = publicCode,
                 requesterUserId = userId,
+                deliveryTypeReason = request.deliveryTypeReason,
+                tradingPlatformReason = request.tradingPlatformReason,
                 titleReason = request.titleReason,
                 priceReason = request.priceReason,
                 conditionSummaryReason = request.conditionSummaryReason,
                 conditionDetailsReason = request.conditionDetailsReason,
             ).toResponse()
+
+    override fun getLatestRevision(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ): ContractRevisionRequestResponse = statusService.getLatestRevisionRequest(publicCode, userId).toResponse()
 
     override fun acceptInvitation(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
@@ -246,6 +255,18 @@ private fun ContractStatusLog.toResponse(): ContractStatusLogResponse =
         actorUserId = actorUserId,
         reason = reason,
         changedAt = requireNotNull(changedAt) { "changedAt 은 @CreationTimestamp 로 채워짐" },
+    )
+
+private fun ContractRevisionRequest.toResponse(): ContractRevisionRequestResponse =
+    ContractRevisionRequestResponse(
+        requesterUserId = requesterUserId,
+        deliveryTypeReason = deliveryTypeReason,
+        tradingPlatformReason = tradingPlatformReason,
+        titleReason = titleReason,
+        priceReason = priceReason,
+        conditionSummaryReason = conditionSummaryReason,
+        conditionDetailsReason = conditionDetailsReason,
+        requestedAt = requireNotNull(requestedAt) { "requestedAt 은 @CreationTimestamp 로 채워짐" },
     )
 
 private fun PdfDownloadView.toResponse(): ContractPdfDownloadResponse =

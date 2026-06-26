@@ -147,6 +147,13 @@ sealed class ContractException(
             "AI 추출 결과를 찾을 수 없습니다 (extractionId=$extractionId)",
         )
 
+    class RevisionRequestNotFound(
+        publicCode: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_REVISION_REQUEST_NOT_FOUND,
+            "수정 요청 이력이 없습니다 (publicCode=$publicCode)",
+        )
+
     class InvitationNotFound(
         token: String,
     ) : ContractException(
