@@ -38,6 +38,7 @@ class FraudUserHashService(
         val hash =
             FraudUserHash(
                 userIdHash = userIdHash,
+                ciHash = user.ciHash,
                 fraudConfirmedAt = Instant.now(),
                 reason = DEFAULT_FRAUD_REASON,
                 reporterIdHashes = null,

@@ -99,6 +99,7 @@ CREATE TABLE fraud_user_hashes
 (
     id                            BIGSERIAL PRIMARY KEY,
     user_id_hash                  VARCHAR(64) NOT NULL UNIQUE,
+    ci_hash                       VARCHAR(64),
     reporter_id_hashes            JSONB,
     fraud_confirmed_at            TIMESTAMPTZ NOT NULL,
     reason                        TEXT        NOT NULL,
@@ -107,6 +108,9 @@ CREATE TABLE fraud_user_hashes
     created_at                    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_fraud_user_hashes_ci_hash
+    ON fraud_user_hashes (ci_hash) WHERE ci_hash IS NOT NULL;
+
 CREATE TRIGGER trg_fraud_user_hashes_worm
     BEFORE UPDATE OR DELETE
     ON fraud_user_hashes
@@ -114,6 +118,7 @@ CREATE TRIGGER trg_fraud_user_hashes_worm
 EXECUTE FUNCTION worm_protect();
 
 COMMENT ON COLUMN fraud_user_hashes.user_id_hash IS 'SHA-256(users.public_code) — 식별자 추적 가능, 원본 복원 불가';
+COMMENT ON COLUMN fraud_user_hashes.ci_hash IS 'PASS ci SHA-256 — 재가입 차단 키. NCP/OAuth user 는 NULL. PASS-9 에서 UNIQUE 강제';
 COMMENT ON COLUMN fraud_user_hashes.reporter_id_hashes IS '신고자들의 user_id_hash 배열 (JSON)';
 COMMENT ON COLUMN fraud_user_hashes.related_contract_public_codes IS '연관 계약 public_code 배열 (JSON, 12자 nanoid)';
 COMMENT ON COLUMN fraud_user_hashes.withdrawn_at IS '탈퇴 시각. NULL = 활성 사용자 (사기 이력만 있음)';

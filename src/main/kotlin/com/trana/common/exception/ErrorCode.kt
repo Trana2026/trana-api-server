@@ -53,6 +53,11 @@ enum class ErrorCode(
     IDENTITY_COMPARE_REJECTED(HttpStatus.UNPROCESSABLE_ENTITY, "IDENTITY_422_COMPARE", "얼굴 일치 확인에 실패했습니다"),
     IDENTITY_VERIFY_REQUIRED(HttpStatus.CONFLICT, "IDENTITY_409_VERIFY_REQUIRED", "신분증 진위확인을 먼저 완료해주세요"),
     IDENTITY_DUPLICATE(HttpStatus.CONFLICT, "IDENTITY_409_DUPLICATE", "이미 본인인증된 사용자입니다"),
+    IDENTITY_FRAUD_BLOCKED(
+        HttpStatus.FORBIDDEN,
+        "IDENTITY_403_FRAUD",
+        "이전에 사기 신고가 확인된 신원입니다. 가입이 제한됩니다.",
+    ),
     IDENTITY_FILE_INVALID(HttpStatus.BAD_REQUEST, "IDENTITY_400_FILE", "신분증 사진 파일이 유효하지 않습니다"),
     IDENTITY_NCP_FAILED(HttpStatus.BAD_GATEWAY, "IDENTITY_502_NCP", "신원확인 외부 서비스 통신에 실패했습니다"),
 

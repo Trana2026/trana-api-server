@@ -19,7 +19,8 @@ import java.time.Instant
  * - withdrawnAt 은 탈퇴 시점 채움 (탈퇴 전 사기 user 도 row 있을 수 있도록 nullable)
  *
  * 보안 (명세 부록):
- * - user_id_hash = SHA-256(users.public_code) — 식별자 추적 가능, 원본 복원 불가
+ * - user_id_hash = SHA-256(users.public_code) — 식별자 추적 (NCP/OAuth 호환)
+ * - ci_hash = SHA-256(PASS ci) — PASS user 의 재가입 차단 + 휴대폰 변경 후에도 동일 신원 (PASS-8)
  * - 원본 PII (이름/전화/주민번호) 는 탈퇴 시 즉시 삭제 + hash 만 영구 보존
  * - B2B API 사기 조회 서비스 (W10+) 의 source
  */
@@ -28,6 +29,8 @@ import java.time.Instant
 class FraudUserHash(
     @Column(name = "user_id_hash", nullable = false, unique = true, length = 64)
     val userIdHash: String,
+    @Column(name = "ci_hash", length = 64)
+    val ciHash: String? = null,
     @Column(name = "fraud_confirmed_at", nullable = false)
     val fraudConfirmedAt: Instant,
     @Column(nullable = false, columnDefinition = "text")

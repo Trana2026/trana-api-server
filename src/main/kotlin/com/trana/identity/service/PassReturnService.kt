@@ -7,6 +7,7 @@ import com.trana.guardian.GuardianProperties
 import com.trana.guardian.entity.Guardian
 import com.trana.guardian.repository.GuardianRepository
 import com.trana.guardian.service.GuardianLinkService
+import com.trana.identity.IdentityException
 import com.trana.identity.adapter.pass.PassCryptoUtil
 import com.trana.identity.adapter.pass.PassMobileOkClient
 import com.trana.identity.adapter.pass.PassProperties
@@ -20,6 +21,7 @@ import com.trana.identity.entity.VerificationStatus
 import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.notification.service.NotificationDispatchService
 import com.trana.terms.service.ConsentService
+import com.trana.trustscore.repository.FraudUserHashRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.Gender
 import com.trana.user.entity.UserStatus
@@ -55,6 +57,7 @@ class PassReturnService(
     private val verificationRepository: IdentityVerificationRepository,
     private val userRepository: UserRepository,
     private val userService: UserService,
+    private val fraudUserHashRepository: FraudUserHashRepository,
     private val consentService: ConsentService,
     private val guardianRepository: GuardianRepository,
     private val guardianLinkService: GuardianLinkService,
@@ -94,6 +97,9 @@ class PassReturnService(
         payload: PassResultPayload,
     ): String {
         val ciHash = sha256Hex(payload.ci)
+        if (fraudUserHashRepository.existsByCiHash(ciHash)) {
+            throw IdentityException.FraudBlocked(ciHash)
+        }
         val birthDate = payload.toBirthDate()
         val gender = payload.toGender()
         val ageGroup = determineAgeGroup(birthDate)
@@ -108,6 +114,17 @@ class PassReturnService(
                     phone = payload.userPhone,
                     ageGroup = ageGroup,
                 )
+
+        // 휴대폰 번호 변경 자동 반영 — 같은 ci 의 기존 user 가 최신 PASS phone 과 다르면 업데이트
+        if (user.phone != payload.userPhone) {
+            log.info(
+                "PASS phone 자동 갱신 userId={} old={} new={}",
+                user.id,
+                user.phone?.let { "${it.take(3)}***${it.takeLast(4)}" },
+                "${payload.userPhone.take(3)}***${payload.userPhone.takeLast(4)}",
+            )
+            user.phone = payload.userPhone
+        }
         val userId = checkNotNull(user.id) { "User id null" }
 
         verification.markPassSuccess(
@@ -146,6 +163,9 @@ class PassReturnService(
         check(minor.guardianVerifiedAt == null) { "이미 보호자 인증 완료된 미성년자" }
 
         val ciHash = sha256Hex(payload.ci)
+        if (fraudUserHashRepository.existsByCiHash(ciHash)) {
+            throw IdentityException.FraudBlocked(ciHash)
+        }
         val birthDate = payload.toBirthDate()
         val gender = payload.toGender()
 

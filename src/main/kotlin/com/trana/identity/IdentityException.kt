@@ -14,6 +14,7 @@ import java.util.UUID
  * - Duplicate: identifier_hash 중복 (이미 가입된 사람의 재가입 시도)
  * - FileInvalid: MIME / 매직바이트 검증 실패
  * - NcpCallFailed: NCP API 통신 자체 실패 (5xx, timeout)
+ * - FraudBlocked: PASS 재가입 차단 — fraud_user_hashes.ci_hash 매칭 (PASS-8)
  */
 sealed class IdentityException(
     errorCode: ErrorCode,
@@ -91,6 +92,13 @@ sealed class IdentityException(
     ) : IdentityException(
             ErrorCode.IDENTITY_DUPLICATE,
             "이미 본인인증된 사용자입니다 (hash=${identifierHash.take(8)}...)",
+        )
+
+    class FraudBlocked(
+        ciHash: String,
+    ) : IdentityException(
+            ErrorCode.IDENTITY_FRAUD_BLOCKED,
+            "사기 신고 확인된 신원으로 가입이 차단됩니다 (ci hash=${ciHash.take(8)}...)",
         )
 
     class FileInvalid(
