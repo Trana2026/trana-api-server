@@ -14,7 +14,17 @@ data class AgreeRequest(
     val termsVersionIds: List<Long>,
     @Schema(description = "동의 컨텍스트", example = "SIGNUP", requiredMode = Schema.RequiredMode.REQUIRED)
     val contextType: ConsentContextType,
-    @Schema(description = "동의 시점 연령대", example = "ADULT", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+        description = """
+동의 시점 연령대 — 자기보고 (PASS 도입 후 audit 가치).
+- PASS 흐름: PASS 결과 birthday 가 user.ageGroup 의 SOT. 본 필드는 약관 동의 시점 임시 자기보고 (덮어씀 X, audit 만)
+- 레거시 (NCP/OAuth) 흐름: 기존대로 자기보고가 user.ageGroup 결정
+- MINOR / ADULT 모두 허용 (이전 MINOR 차단 정책 폐기 — PASS-5)
+- PASS-9 에서 본 필드 제거 예정
+    """,
+        example = "ADULT",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
     val ageGroup: AgeGroup,
     @Schema(
         description = """

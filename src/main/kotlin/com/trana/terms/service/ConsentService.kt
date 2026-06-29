@@ -39,9 +39,6 @@ class ConsentService(
         if (command.guardianLinkToken != null) {
             guardianLinkService.findActive(command.guardianLinkToken) // 만료/사용된 token → GuardianException
         }
-        require(command.ageGroup != AgeGroup.MINOR) {
-            "미성년자 본인 동의는 지원하지 않습니다. 보호자 동의 흐름을 사용하세요"
-        }
         command.termsVersionIds.forEach { termsService.getById(it) }
 
         val signupSessionId = resolveSignupSessionId(command)
