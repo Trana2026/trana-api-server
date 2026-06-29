@@ -52,6 +52,15 @@ trana:
       android-package-name: <Flutter Android package — 예: kr.trana.app>
   dev:
     token-key: local-dev-token-key-change-me
+  identity:
+    pass:
+      # mok_keyInfo.dat 파일을 base64 인코딩한 한 줄
+      #   PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("mok_keyInfo.dat"))
+      #   Git Bash:   base64 -w0 mok_keyInfo.dat
+      key-info-base64: <REPLACE_WITH_BASE64_OF_mok_keyInfo.dat>
+      key-info-password: <REPLACE_WITH_mobileOK_password>
+      mobile-ok-base-url: https://scert.mobile-ok.com
+      return-url: http://localhost:8080/v1/identity/pass/return
   kyc:
     ncp:
       id-card:

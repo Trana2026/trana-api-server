@@ -42,6 +42,12 @@ trana:
         TEST_PRIVATE_KEY_BODY
         -----END PRIVATE KEY-----
       android-package-name: com.trana.test
+  identity:
+    pass:
+      key-info-base64: test-mok-key-info-base64-not-decrypted-in-tests
+      key-info-password: test-mok-password
+      mobile-ok-base-url: https://test.mobile-ok.example.com
+      return-url: http://localhost/v1/identity/pass/return
   kyc:
     ncp:
       id-card:
