@@ -1,19 +1,20 @@
 package com.trana.identity.controller
 
 import com.trana.identity.dto.MOKReqClientInfoResponse
-import com.trana.identity.dto.PassGuardianReqClientInfoRequest
 import com.trana.identity.service.PassGuardianSignupService
-import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.RequestBody
+import jakarta.validation.constraints.NotBlank
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/v1/identity/guardian/pass")
+@Validated
 class PassGuardianIdentityController(
     private val passGuardianSignupService: PassGuardianSignupService,
 ) : PassGuardianIdentityApi {
     override fun requestGuardianClientInfo(
-        @Valid @RequestBody request: PassGuardianReqClientInfoRequest,
-    ): MOKReqClientInfoResponse = passGuardianSignupService.issueReqClientInfo(request.token)
+        @RequestParam("token") @NotBlank token: String,
+    ): MOKReqClientInfoResponse = passGuardianSignupService.issueReqClientInfo(token)
 }

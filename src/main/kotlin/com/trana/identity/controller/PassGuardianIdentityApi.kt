@@ -3,18 +3,18 @@ package com.trana.identity.controller
 import com.trana.common.exception.ProblemDetailResponse
 import com.trana.identity.PassExamples
 import com.trana.identity.dto.MOKReqClientInfoResponse
-import com.trana.identity.dto.PassGuardianReqClientInfoRequest
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.springframework.web.bind.annotation.PostMapping
-import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
-import org.springframework.web.bind.annotation.RequestBody as SpringRequestBody
+import org.springframework.web.bind.annotation.RequestParam
 
 @Tag(name = "Guardian Identity PASS", description = "보호자 PASS (mobileOK V3 표준창) 본인확인 — 미성년 가입 완성")
 interface PassGuardianIdentityApi {
@@ -24,6 +24,10 @@ interface PassGuardianIdentityApi {
         description = """
 trana-web-guardian 에서 호출. 자녀가 발급한 GuardianLink 토큰 (jnanoid 21자) 필수.
 
+V3 표준창 SDK 호출 방식 — `MOBILEOK.process(URL, browserDevice, callback)` 의 첫 인자가 이 endpoint URL.
+SDK 가 해당 URL 에 POST 보내서 응답 body 의 MOKReqClientInfo JSON 을 받아 표준창에 전달.
+따라서 token 은 query param (`?token=...`).
+
 흐름:
 - token 유효성 (TTL 3일, 미사용) + 자녀 user MINOR + guardian_verified_at=null 검증
 - clientTxId 발급 + PENDING IdentityVerification (purpose=GUARDIAN, subjectUserId, guardianLinkToken) INSERT
@@ -32,10 +36,10 @@ trana-web-guardian 에서 호출. 자녀가 발급한 GuardianLink 토큰 (jnano
 → 그 endpoint 가 verification.purpose 분기 → GUARDIAN path 처리 (보호자 매핑 + 자녀 markGuardianVerified + 푸시)
 
 이후 흐름:
-- trana-web-guardian MOBILEOK.process() 호출 → 표준창 팝업
+- trana-web-guardian MOBILEOK.process("https://.../v1/identity/guardian/pass/req-client-info?token=...", "WB", callback) 호출 → 표준창 팝업
 - 보호자 본인 통신사 인증 → 표준창이 returnUrl POST
 - 백엔드 처리 후 trana-web-guardian /pass/result#status=success&minorPublicCode=... 로 redirect
-            """,
+              """,
     )
     @ApiResponses(
         value = [
@@ -77,19 +81,14 @@ trana-web-guardian 에서 호출. 자녀가 발급한 GuardianLink 토큰 (jnano
     )
     @PostMapping("/req-client-info")
     fun requestGuardianClientInfo(
-        @SwaggerRequestBody(
+        @Parameter(
+            name = "token",
+            `in` = ParameterIn.QUERY,
             required = true,
-            content = [
-                Content(
-                    schema = Schema(implementation = PassGuardianReqClientInfoRequest::class),
-                    examples = [
-                        ExampleObject(name = "default", value = PassExamples.GUARDIAN_REQ_CLIENT_INFO_REQUEST),
-                    ],
-                ),
-            ],
+            description = "GuardianLink token (jnanoid 21자)",
+            example = "V1StGXR8_Z5jdHi6B-myT",
         )
-        @SpringRequestBody
-        @Valid
-        request: PassGuardianReqClientInfoRequest,
+        @RequestParam("token")
+        @NotBlank token: String,
     ): MOKReqClientInfoResponse
 }

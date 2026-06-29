@@ -1,10 +1,6 @@
 package com.trana.identity
 
 internal object PassExamples {
-    const val REQ_CLIENT_INFO_REQUEST = """
-              { "signupSessionId": "20a4b2c9-1f3e-4a7d-9c1b-8e5f2a3b4c5d" }
-          """
-
     const val REQ_CLIENT_INFO_SUCCESS = """
               {
                 "serviceId": "7a2d276f-2bd0-4b60-852b-b91da40dd9d3",
@@ -32,10 +28,6 @@ internal object PassExamples {
           302 Found
           Location: https://trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
       """
-
-    const val GUARDIAN_REQ_CLIENT_INFO_REQUEST = """
-              { "token": "V1StGXR8_Z5jdHi6B-myT" }
-          """
 
     const val GUARDIAN_LINK_NOT_FOUND = """
               {
