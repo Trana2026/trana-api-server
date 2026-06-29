@@ -27,7 +27,7 @@ trana:
     audience: trana-app
     secret: <REPLACE_WITH_openssl_rand_base64_32>
     access-token-ttl: PT15M
-    refresh-token-ttl: P30D
+    refresh-token-ttl: P1825D
   crypto:
     password: <REPLACE_WITH_openssl_rand_base64_32>
     salt: <REPLACE_WITH_openssl_rand_hex_16>

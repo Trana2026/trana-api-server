@@ -13,7 +13,7 @@ trana:
     audience: trana-app
     secret: ${TRANA_JWT_SECRET}
     access-token-ttl: PT15M
-    refresh-token-ttl: P30D
+    refresh-token-ttl: P1825D
   crypto:
     password: ${TRANA_CRYPTO_PASSWORD}
     salt: ${TRANA_CRYPTO_SALT}

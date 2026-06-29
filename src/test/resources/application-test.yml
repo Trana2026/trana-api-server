@@ -19,7 +19,7 @@ trana:
     audience: trana-app
     secret: test-secret-do-not-use-in-prod-32bytes-minimum-length-required
     access-token-ttl: PT15M
-    refresh-token-ttl: P30D
+    refresh-token-ttl: P1825D
   crypto:
     password: test-password-do-not-use-in-prod
     salt: deadbeefcafebabe1234567890abcdef

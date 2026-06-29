@@ -14,7 +14,7 @@ class JwtProviderTest {
             audience = "trana-app",
             secret = "test-secret-do-not-use-in-prod-32bytes-minimum-length-required",
             accessTokenTtl = Duration.ofMinutes(15),
-            refreshTokenTtl = Duration.ofDays(30),
+            refreshTokenTtl = Duration.ofDays(1825),
         )
 
     private val provider = JwtProvider(properties)
