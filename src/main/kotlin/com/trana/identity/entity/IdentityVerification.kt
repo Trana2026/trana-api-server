@@ -39,7 +39,7 @@ class IdentityVerification(
     @Column(name = "client_tx_id", length = 40)
     val clientTxId: String? = null,
     @Column(name = "ci_hash", length = 64)
-    val ciHash: String? = null,
+    var ciHash: String? = null,
     @Column(name = "verify_passed", nullable = false)
     var verifyPassed: Boolean = false,
     @Column(name = "user_id")
@@ -132,6 +132,32 @@ class IdentityVerification(
         this.faceSimilarity = similarity
         this.faceMatch = true
         this.guardianId = boundGuardianId
+        this.status = VerificationStatus.SUCCESS
+    }
+
+    /**
+     * PASS 본인확인 SUCCESS — return endpoint 에서 mobileOK 응답 복호화 후 호출.
+     *
+     * - PENDING + SIGNUP 상태에서만 가능 (NCP/Guardian 흐름은 별도 메서드)
+     * - PASS 결과 (name/birthDate/gender/phone) 백필 + ci_hash 저장
+     * - userId 바인딩 + status SUCCESS 전이
+     */
+    fun markPassSuccess(
+        ciHash: String,
+        name: String,
+        birthDate: LocalDate,
+        gender: Gender,
+        phone: String,
+        boundUserId: Long,
+    ) {
+        check(status == VerificationStatus.PENDING) { "PENDING 상태에서만 markPassSuccess 가능" }
+        check(purpose == VerificationPurpose.SIGNUP) { "본인 SIGNUP 만 markPassSuccess 가능" }
+        this.ciHash = ciHash
+        this.name = name
+        this.birthDate = birthDate
+        this.gender = gender
+        this.phone = phone
+        this.userId = boundUserId
         this.status = VerificationStatus.SUCCESS
     }
 

@@ -27,4 +27,9 @@ internal object PassExamples {
                 "timestamp": "2026-06-29T11:00:00.000Z"
               }
           """
+
+    const val RETURN_REDIRECT_DESCRIPTION = """
+          302 Found
+          Location: https://trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
+      """
 }

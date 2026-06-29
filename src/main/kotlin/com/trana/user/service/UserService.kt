@@ -131,6 +131,49 @@ class UserService(
         return newUser
     }
 
+    /**
+     * PASS 본인확인 결과로 신규 user 생성.
+     *
+     * - 호출 시점: PASS return endpoint 에서 ci_hash 매칭 ACTIVE user 없을 때
+     * - ageGroup: birthday 로 자동 결정 (호출자가 판정 후 전달)
+     *   - ADULT: 가입 완료
+     *   - MINOR: user 생성되지만 guardian_verified_at=null → 보호자 PASS 흐름 (PASS-6)
+     */
+    fun createFromPass(
+        ciHash: String,
+        name: String,
+        birthDate: LocalDate,
+        gender: Gender,
+        phone: String,
+        ageGroup: AgeGroup,
+    ): User {
+        val newUser =
+            User(
+                publicCode = tokenGenerator.generatePublicCode(),
+                name = name,
+                birthDate = birthDate.toString(),
+                gender = gender,
+                phone = phone,
+                ageGroup = ageGroup,
+                ciHash = ciHash,
+            )
+        userRepository.save(newUser)
+        val userId = checkNotNull(newUser.id) { "User id should be assigned after save" }
+
+        auditLogger.log(
+            eventType = AuditEvent.USER_CREATED,
+            actorUserId = userId,
+            entityType = ENTITY_USER,
+            entityId = userId,
+            metadata =
+                mapOf(
+                    "source" to "PASS",
+                    "ageGroup" to ageGroup.name,
+                ),
+        )
+        return newUser
+    }
+
     @Transactional(readOnly = true)
     fun getByPublicCode(publicCode: String): User =
         userRepository.findByPublicCode(publicCode)

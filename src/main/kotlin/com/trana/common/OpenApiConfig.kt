@@ -109,6 +109,7 @@ class OpenApiConfig {
                 "/v1/identity/guardian/face-compare",
                 // PASS 표준창
                 "/v1/identity/pass/req-client-info",
+                "/v1/identity/pass/return",
                 // 계약 첨부 (presign → register → delete)
                 "/v1/contracts/{publicCode}/attachments/presign",
                 "/v1/contracts/{publicCode}/attachments",

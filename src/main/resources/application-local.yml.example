@@ -61,6 +61,7 @@ trana:
       key-info-password: <REPLACE_WITH_mobileOK_password>
       mobile-ok-base-url: https://scert.mobile-ok.com
       return-url: http://localhost:8080/v1/identity/pass/return
+      result-redirect-url: http://localhost:3000/auth/pass/result
   kyc:
     ncp:
       id-card:

@@ -160,10 +160,7 @@ class KycGuardianService(
 
         val guardian =
             upsertGuardian(
-                identifierHash =
-                    requireNotNull(verification.identifierHash) {
-                        "Guardian KYC (NCP) row 는 identifierHash 가 반드시 채워져 있어야 함"
-                    },
+                identifierHash = requireNotNull(verification.identifierHash) { "Guardian (NCP) identifierHash 필수" },
                 name = checkNotNull(verification.name) { "verification.name null" },
                 birthDate = checkNotNull(verification.birthDate) { "verification.birthDate null" },
                 gender = checkNotNull(verification.gender) { "verification.gender null" },

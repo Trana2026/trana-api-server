@@ -9,6 +9,15 @@ interface UserRepository : JpaRepository<User, Long> {
     fun findByPublicCode(publicCode: String): User?
 
     /**
+     * PASS 흐름 재가입 확인 — 같은 ci 의 ACTIVE user 가 이미 있으면 재로그인 (신규 생성 X).
+     * WITHDRAWN user 는 별개 — 새 user 발급 가능.
+     */
+    fun findFirstByCiHashAndStatus(
+        ciHash: String,
+        status: UserStatus,
+    ): User?
+
+    /**
      * 신뢰 점수 범위 내 활성 user 일괄 조회.
      * 면제 티켓 매월 발급 batch — 신뢰 등급 (55~74) / 우수 등급 (75~89) 별 호출.
      */

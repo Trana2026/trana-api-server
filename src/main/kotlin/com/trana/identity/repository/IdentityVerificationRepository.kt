@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface IdentityVerificationRepository : JpaRepository<IdentityVerification, Long> {
+    fun findByClientTxId(clientTxId: String): IdentityVerification?
+
     /**
      * 같은 세션의 진행 중 verification 조회 (Verify/Phone/Compare step에서 lookup).
      * SIGNUP 흐름 전용 — userId가 아직 없는 단계에서 signupSessionId로 매칭.

@@ -48,6 +48,7 @@ trana:
       key-info-password: test-mok-password
       mobile-ok-base-url: https://test.mobile-ok.example.com
       return-url: http://localhost/v1/identity/pass/return
+      result-redirect-url: http://localhost/auth/pass/result
   kyc:
     ncp:
       id-card:
