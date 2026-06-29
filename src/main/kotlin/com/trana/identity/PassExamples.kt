@@ -32,4 +32,30 @@ internal object PassExamples {
           302 Found
           Location: https://trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
       """
+
+    const val GUARDIAN_REQ_CLIENT_INFO_REQUEST = """
+              { "token": "V1StGXR8_Z5jdHi6B-myT" }
+          """
+
+    const val GUARDIAN_LINK_NOT_FOUND = """
+              {
+                "type": "about:blank",
+                "title": "Not Found",
+                "status": 404,
+                "code": "GUARDIAN_404_LINK_NOT_FOUND",
+                "detail": "보호자 링크를 찾을 수 없습니다.",
+                "timestamp": "2026-06-29T11:00:00.000Z"
+              }
+          """
+
+    const val GUARDIAN_LINK_INVALID = """
+              {
+                "type": "about:blank",
+                "title": "Gone",
+                "status": 410,
+                "code": "GUARDIAN_410_LINK_INVALID",
+                "detail": "보호자 링크가 만료되었거나 이미 사용되었습니다.",
+                "timestamp": "2026-06-29T11:00:00.000Z"
+              }
+          """
 }

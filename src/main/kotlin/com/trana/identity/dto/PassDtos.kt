@@ -1,6 +1,7 @@
 package com.trana.identity.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import java.util.UUID
 
@@ -37,4 +38,15 @@ data class MOKReqClientInfoResponse(
     val returnUrl: String,
     @Schema(description = "암호화 버전 — 고정 V2")
     val encryptVersion: String,
+)
+
+@Schema(description = "보호자 PASS 표준창 요청 토큰 발급 — 자녀가 발급한 GuardianLink 토큰 필수")
+data class PassGuardianReqClientInfoRequest(
+    @field:NotBlank
+    @Schema(
+        description = "GuardianLink 토큰 (jnanoid 21자) — 자녀의 POST /v1/guardian/links 응답에 포함",
+        example = "V1StGXR8_Z5jdHi6B-myT",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+    )
+    val token: String,
 )

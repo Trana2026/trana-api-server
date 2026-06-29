@@ -25,8 +25,8 @@ import java.time.LocalDate
 @Entity
 @Table(name = "guardians")
 class Guardian(
-    @Column(name = "identifier_hash", nullable = false, unique = true, length = 64)
-    val identifierHash: String,
+    @Column(name = "identifier_hash", unique = true, length = 64)
+    val identifierHash: String? = null,
     @Column(name = "ci_hash", length = 64)
     val ciHash: String? = null,
     @Column(name = "name", nullable = false, length = 100)

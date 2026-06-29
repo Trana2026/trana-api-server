@@ -161,6 +161,31 @@ class IdentityVerification(
         this.status = VerificationStatus.SUCCESS
     }
 
+    /**
+     * PASS 보호자 본인확인 SUCCESS — return endpoint 에서 GUARDIAN purpose 분기 시 호출.
+     *
+     * - PENDING + GUARDIAN 상태에서만 가능
+     * - PASS 결과 백필 + ci_hash 저장 + guardianId 바인딩
+     */
+    fun markPassGuardianSuccess(
+        ciHash: String,
+        name: String,
+        birthDate: LocalDate,
+        gender: Gender,
+        phone: String,
+        boundGuardianId: Long,
+    ) {
+        check(status == VerificationStatus.PENDING) { "PENDING 상태에서만 markPassGuardianSuccess 가능" }
+        check(purpose == VerificationPurpose.GUARDIAN) { "GUARDIAN purpose 만 markPassGuardianSuccess 가능" }
+        this.ciHash = ciHash
+        this.name = name
+        this.birthDate = birthDate
+        this.gender = gender
+        this.phone = phone
+        this.guardianId = boundGuardianId
+        this.status = VerificationStatus.SUCCESS
+    }
+
     fun markCompareFailed(
         similarity: Double?,
         errorCode: String,
@@ -235,6 +260,26 @@ class IdentityVerification(
                 signupSessionId = signupSessionId,
                 clientTxId = clientTxId,
                 purpose = VerificationPurpose.SIGNUP,
+            )
+
+        /**
+         * PASS 보호자 흐름 시작 — req-client-info endpoint (보호자용).
+         *
+         * - purpose = GUARDIAN
+         * - clientTxId 발급, subjectUserId(미성년자) + guardianLinkToken 보관
+         * - NCP 필드 (id_type / identifier_hash / ncp_document_request_id) 모두 NULL
+         * - 인적 정보는 PASS return endpoint 에서 markPassGuardianSuccess 시점 백필
+         */
+        fun startPassGuardian(
+            subjectUserId: Long,
+            guardianLinkToken: String,
+            clientTxId: String,
+        ): IdentityVerification =
+            IdentityVerification(
+                clientTxId = clientTxId,
+                purpose = VerificationPurpose.GUARDIAN,
+                subjectUserId = subjectUserId,
+                guardianLinkToken = guardianLinkToken,
             )
     }
 }

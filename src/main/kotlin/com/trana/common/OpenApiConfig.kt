@@ -67,6 +67,7 @@ class OpenApiConfig {
                 "Identity",
                 "Identity PASS",
                 "Guardian Identity",
+                "Guardian Identity PASS",
                 "Guardian",
                 "User",
                 "User Consent",
@@ -110,6 +111,7 @@ class OpenApiConfig {
                 // PASS 표준창
                 "/v1/identity/pass/req-client-info",
                 "/v1/identity/pass/return",
+                "/v1/identity/guardian/pass/req-client-info",
                 // 계약 첨부 (presign → register → delete)
                 "/v1/contracts/{publicCode}/attachments/presign",
                 "/v1/contracts/{publicCode}/attachments",
