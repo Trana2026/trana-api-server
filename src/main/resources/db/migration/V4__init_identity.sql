@@ -47,6 +47,8 @@ CREATE TABLE identity_verifications
     status                  VARCHAR(20)  NOT NULL,
     ncp_document_request_id VARCHAR(100) NOT NULL,
     identifier_hash         VARCHAR(64)  NOT NULL,
+    client_tx_id            VARCHAR(40),
+    ci_hash                 VARCHAR(64),
     name                    VARCHAR(100),
     birth_date              DATE,
     gender                  VARCHAR(10),
@@ -67,8 +69,13 @@ CREATE TABLE identity_verifications
 CREATE INDEX idx_identity_verifications_user ON identity_verifications (user_id, created_at DESC);
 CREATE INDEX idx_identity_verifications_session ON identity_verifications (signup_session_id);
 CREATE INDEX idx_identity_verifications_hash ON identity_verifications (identifier_hash);
+CREATE INDEX idx_identity_verifications_ci_hash
+    ON identity_verifications (ci_hash) WHERE ci_hash IS NOT NULL;
+CREATE INDEX idx_identity_verifications_client_tx_id
+    ON identity_verifications (client_tx_id) WHERE client_tx_id IS NOT NULL;
 CREATE INDEX idx_identity_verifications_subject ON identity_verifications (subject_user_id, created_at DESC);
 CREATE INDEX idx_identity_verifications_guardian ON identity_verifications (guardian_id, created_at DESC);
+
 
 COMMENT ON TABLE identity_verifications IS 'KYC 시도/결과 영구 기록 (audit + 분쟁 증거)';
 COMMENT ON COLUMN identity_verifications.user_id IS '논리 FK (cascade 사고 방지). SIGNUP은 Compare SUCCESS 시 백필';
@@ -76,9 +83,13 @@ COMMENT ON COLUMN identity_verifications.signup_session_id IS '성인 가입 mul
 COMMENT ON COLUMN identity_verifications.status IS 'PENDING | SUCCESS | FAILED — OCR 시 PENDING 생성';
 COMMENT ON COLUMN identity_verifications.ncp_document_request_id IS 'NCP Document API requestId';
 COMMENT ON COLUMN identity_verifications.identifier_hash IS 'SHA-256 (주민번호/외국인등록번호) — 중복 가입 lookup';
+COMMENT ON COLUMN identity_verifications.ci_hash IS 'PASS 본인확인 ci SHA-256 (Option B: NULL 허용. NCP 시대 row 는 NULL, PASS 시대 row 는 채워짐)';
+COMMENT ON COLUMN identity_verifications.client_tx_id IS 'PASS 표준창 clientTxId (20~40자, 매 요청 고유. PASS-9 에서 UNIQUE 강제)';
 COMMENT ON COLUMN identity_verifications.phone IS 'Verify 단계 사용자 입력. Compare SUCCESS 시 user.phone 백필';
 COMMENT ON COLUMN identity_verifications.failure_step IS 'OCR | VERIFY | COMPARE | NULL(성공)';
 COMMENT ON COLUMN identity_verifications.purpose IS 'SIGNUP(본인) | GUARDIAN(보호자) — Phase 6에서 GUARDIAN 사용';
 COMMENT ON COLUMN identity_verifications.subject_user_id IS 'GUARDIAN 인증 시 보호 대상(미성년자) user_id';
 COMMENT ON COLUMN identity_verifications.guardian_id IS 'GUARDIAN 인증 SUCCESS 시 guardians FK (논리)';
 COMMENT ON COLUMN identity_verifications.guardian_link_token IS 'GUARDIAN 인증 시 사용된 매칭 토큰';
+
+

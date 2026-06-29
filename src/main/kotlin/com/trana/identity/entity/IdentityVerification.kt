@@ -36,6 +36,10 @@ class IdentityVerification(
     val ncpDocumentRequestId: String,
     @Column(name = "identifier_hash", nullable = false, length = 64)
     val identifierHash: String,
+    @Column(name = "client_tx_id", length = 40)
+    val clientTxId: String? = null,
+    @Column(name = "ci_hash", length = 64)
+    val ciHash: String? = null,
     @Column(name = "verify_passed", nullable = false)
     var verifyPassed: Boolean = false,
     @Column(name = "user_id")

@@ -30,6 +30,8 @@ class User(
     val publicCode: String,
     @Column(unique = true, length = 255)
     var email: String? = null,
+    @Column(name = "ci_hash", length = 64)
+    var ciHash: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "age_group", length = 10)
     var ageGroup: AgeGroup? = null,

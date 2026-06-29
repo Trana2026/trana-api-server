@@ -11,6 +11,7 @@ CREATE TABLE users
     id                          BIGSERIAL PRIMARY KEY,
     public_code                 VARCHAR(20) NOT NULL UNIQUE,
     email                       VARCHAR(255) UNIQUE,
+    ci_hash                     VARCHAR(64),
     age_group                   VARCHAR(10),
     status                      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     name                        VARCHAR(255),
@@ -35,9 +36,11 @@ CREATE TABLE users
 );
 
 CREATE INDEX idx_users_public_code ON users (public_code);
+CREATE INDEX idx_users_ci_hash ON users (ci_hash) WHERE ci_hash IS NOT NULL;
 
 COMMENT ON COLUMN users.public_code IS '외부 노출용 식별자 (nanoid 12자, URL-safe)';
 COMMENT ON COLUMN users.email IS '소셜 로그인 시 공급자 제공 (미성년자만, 성인은 null 가능)';
+COMMENT ON COLUMN users.ci_hash IS 'PASS 본인확인 ci SHA-256 (Option B: ADD-only NULL 허용. PASS-9 에서 NOT NULL + UNIQUE 변경 예정)';
 COMMENT ON COLUMN users.age_group IS 'ADULT | MINOR — 가입 흐름에서 결정. NULL = 가입 미완 임시 상태';
 COMMENT ON COLUMN users.status IS 'ACTIVE | WITHDRAWN';
 COMMENT ON COLUMN users.name IS '표시명 — 성인: KYC 실명 / 미성년: 소셜 표시명 (V14 nickname 통합)';

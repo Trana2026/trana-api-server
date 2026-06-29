@@ -27,6 +27,8 @@ import java.time.LocalDate
 class Guardian(
     @Column(name = "identifier_hash", nullable = false, unique = true, length = 64)
     val identifierHash: String,
+    @Column(name = "ci_hash", length = 64)
+    val ciHash: String? = null,
     @Column(name = "name", nullable = false, length = 100)
     val name: String,
     @Column(name = "birth_date", nullable = false)

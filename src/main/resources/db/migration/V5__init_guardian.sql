@@ -12,6 +12,7 @@ CREATE TABLE guardians
 (
     id              BIGSERIAL PRIMARY KEY,
     identifier_hash VARCHAR(64)  NOT NULL,
+    ci_hash         VARCHAR(64),
     name            VARCHAR(100) NOT NULL,
     birth_date      DATE         NOT NULL,
     gender          VARCHAR(10)  NOT NULL,
@@ -20,9 +21,11 @@ CREATE TABLE guardians
 );
 
 CREATE UNIQUE INDEX uq_guardians_identifier_hash ON guardians (identifier_hash);
+CREATE INDEX idx_guardians_ci_hash ON guardians (ci_hash) WHERE ci_hash IS NOT NULL;
 
 COMMENT ON TABLE guardians IS '보호자 마스터 (identifier_hash 기준 upsert)';
 COMMENT ON COLUMN guardians.identifier_hash IS 'SHA-256 (보호자 주민번호/외국인등록번호)';
+COMMENT ON COLUMN guardians.ci_hash IS 'PASS 보호자 본인확인 ci SHA-256 (Option B: NULL 허용. PASS-9 에서 NOT NULL + UNIQUE 변경 예정)';
 
 -- =========================================
 -- guardian_links
