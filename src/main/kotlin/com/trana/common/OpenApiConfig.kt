@@ -65,6 +65,7 @@ class OpenApiConfig {
                 "Auth",
                 "Apple Sign In",
                 "Identity",
+                "Identity PASS",
                 "Guardian Identity",
                 "Guardian",
                 "User",
@@ -106,6 +107,8 @@ class OpenApiConfig {
                 "/v1/identity/guardian/id-card/image",
                 "/v1/identity/guardian/verify-id-card",
                 "/v1/identity/guardian/face-compare",
+                // PASS 표준창
+                "/v1/identity/pass/req-client-info",
                 // 계약 첨부 (presign → register → delete)
                 "/v1/contracts/{publicCode}/attachments/presign",
                 "/v1/contracts/{publicCode}/attachments",
@@ -159,6 +162,7 @@ class OpenApiConfig {
                 "/v1/terms/**",
                 "/v1/guardian/**",
                 "/v1/identity/guardian/**",
+                "/v1/identity/pass/**",
                 "/v1/users/**",
                 "/v1/contracts/**",
             ).addOpenApiCustomizer(sortingCustomizer)

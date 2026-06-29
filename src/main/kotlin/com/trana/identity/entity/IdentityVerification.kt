@@ -30,12 +30,12 @@ import java.util.UUID
 @Table(name = "identity_verifications")
 @Suppress("LongParameterList")
 class IdentityVerification(
-    @Column(name = "id_type", nullable = false, length = 30)
-    val idType: String,
-    @Column(name = "ncp_document_request_id", nullable = false, length = 100)
-    val ncpDocumentRequestId: String,
-    @Column(name = "identifier_hash", nullable = false, length = 64)
-    val identifierHash: String,
+    @Column(name = "id_type", length = 30)
+    val idType: String? = null,
+    @Column(name = "ncp_document_request_id", length = 100)
+    val ncpDocumentRequestId: String? = null,
+    @Column(name = "identifier_hash", length = 64)
+    val identifierHash: String? = null,
     @Column(name = "client_tx_id", length = 40)
     val clientTxId: String? = null,
     @Column(name = "ci_hash", length = 64)
@@ -192,6 +192,23 @@ class IdentityVerification(
                 name = name,
                 birthDate = birthDate,
                 gender = gender,
+            )
+
+        /**
+         * PASS 흐름 시작 — clientTxId 발급 시점 (req-client-info endpoint).
+         *
+         * - NCP 필드 (idType / ncpDocumentRequestId / identifierHash) 모두 null
+         * - 인적 정보 (name / birthDate / gender / phone) 는 PASS return endpoint 에서 markPassSuccess 시점에 백필
+         * - status PENDING 으로 시작
+         */
+        fun startPassSignup(
+            signupSessionId: UUID,
+            clientTxId: String,
+        ): IdentityVerification =
+            IdentityVerification(
+                signupSessionId = signupSessionId,
+                clientTxId = clientTxId,
+                purpose = VerificationPurpose.SIGNUP,
             )
     }
 }

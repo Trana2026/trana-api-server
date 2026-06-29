@@ -66,7 +66,8 @@ class KycGuardianService(
         // 같은 token의 기존 PENDING 세션 즉시 정리 (재진입 케이스 — 보호자 화면 이탈 후 다시 OCR)
         verificationRepository
             .findFirstByGuardianLinkTokenAndStatus(token, VerificationStatus.PENDING)
-            ?.let { purger.purgeByRequestId(it.ncpDocumentRequestId) }
+            ?.ncpDocumentRequestId
+            ?.let { purger.purgeByRequestId(it) }
 
         val ocr = idCardOcrAdapter.recognizeIdCard(image)
         val identifierHash = ocr.result.identifierHashRaw
@@ -159,7 +160,10 @@ class KycGuardianService(
 
         val guardian =
             upsertGuardian(
-                identifierHash = verification.identifierHash,
+                identifierHash =
+                    requireNotNull(verification.identifierHash) {
+                        "Guardian KYC (NCP) row 는 identifierHash 가 반드시 채워져 있어야 함"
+                    },
                 name = checkNotNull(verification.name) { "verification.name null" },
                 birthDate = checkNotNull(verification.birthDate) { "verification.birthDate null" },
                 gender = checkNotNull(verification.gender) { "verification.gender null" },
