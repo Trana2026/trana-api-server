@@ -8,7 +8,7 @@ internal object PassExamples {
                 "serviceType": "telcoAuth",
                 "usageCode": "01005",
                 "retTransferType": "MOKToken",
-                "returnUrl": "https://trana-server-dev.up.railway.app/v1/identity/pass/return",
+                "returnUrl": "https://dev-api.trana.kr/v1/identity/pass/return",
                 "encryptVersion": "V2"
               }
           """
@@ -26,7 +26,7 @@ internal object PassExamples {
 
     const val RETURN_REDIRECT_DESCRIPTION = """
           302 Found
-          Location: https://trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
+          Location: https://dev-kyc.trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
       """
 
     const val GUARDIAN_LINK_NOT_FOUND = """

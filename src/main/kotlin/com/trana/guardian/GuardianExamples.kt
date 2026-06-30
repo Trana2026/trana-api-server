@@ -5,7 +5,7 @@ internal object GuardianExamples {
           {
             "token": "V1StGXR8_Z5jdHi6B-myT",
             "expiresAt": "2026-05-22T12:00:00Z",
-            "verifyUrl": "https://trana-web-guardian.vercel.app/verify/V1StGXR8_Z5jdHi6B-myT?openExternalBrowser=1"
+            "verifyUrl": "https://dev-kyc.trana.kr/verify/V1StGXR8_Z5jdHi6B-myT?openExternalBrowser=1"
           }
       """
 

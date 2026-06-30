@@ -38,8 +38,8 @@ trana:
   identity:
     pass:
       mobile-ok-base-url: https://scert.mobile-ok.com
-      return-url: ${TRANA_PASS_RETURN_URL:https://trana-server-dev.up.railway.app/v1/identity/pass/return}
-      result-redirect-url: ${TRANA_PASS_RESULT_REDIRECT_URL:https://trana-web-dev.vercel.app/auth/pass/result}
+      return-url: ${TRANA_PASS_RETURN_URL:https://dev-api.trana.kr/v1/identity/pass/return}
+      result-redirect-url: ${TRANA_PASS_RESULT_REDIRECT_URL:https://dev-kyc.trana.kr/auth/pass/result}
   kyc:
     ncp:
       id-card:
@@ -75,13 +75,13 @@ trana:
       base-url: ${TRANA_CONTRACT_WEB_BASE_URL:https://trana.app}
   cors:
     allowed-origins:
-      - https://trana-web-guardian.vercel.app
+      - https://dev-kyc.trana.kr
       - http://localhost:3000
       - https://khedivial-instructive-thatcher.ngrok-free.dev
     allowed-origin-patterns:
       - https://trana-web-guardian-*.vercel.app
   guardian:
-    web-base-url: https://trana-web-guardian.vercel.app
+    web-base-url: https://dev-kyc.trana.kr
   alimtalk:
     aligo:
       api-key: ${TRANA_ALIGO_API_KEY}
