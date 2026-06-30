@@ -90,7 +90,6 @@ class PassKeyInfoLoaderTest {
         serviceType = "telcoAuth",
         returnUrl = "http://localhost/test",
         mobileOkBaseUrl = "https://test.mobile-ok.example.com",
-        resultRedirectUrl = "http://localhost/test/result",
     )
 
     /**

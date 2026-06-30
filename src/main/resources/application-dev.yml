@@ -39,7 +39,6 @@ trana:
     pass:
       mobile-ok-base-url: https://scert.mobile-ok.com
       return-url: ${TRANA_PASS_RETURN_URL:https://dev-api.trana.kr/v1/identity/pass/return}
-      result-redirect-url: ${TRANA_PASS_RESULT_REDIRECT_URL:https://dev-kyc.trana.kr/auth/pass/result}
   kyc:
     ncp:
       id-card:

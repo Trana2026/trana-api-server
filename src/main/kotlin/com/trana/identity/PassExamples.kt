@@ -24,10 +24,23 @@ internal object PassExamples {
               }
           """
 
-    const val RETURN_REDIRECT_DESCRIPTION = """
-          302 Found
-          Location: https://dev-kyc.trana.kr/auth/pass/result#accessToken=eyJ...&refreshToken=eyJ...&publicCode=Vh7sK2x9Pq3R&requiresGuardian=false
-      """
+    const val RETURN_SIGNUP_SUCCESS = """
+            {
+              "purpose": "SIGNUP",
+              "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.xxx",
+              "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.yyy",
+              "publicCode": "Vh7sK2x9Pq3R",
+              "requiresGuardian": false
+            }
+        """
+
+    const val RETURN_GUARDIAN_SUCCESS = """
+            {
+              "purpose": "GUARDIAN",
+              "status": "success",
+              "minorPublicCode": "TST-MIN-E03"
+            }
+        """
 
     const val GUARDIAN_LINK_NOT_FOUND = """
               {

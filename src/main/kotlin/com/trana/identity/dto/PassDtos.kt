@@ -40,6 +40,42 @@ data class MOKReqClientInfoResponse(
     val encryptVersion: String,
 )
 
+@Schema(
+    description = """
+  PASS 표준창 검증 결과 — purpose 로 SIGNUP / GUARDIAN 분기.
+
+  V3 표준창 spec: 백엔드가 /v1/identity/pass/return POST 처리 후 JSON body 반환 → 표준창이 MOBILEOK.process 의 callback 함수 인자로 그대로 전달. 프론트는 JSON.parse(payload) 로 받음.
+
+  302 redirect 사용 X — V3 표준창은 returnUrl 응답을 callback payload 로 해석하므로 redirect 를 따라가지 않음.
+      """,
+)
+sealed interface PassReturnResponse {
+    @get:Schema(description = "응답 분기 식별자 — \"SIGNUP\" / \"GUARDIAN\"")
+    val purpose: String
+
+    @Schema(description = "성인/미성년 본인 가입 SUCCESS — JWT 발급 + publicCode")
+    data class Signup(
+        override val purpose: String = "SIGNUP",
+        @Schema(description = "JWT access token (TTL 15분)")
+        val accessToken: String,
+        @Schema(description = "JWT refresh token (TTL 5년, PASS 도입 후 정책)")
+        val refreshToken: String,
+        @Schema(description = "public code (12자 jnanoid) — 사기 조회 / 안내용")
+        val publicCode: String,
+        @Schema(description = "true = 미성년 + 보호자 인증 미완료 → 프론트는 보호자 링크 발급 흐름으로 라우팅")
+        val requiresGuardian: Boolean,
+    ) : PassReturnResponse
+
+    @Schema(description = "보호자 인증 SUCCESS — 자녀 publicCode 안내")
+    data class Guardian(
+        override val purpose: String = "GUARDIAN",
+        @Schema(description = "고정 \"success\" (실패는 ProblemDetail 4xx/5xx 로 별도 응답)")
+        val status: String,
+        @Schema(description = "자녀 publicCode — 보호자 결과 페이지에서 자녀 식별 표시")
+        val minorPublicCode: String,
+    ) : PassReturnResponse
+}
+
 @Schema(description = "보호자 PASS 표준창 요청 토큰 발급 — 자녀가 발급한 GuardianLink 토큰 필수")
 data class PassGuardianReqClientInfoRequest(
     @field:NotBlank

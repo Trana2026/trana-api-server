@@ -20,7 +20,6 @@ data class PassProperties(
     val serviceType: String = "telcoAuth",
     val returnUrl: String,
     val mobileOkBaseUrl: String,
-    val resultRedirectUrl: String,
 ) {
     val resultRequestUrl: String
         get() = "$mobileOkBaseUrl/gui/service/v1/result/request"

@@ -70,7 +70,6 @@ trana:
       key-info-password: ${TRANA_PASS_KEY_INFO_PASSWORD}
       return-url: ${TRANA_PASS_RETURN_URL}
       mobile-ok-base-url: ${TRANA_PASS_MOBILE_OK_BASE_URL}
-      result-redirect-url: ${TRANA_PASS_RESULT_REDIRECT_URL}
   alimtalk:
     aligo:
       tpl-code:

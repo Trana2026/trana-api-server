@@ -1,10 +1,9 @@
 package com.trana.identity.controller
 
 import com.trana.identity.dto.MOKReqClientInfoResponse
+import com.trana.identity.dto.PassReturnResponse
 import com.trana.identity.service.PassReturnService
 import com.trana.identity.service.PassSignupService
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.RequestMapping
@@ -25,11 +24,5 @@ class PassIdentityController(
 
     override fun receiveReturn(
         @RequestParam("data") data: String,
-    ): ResponseEntity<Void> {
-        val redirectUrl = passReturnService.handleReturn(data)
-        return ResponseEntity
-            .status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, redirectUrl)
-            .build()
-    }
+    ): ResponseEntity<PassReturnResponse> = ResponseEntity.ok(passReturnService.handleReturn(data))
 }
