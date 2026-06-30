@@ -5,6 +5,7 @@ import org.springframework.http.client.JdkClientHttpRequestFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
+import tools.jackson.databind.ObjectMapper
 import java.net.http.HttpClient
 import java.time.Duration
 
@@ -18,6 +19,7 @@ import java.time.Duration
 @Component
 class PassMobileOkClient(
     private val properties: PassProperties,
+    private val objectMapper: ObjectMapper,
 ) {
     private val restClient: RestClient =
         RestClient
@@ -39,15 +41,19 @@ class PassMobileOkClient(
      * @throws RestClientResponseException 4xx/5xx
      * @throws RestClientException 네트워크 오류 / timeout
      */
-    fun requestResult(encryptMOKKeyToken: String): MobileOkResultResponse =
-        restClient
-            .post()
-            .uri(properties.resultRequestUrl)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(MobileOkResultRequest(encryptMOKKeyToken))
-            .retrieve()
-            .body<MobileOkResultResponse>()
-            ?: error("mobileOK result/request 응답이 비어 있음")
+    fun requestResult(encryptMOKKeyToken: String): MobileOkResultResponse {
+        val responseBody: String =
+            restClient
+                .post()
+                .uri(properties.resultRequestUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(MobileOkResultRequest(encryptMOKKeyToken))
+                .retrieve()
+                .body<String>()
+                ?: error("mobileOK result/request 응답이 비어 있음")
+
+        return objectMapper.readValue(responseBody, MobileOkResultResponse::class.java)
+    }
 
     private data class MobileOkResultRequest(
         val encryptMOKKeyToken: String,
