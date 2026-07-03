@@ -1,10 +1,9 @@
 package com.trana.identity.adapter.pass
 
+import com.trana.common.util.KstFormatter
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
-import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Base64
 import java.util.UUID
 
@@ -52,7 +51,7 @@ class PassTokenIssuer(
         return Base64.getEncoder().encodeToString(encrypted)
     }
 
-    private fun nowKstTimestamp(): String = ZonedDateTime.now(KST_ZONE).format(TIMESTAMP_FORMATTER)
+    private fun nowKstTimestamp(): String = ZonedDateTime.now(KstFormatter.ZONE).format(KstFormatter.COMPACT)
 
     /**
      * mobileOK 요청 토큰 JSON 페이로드. 직렬화는 ObjectMapper (snake_case 변환 X — 그대로 사용).
@@ -66,8 +65,5 @@ class PassTokenIssuer(
     companion object {
         private const val CLIENT_TX_ID_PREFIX = "TRANA-"
         private const val MOBILE_OK_VERSION = "V2"
-        private val KST_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
-        private val TIMESTAMP_FORMATTER: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
     }
 }

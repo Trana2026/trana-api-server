@@ -1,5 +1,6 @@
 package com.trana.trustscore.service
 
+import com.trana.common.util.KstFormatter
 import com.trana.notification.service.NotificationDispatchService
 import com.trana.trustscore.TrustScoreException
 import com.trana.trustscore.entity.IssueReason
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 /**
@@ -185,12 +185,11 @@ class WarrantyExemptionTicketService(
     }
 
     private fun startOfCurrentMonth(now: Instant): Instant {
-        val today = LocalDate.ofInstant(now, KST)
-        return today.withDayOfMonth(1).atStartOfDay(KST).toInstant()
+        val today = LocalDate.ofInstant(now, KstFormatter.ZONE)
+        return today.withDayOfMonth(1).atStartOfDay(KstFormatter.ZONE).toInstant()
     }
 
     companion object {
-        private val KST: ZoneId = ZoneId.of("Asia/Seoul")
         private const val TICKET_VALIDITY_DAYS = 30L
         private const val EXPIRY_NOTICE_DAYS = 3L
         private const val MONTH_END_OFFSET_DAYS = 31L

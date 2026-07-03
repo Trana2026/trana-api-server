@@ -1,6 +1,7 @@
 package com.trana.contract.adapter.kakao
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.trana.common.util.KstFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.http.MediaType
@@ -13,8 +14,6 @@ import org.springframework.web.client.body
 import tools.jackson.databind.ObjectMapper
 import java.net.http.HttpClient
 import java.time.Duration
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * 알리고 카카오 알림톡 실발송 클라이언트.
@@ -46,11 +45,6 @@ class LiveAligoAlimtalkClient(
             .baseUrl(ALIGO_BASE_URL)
             .requestFactory(buildRequestFactory())
             .build()
-
-    private val completedAtFormatter: DateTimeFormatter =
-        DateTimeFormatter
-            .ofPattern("yyyy-MM-dd HH:mm")
-            .withZone(ZoneId.of("Asia/Seoul"))
 
     override fun sendNewContract(message: NewContractMessage) {
         val body =
@@ -135,7 +129,7 @@ class LiveAligoAlimtalkClient(
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
-            계약 체결 일시: ${completedAtFormatter.format(message.completedAt)}
+            계약 체결 일시: ${KstFormatter.DISPLAY.format(message.completedAt)}
             ※ 안전한 거래를 위해 계약 내용을 준수해 주시기 바랍니다. 감사합니다.
             """.trimIndent()
 
@@ -158,7 +152,7 @@ class LiveAligoAlimtalkClient(
             [Trana] 거래에 대한 신고가 접수되었습니다.
 
             상품명: ${message.contractTitle}
-            접수 일시: ${completedAtFormatter.format(message.reportedAt)}
+            접수 일시: ${KstFormatter.DISPLAY.format(message.reportedAt)}
 
             아래 버튼을 눌러 상세 내용을 확인해 주세요.
             """.trimIndent()
@@ -181,7 +175,7 @@ class LiveAligoAlimtalkClient(
             [Trana] 거래 계약 취소 요청이 도착했습니다.
 
             상품명: ${message.contractTitle}
-            요청 일시: ${completedAtFormatter.format(message.requestedAt)}
+            요청 일시: ${KstFormatter.DISPLAY.format(message.requestedAt)}
 
             아래 버튼을 눌러 취소 내용을 확인해 주세요.
             """.trimIndent()
