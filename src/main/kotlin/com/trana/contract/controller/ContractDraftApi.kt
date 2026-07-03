@@ -559,16 +559,16 @@ deliveryTypeReason / tradingPlatformReason / titleReason / priceReason / conditi
         operationId = "contractGetLatestRevisionRequest",
         summary = "가장 최근 수정 요청 1건 조회",
         description = """
-  계약의 가장 최근 수정 요청 (`contract_revision_requests` 최신 row) 1건 조회.
+계약의 가장 최근 수정 요청 (`contract_revision_requests` 최신 row) 1건 조회.
 
-  용도:
-  - 생성자(creator): 수정 모드 진입 시 6 필드 prefill — receiver 가 보낸 reason 화면 표시
-  - 수신자(receiver): 본인이 보낸 수정 요청 검토 / 재요청 시 이전 내용 확인
+용도:
+- 생성자(creator): 수정 모드 진입 시 6 필드 prefill — receiver 가 보낸 reason 화면 표시
+- 수신자(receiver): 본인이 보낸 수정 요청 검토 / 재요청 시 이전 내용 확인
 
-  권한:
-  - creator 또는 contract_parties 멤버(수신자) 둘 다 조회 가능 — 그 외 403
-  - 계약 상태 제약 X (REVISION_REQUESTED 가 아닌 다른 상태에서도 audit 조회 허용)
-  - 수정 요청 row 가 한 건도 없으면 404
+권한:
+- creator 또는 contract_parties 멤버(수신자) 둘 다 조회 가능 — 그 외 403
+- 계약 상태 제약 X (REVISION_REQUESTED 가 아닌 다른 상태에서도 audit 조회 허용)
+- 수정 요청 row 가 한 건도 없으면 404
               """,
     )
     @ApiResponses(
@@ -914,24 +914,24 @@ SHARED 상태 계약에 수신자가 약관 동의 + 전자서명 → PDF v2 생
         operationId = "contractCreatorSign",
         summary = "생성자 최종 서명 — RECEIVER_SIGNED → SIGNED",
         description = """
-  RECEIVER_SIGNED 상태 계약에 대해 생성자가 PDF v2 검토 후 약관 동의 + 전자서명 → PDF v3 생성 + 양측 알림톡 + status SIGNED 전이.
+RECEIVER_SIGNED 상태 계약에 대해 생성자가 PDF v2 검토 후 약관 동의 + 전자서명 → PDF v3 생성 + 양측 알림톡 + status SIGNED 전이.
 
-  전제:
-  - 권한: contract.creatorUserId == 본인 (수신자 호출 시 403 NotOwner)
-  - 계약 status = RECEIVER_SIGNED (그 외 상태면 409)
-  - backend 강제 검증: 수신자 user 가 ACTIVE + 미성년이면 guardianVerifiedAt!=null
-  - 동의 약관: CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개씩 정확히 2개
+전제:
+- 권한: contract.creatorUserId == 본인 (수신자 호출 시 403 NotOwner)
+- 계약 status = RECEIVER_SIGNED (그 외 상태면 409)
+- backend 강제 검증: 수신자 user 가 ACTIVE + 미성년이면 guardianVerifiedAt!=null
+- 동의 약관: CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 각 1개씩 정확히 2개
 
-  효과:
-  - contract_consents row INSERT (생성자 약관 동의 2 row)
-  - contract_signatures row INSERT (생성자 서명 + IP/UA + pdfVersionAtSign snapshot, WORM)
-  - PDF v3 렌더링 (양측 박스 모두 채움 = 생성자 + 수신자 기존 서명) + S3 덮어쓰기 (Versioning 으로 v1/v2 보존)
-  - contracts.status = SIGNED, content_hash 갱신
-  - contract_status_logs (RECEIVER_SIGNED → SIGNED) row INSERT
-  - 양측 (생성자 + 수신자) 카카오톡 알림톡 3번 템플릿 `[Trana] 계약 체결 완료`
+효과:
+- contract_consents row INSERT (생성자 약관 동의 2 row)
+- contract_signatures row INSERT (생성자 서명 + IP/UA + pdfVersionAtSign snapshot, WORM)
+- PDF v3 렌더링 (양측 박스 모두 채움 = 생성자 + 수신자 기존 서명) + S3 덮어쓰기 (Versioning 으로 v1/v2 보존)
+- contracts.status = SIGNED, content_hash 갱신
+- contract_status_logs (RECEIVER_SIGNED → SIGNED) row INSERT
+- 양측 (생성자 + 수신자) 카카오톡 알림톡 3번 템플릿 `[Trana] 계약 체결 완료`
 
-  후속:
-  - COMPLETED 전이 (거래 완료 확정, W7+) → PDF attachment 다운로드 가능
+후속:
+- COMPLETED 전이 (거래 완료 확정, W7+) → PDF attachment 다운로드 가능
                 """,
     )
     @ApiResponses(
@@ -1282,13 +1282,13 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         description = """
 본 계약의 모든 상태 전이 이력 — 시간순 정렬.
 
-  권한:
-  - 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 양측 조회 가능
-  - 그 외 user 는 403 NOT_ACCESSIBLE
+권한:
+- 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 양측 조회 가능
+- 그 외 user 는 403 NOT_ACCESSIBLE
 
-  활용:
-  - 분쟁 시 "언제 누가 어떤 상태로 바꿨는지" 추적
-  - 첫 row 는 항상 INITIAL (fromStatus=null, toStatus=IN_PROGRESS)
+활용:
+- 분쟁 시 "언제 누가 어떤 상태로 바꿨는지" 추적
+- 첫 row 는 항상 INITIAL (fromStatus=null, toStatus=IN_PROGRESS)
                 """,
     )
     @ApiResponses(
@@ -1334,23 +1334,23 @@ READY 상태의 계약을 다시 DRAFT 로 되돌립니다 (본인이 수정 재
         description = """
 계약 본문 PDF 의 presigned GET URL 발급. TTL 10분.
 
-  권한:
-  - 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 만 접근
-  - 그 외 user 는 403 NOT_ACCESSIBLE
+권한:
+- 생성자 (creator) OR 계약 당사자 (contract_parties 멤버, 수신자 accept 후) 만 접근
+- 그 외 user 는 403 NOT_ACCESSIBLE
 
-  상태별 정책:
-  - IN_PROGRESS / DRAFT : PDF 없음 → 409 (DRAFT 미리보기는 `/preview` 별도 endpoint 사용)
-  - READY              : 생성자만 (수신자 아직 없음), inline 렌더링
-  - SHARED ~ SIGNED    : 양측 inline 렌더링 (앱/브라우저 내 미리보기)
-  - COMPLETED          : 양측 attachment 다운로드 (거래 완료 후 보존본)
-  - CANCELLED          : 양측 inline 접근 가능 (audit)
+상태별 정책:
+- IN_PROGRESS / DRAFT : PDF 없음 → 409 (DRAFT 미리보기는 `/preview` 별도 endpoint 사용)
+- READY              : 생성자만 (수신자 아직 없음), inline 렌더링
+- SHARED ~ SIGNED    : 양측 inline 렌더링 (앱/브라우저 내 미리보기)
+- COMPLETED          : 양측 attachment 다운로드 (거래 완료 후 보존본)
+- CANCELLED          : 양측 inline 접근 가능 (audit)
 
-  응답 사용:
-  - inline : 즉시 GET → 앱 PDF 뷰어 또는 브라우저 inline 렌더링
-  - attachment : 즉시 GET → 다운로드 다이얼로그
-  - 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
+응답 사용:
+- inline : 즉시 GET → 앱 PDF 뷰어 또는 브라우저 inline 렌더링
+- attachment : 즉시 GET → 다운로드 다이얼로그
+- 다운로드 후 sha256 비교로 무결성 검증 (분쟁 시 증거 매칭)
 
-  S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
+S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 **최신 버전** 반환.
                 """,
     )
     @ApiResponses(

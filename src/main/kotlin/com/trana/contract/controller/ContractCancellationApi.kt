@@ -25,15 +25,15 @@ interface ContractCancellationApi {
         operationId = "contractCancellationRequest",
         summary = "취소 요청 접수",
         description = """
-  서명 요청을 받은 측이 취소 요청. 가능 시점:
-  - SHARED (1차 서명 수신자 = receiver)
-  - RECEIVER_SIGNED (최종 서명 수신자 = creator)
+서명 요청을 받은 측이 취소 요청. 가능 시점:
+- SHARED (1차 서명 수신자 = receiver)
+- RECEIVER_SIGNED (최종 서명 수신자 = creator)
 
-  흐름:
-  - 송신 측 (서명 요청 보낸 사람) 시도 시 403 NotEligibleRequester
-  - 활성 요청 1건 이미 보유 시 409 AlreadyActive
-  - 성공 시 contract.status → CANCEL_REQUESTED 전이
-  - 알림톡 6번 → 상대 측 (A'-7)
+흐름:
+- 송신 측 (서명 요청 보낸 사람) 시도 시 403 NotEligibleRequester
+- 활성 요청 1건 이미 보유 시 409 AlreadyActive
+- 성공 시 contract.status → CANCEL_REQUESTED 전이
+- 알림톡 6번 → 상대 측 (A'-7)
               """,
     )
     @SecurityRequirement(name = "bearerAuth")
@@ -100,12 +100,12 @@ interface ContractCancellationApi {
         operationId = "contractCancellationConfirm",
         summary = "상대 측 취소 확정",
         description = """
-  요청자가 아닌 측이 취소 확정 → contract.status → CANCELLED 전이.
+요청자가 아닌 측이 취소 확정 → contract.status → CANCELLED 전이.
 
-  흐름:
-  - 활성 요청 없으면 404
-  - 요청자 본인이 시도 시 403 SelfConfirm
-  - 성공 시 listMine 응답에서 해당 계약 제외 (스펙: "계약 목록에서 삭제")
+흐름:
+- 활성 요청 없으면 404
+- 요청자 본인이 시도 시 403 SelfConfirm
+- 성공 시 listMine 응답에서 해당 계약 제외 (스펙: "계약 목록에서 삭제")
               """,
     )
     @SecurityRequirement(name = "bearerAuth")
@@ -147,10 +147,10 @@ interface ContractCancellationApi {
         operationId = "contractCancellationActive",
         summary = "활성 취소 요청 조회 (양측)",
         description = """
-  계약 참여자 (creator OR party) 가 자기 계약의 활성(REQUESTED) 취소 요청 조회.
-  - 활성 요청 없으면 204 No Content
-  - 요청자 user_id 미노출 — isMine boolean 만
-  - 스펙의 "취소 내용 확인 가능한 바텀시트" 데이터 source
+계약 참여자 (creator OR party) 가 자기 계약의 활성(REQUESTED) 취소 요청 조회.
+- 활성 요청 없으면 204 No Content
+- 요청자 user_id 미노출 — isMine boolean 만
+- 스펙의 "취소 내용 확인 가능한 바텀시트" 데이터 source
               """,
     )
     @SecurityRequirement(name = "bearerAuth")

@@ -27,17 +27,17 @@ interface UserInquiryApi {
     @Operation(
         summary = "1:1 문의 작성",
         description = """
-  사용자 → 운영자 단방향 문의. DB 저장 + Slack 채널 발송.
+사용자 → 운영자 단방향 문의. DB 저장 + Slack 채널 발송.
 
-  처리 흐름:
-  - DB INSERT (publicCode 12자 nanoid 발급)
-  - Slack webhook 발송 (실패해도 200 — 운영 로그에만 남고 사용자 응답은 성공)
-  - 운영자는 Slack 보고 사용자 입력 이메일로 직접 회신 (DB 답변 저장 X)
+처리 흐름:
+- DB INSERT (publicCode 12자 nanoid 발급)
+- Slack webhook 발송 (실패해도 200 — 운영 로그에만 남고 사용자 응답은 성공)
+- 운영자는 Slack 보고 사용자 입력 이메일로 직접 회신 (DB 답변 저장 X)
 
-  제약:
-  - email: 필수 + 형식 검증 (user.email 안 활용 — 성인 KYC 가입자는 user.email null)
-  - title: 1~100자
-  - content: 1~2000자
+제약:
+- email: 필수 + 형식 검증 (user.email 안 활용 — 성인 KYC 가입자는 user.email null)
+- title: 1~100자
+- content: 1~2000자
           """,
         requestBody =
             SwaggerRequestBody(

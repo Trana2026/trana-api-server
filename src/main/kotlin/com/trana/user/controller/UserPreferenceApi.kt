@@ -21,14 +21,14 @@ interface UserPreferenceApi {
     @Operation(
         summary = "푸시 알림 토글",
         description = """
-  마이페이지 "알림 설정" 화면에서 푸시 알림 수신 동의 변경. 멱등 — 같은 값 반복 호출 OK.
+마이페이지 "알림 설정" 화면에서 푸시 알림 수신 동의 변경. 멱등 — 같은 값 반복 호출 OK.
 
-  동작:
-  - User.pushEnabled 갱신
-  - NotificationDispatchService 가 발송 직전 이 값 검사 → false 면 FCM 발송 skip + 로그
+동작:
+- User.pushEnabled 갱신
+- NotificationDispatchService 가 발송 직전 이 값 검사 → false 면 FCM 발송 skip + 로그
 
-  운영 보류 (W9+):
-  - 카테고리별 토글 (예: 계약 알림 / 마케팅 / 시스템) — 현재는 전체 토글만
+운영 보류 (W9+):
+- 카테고리별 토글 (예: 계약 알림 / 마케팅 / 시스템) — 현재는 전체 토글만
           """,
         requestBody =
             io.swagger.v3.oas.annotations.parameters.RequestBody(

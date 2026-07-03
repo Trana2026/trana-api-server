@@ -21,10 +21,10 @@ interface AuthApi {
     @Operation(
         summary = "토큰 재발급",
         description = """
-  Refresh token으로 새 access / refresh token 발급.
-  - access token 만료 (15분) 후 사용
-  - refresh token 만료 (30일) 시엔 다시 로그인 (PASS 흐름) 필요
-  - 매 호출 시 access + refresh 모두 새로 발급
+Refresh token으로 새 access / refresh token 발급.
+- access token 만료 (15분) 후 사용
+- refresh token 만료 (30일) 시엔 다시 로그인 (PASS 흐름) 필요
+- 매 호출 시 access + refresh 모두 새로 발급
         """,
     )
     @ApiResponses(
@@ -70,15 +70,15 @@ interface AuthApi {
     @Operation(
         summary = "로그아웃",
         description = """
-    JWT subject(userId) 기준 로그아웃. audit 기록 + (선택적) device token 정리.
+JWT subject(userId) 기준 로그아웃. audit 기록 + (선택적) device token 정리.
 
-    동작:
-    - AuditEvent.USER_SIGNED_OUT 기록 (IP/UA 자동 — RequestMdcFilter)
-    - deviceToken 제공 시 본인 token 매칭 row 삭제 (멱등)
-    - JWT 무효화 X (stateless 정책, access 15분 자연 만료) — 클라이언트가 로컬 토큰 폐기 필요
+동작:
+- AuditEvent.USER_SIGNED_OUT 기록 (IP/UA 자동 — RequestMdcFilter)
+- deviceToken 제공 시 본인 token 매칭 row 삭제 (멱등)
+- JWT 무효화 X (stateless 정책, access 15분 자연 만료) — 클라이언트가 로컬 토큰 폐기 필요
 
-    운영 보류 (W9+):
-    - refresh token blacklist (현재 stateless 라 강제 만료 불가)
+운영 보류 (W9+):
+- refresh token blacklist (현재 stateless 라 강제 만료 불가)
             """,
         requestBody =
             SwaggerRequestBody(
