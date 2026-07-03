@@ -8,15 +8,13 @@ import com.trana.user.service.UserService
 import org.springframework.stereotype.Service
 
 /**
- * JWT refresh + logout 처리 (소셜 로그인 폐기 후 남은 auth 로직).
+ * JWT refresh + logout 처리.
  *
  * - refresh: 만료 임박 access 재발급 (refresh token 검증)
  * - logout: audit + optional device token 정리 (JWT 자체는 stateless, access 15분 자연 만료)
- *
- * 클래스명 `AuthService` 로 rename 예정 (auth sub-task 마무리 시점).
  */
 @Service
-class SocialSignInService(
+class AuthService(
     private val userService: UserService,
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,

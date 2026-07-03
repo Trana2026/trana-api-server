@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1/auth")
 class AuthController(
-    private val socialSignInService: SocialSignInService,
+    private val authService: AuthService,
 ) : AuthApi {
-    override fun refresh(request: RefreshRequest): SignInResponse = socialSignInService.refresh(request)
+    override fun refresh(request: RefreshRequest): SignInResponse = authService.refresh(request)
 
     override fun logout(
         @AuthenticationPrincipal userId: Long,
         request: LogoutRequest,
     ) {
-        socialSignInService.logout(userId, request.deviceToken)
+        authService.logout(userId, request.deviceToken)
     }
 }
