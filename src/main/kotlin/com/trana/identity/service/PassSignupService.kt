@@ -14,7 +14,7 @@ import java.util.UUID
  * PASS (mobileOK V3 표준창) 본인확인 가입 흐름 — req-client-info endpoint 의 핵심 로직.
  *
  * 흐름:
- * 1. signupSessionId TTL 검증 (KycStateLookup)
+ * 1. signupSessionId TTL 검증 (SignupStateLookup)
  * 2. PassTokenIssuer 로 clientTxId 발급
  * 3. PENDING IdentityVerification row INSERT (PASS factory, NCP 필드 모두 null)
  * 4. PassTokenIssuer 로 encryptReqClientInfo 생성 (RSA-OAEP)
@@ -25,7 +25,7 @@ import java.util.UUID
 @Service
 @Transactional
 class PassSignupService(
-    private val stateLookup: KycStateLookup,
+    private val stateLookup: SignupStateLookup,
     private val tokenIssuer: PassTokenIssuer,
     private val keyInfoLoader: PassKeyInfoLoader,
     private val verificationRepository: IdentityVerificationRepository,

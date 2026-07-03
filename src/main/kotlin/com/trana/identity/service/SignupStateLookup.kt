@@ -9,12 +9,12 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * signupSession TTL 검증 helper.
+ * signupSession TTL 검증 helper — 약관 동의 후 30분 안에 PASS 표준창 진입 강제.
  *
- * PASS 흐름 (PassSignupService) 이 재사용 — 약관 동의 후 30분 안에 PASS 표준창 진입 강제.
+ * PassSignupService 가 유일 참조자.
  */
 @Component
-class KycStateLookup(
+class SignupStateLookup(
     private val consentService: ConsentService,
 ) {
     /**
