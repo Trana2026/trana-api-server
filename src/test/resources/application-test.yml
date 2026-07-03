@@ -12,7 +12,6 @@ spring:
     enabled: true
     baseline-on-migrate: false
     locations: classpath:db/migration
-
 trana:
   jwt:
     issuer: trana
@@ -23,39 +22,12 @@ trana:
   crypto:
     password: test-password-do-not-use-in-prod
     salt: deadbeefcafebabe1234567890abcdef
-  oauth:
-    kakao:
-      issuer: https://kauth.kakao.com
-      client-id: test-kakao-client-id
-      native-app-key: test-kakao-native-app-key
-    google:
-      issuer: https://accounts.google.com
-      client-id: test-google-client-id
-    apple:
-      issuer: https://appleid.apple.com
-      bundle-id: test-apple-bundle-id
-      client-id: test-apple-services-id
-      team-id: TESTTEAMID
-      key-id: TESTKEYID01
-      private-key: |
-        -----BEGIN PRIVATE KEY-----
-        TEST_PRIVATE_KEY_BODY
-        -----END PRIVATE KEY-----
-      android-package-name: com.trana.test
   identity:
     pass:
       key-info-base64: test-mok-key-info-base64-not-decrypted-in-tests
       key-info-password: test-mok-password
       mobile-ok-base-url: https://test.mobile-ok.example.com
       return-url: http://localhost/v1/identity/pass/return
-  kyc:
-    ncp:
-      id-card:
-        invoke-url: https://test.example.com/ekyc/v1/test/test/id-card
-        secret-key: test-id-card-secret
-      face-compare:
-        invoke-url: https://test.example.com/ekyc/v1/test/test/face-compare
-        secret-key: test-face-secret
   storage:
     s3:
       bucket: test-bucket

@@ -31,25 +31,6 @@ trana:
   crypto:
     password: <REPLACE_WITH_openssl_rand_base64_32>
     salt: <REPLACE_WITH_openssl_rand_hex_16>
-  oauth:
-    kakao:
-      issuer: https://kauth.kakao.com
-      client-id: <Kakao Developers Console의 REST API 키>
-      native-app-key: <Kakao Developers Console의 네이티브 앱 키>
-    google:
-      issuer: https://accounts.google.com
-      client-id:
-    apple:
-      issuer: https://appleid.apple.com
-      bundle-id: <Apple App Bundle ID — 예: kr.trana.app>
-      client-id: <Apple Services ID — 예: kr.trana.app.service>
-      team-id: <Apple Developer Team ID (10자)>
-      key-id: <Sign in with Apple Key ID (10자)>
-      private-key: |
-        -----BEGIN PRIVATE KEY-----
-        REPLACE_WITH_p8_FILE_CONTENT
-        -----END PRIVATE KEY-----
-      android-package-name: <Flutter Android package — 예: kr.trana.app>
   dev:
     token-key: local-dev-token-key-change-me
   identity:
@@ -61,14 +42,6 @@ trana:
       key-info-password: <REPLACE_WITH_mobileOK_password>
       mobile-ok-base-url: https://scert.mobile-ok.com
       return-url: http://localhost:8080/v1/identity/pass/return
-  kyc:
-    ncp:
-      id-card:
-        invoke-url: https://CHANGE_ME.apigw-pub.fin-ntruss.com/ekyc/v1/CHANGE_ME/CHANGE_ME/id-card
-        secret-key: CHANGE_ME
-      face-compare:
-        invoke-url: https://CHANGE_ME.apigw-pub.fin-ntruss.com/ekyc/v1/CHANGE_ME/CHANGE_ME/face-compare
-        secret-key: CHANGE_ME
   storage:
     s3:
       bucket: trana-temp-dev

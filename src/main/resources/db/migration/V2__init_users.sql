@@ -56,25 +56,6 @@ COMMENT ON COLUMN users.fraud_report_filed_count IS '본인이 신고한 건 중
 COMMENT ON COLUMN users.fraud_report_received_count IS '본인이 신고 당한 건 중 사기 확인 누적 (마이페이지 통계의 "분쟁 여부")';
 COMMENT ON COLUMN users.withdrawn_at IS '탈퇴 시각. NULL이면 활성';
 
--- =========================================
--- social_accounts (미성년자 가입 시만 INSERT)
--- - 성인은 소셜 로그인 안 받음
--- =========================================
-CREATE TABLE social_accounts
-(
-    id               BIGSERIAL PRIMARY KEY,
-    user_id          BIGINT       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    provider         VARCHAR(20)  NOT NULL,
-    provider_user_id VARCHAR(255) NOT NULL,
-    created_at       TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    UNIQUE (provider, provider_user_id)
-);
-
-CREATE INDEX idx_social_accounts_user ON social_accounts (user_id);
-
-COMMENT ON COLUMN social_accounts.provider IS 'KAKAO | GOOGLE | APPLE';
-COMMENT ON COLUMN social_accounts.provider_user_id IS '공급자 발급 사용자 ID (변경 불가)';
-
 -- 1:1 문의 (단방향) — 사용자 → 운영자.
 -- 운영자 회신은 Slack 채널 + 사용자 입력 이메일로 직접 회신 (DB 저장 X).
 -- 첨부파일 / 상태 / 답변 컬럼 X — 단순 audit 용.
