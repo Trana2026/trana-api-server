@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val socialSignInService: SocialSignInService,
 ) : AuthApi {
-    override fun socialSignIn(request: SocialSignInRequest): SignInResponse = socialSignInService.signIn(request)
-
     override fun refresh(request: RefreshRequest): SignInResponse = socialSignInService.refresh(request)
 
     override fun logout(
