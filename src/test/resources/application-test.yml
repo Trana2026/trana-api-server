@@ -30,7 +30,6 @@ trana:
       return-url: http://localhost/v1/identity/pass/return
   storage:
     s3:
-      bucket: test-bucket
       region: ap-northeast-2
       access-key: test-access-key
       secret-key: test-secret-key

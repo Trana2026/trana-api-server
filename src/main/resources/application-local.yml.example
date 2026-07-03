@@ -44,7 +44,6 @@ trana:
       return-url: http://localhost:8080/v1/identity/pass/return
   storage:
     s3:
-      bucket: trana-temp-dev
       region: ap-northeast-2
       access-key: <AWS IAM trana-server Access Key ID>
       secret-key: <AWS IAM trana-server Secret Access Key>

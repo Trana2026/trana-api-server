@@ -25,7 +25,6 @@ trana:
       return-url: ${TRANA_PASS_RETURN_URL:https://dev-api.trana.kr/v1/identity/pass/return}
   storage:
     s3:
-      bucket: ${TRANA_S3_BUCKET}
       region: ${TRANA_S3_REGION:ap-northeast-2}
       access-key: ${TRANA_S3_ACCESS_KEY}
       secret-key: ${TRANA_S3_SECRET_KEY}
