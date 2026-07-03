@@ -36,4 +36,17 @@ interface GuardianLinkRepository : JpaRepository<GuardianLink, String> {
         @Param("token") token: String,
         @Param("now") now: Instant,
     ): Int
+
+    /**
+     * dev 리셋용 — 특정 미성년자의 모든 링크 삭제.
+     *
+     * DevTokenController.resetGuardianVerification 에서 호출 (SIGNUP + CONTRACT_CONSENT 모두 대상).
+     * production 로직에서는 호출 X.
+     * @return 삭제된 row 수
+     */
+    @Modifying
+    @Query("DELETE FROM GuardianLink l WHERE l.userId = :userId")
+    fun deleteAllByUserId(
+        @Param("userId") userId: Long,
+    ): Int
 }

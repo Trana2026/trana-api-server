@@ -118,6 +118,17 @@ class User(
         this.guardianVerifiedAt = Instant.now()
     }
 
+    /**
+     * 보호자 검증 상태 되돌리기 (개발 전용).
+     *
+     * DevTokenController 의 /v1/dev/guardian/reset 에서 호출 —
+     * 미성년 계정으로 보호자 PASS 반복 테스트 시 사용. production 로직에서는 호출 X.
+     */
+    fun resetGuardianVerification() {
+        check(ageGroup == AgeGroup.MINOR) { "미성년자만 보호자 검증 리셋 가능" }
+        this.guardianVerifiedAt = null
+    }
+
     /** 마이페이지 푸시 토글 — PATCH /v1/users/me/push-enabled. */
     fun changePushEnabled(enabled: Boolean) {
         this.pushEnabled = enabled
