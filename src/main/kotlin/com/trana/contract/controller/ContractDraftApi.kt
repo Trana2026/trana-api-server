@@ -1000,20 +1000,19 @@ RECEIVER_SIGNED 상태 계약에 대해 생성자가 PDF v2 검토 후 약관 �
     @Tag(name = "Contract Lifecycle")
     @Operation(
         operationId = "contractConfirmCompletion",
-        summary = "거래 완료 확인 — SIGNED → COMPLETED (양측 클릭 모델)",
+        summary = "거래 완료 확정 — SIGNED → COMPLETED (구매자 단독 확정)",
         description = """
-SIGNED 상태 계약에서 양측(SELLER + BUYER)이 각자 호출 → 본인 partyCompletedAt 채움.
-두 번째 클릭 시점에 contract.completedAt 채움 + status SIGNED → COMPLETED 자동 전이.
+SIGNED 상태 계약에서 **구매자(BUYER) 만** 호출 가능 — 즉시 COMPLETED 전이 + 판매자/구매자 party.completed_at 동시 채움 (BUYER 단독 결정).
 
 전제:
-- 권한: contract.creatorUserId == 본인 OR contract_parties 에 본인 매핑 (외부 user 403 NotAccessible)
+- 권한: contract_parties 에 본인 매핑 + 본인 partyType == BUYER (SELLER 호출 시 403 NotBuyer, 외부 user 403 NotAccessible)
 - 계약 status = SIGNED (그 외 상태면 409 NotInSignedState — DRAFT/READY/SHARED/RECEIVER_SIGNED/COMPLETED 모두 차단)
-- 본인이 이미 클릭한 상태에서 재호출 시 409 AlreadyCompletedByParty (멱등 X)
+- 프론트: SELLER 화면 CTA 비활성화 필수
 
 효과:
-- contract_parties.completed_at 채움 (본인 partyType row)
-- 양측 모두 completed_at != null 이면 contracts.status = COMPLETED + contracts.completed_at 채움
-- contract_status_logs (SIGNED → COMPLETED) row INSERT — 양측 완료 시점만
+- contract_parties.completed_at 양측(SELLER + BUYER) 동시 채움
+- contracts.status = COMPLETED + contracts.completed_at 채움
+- contract_status_logs (SIGNED → COMPLETED) row INSERT
 - 알림톡 없음 (W7 분쟁 흐름과 함께 결정)
 
 후속:
@@ -1025,17 +1024,13 @@ SIGNED 상태 계약에서 양측(SELLER + BUYER)이 각자 호출 → 본인 pa
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "거래 완료 확인 성공 (한쪽만 클릭 = SIGNED 유지 / 양측 완료 = COMPLETED 전이)",
+                description = "거래 완료 확정 성공 (COMPLETED 전이)",
                 content = [
                     Content(
                         schema = Schema(implementation = ConfirmCompletionResponse::class),
                         examples = [
                             ExampleObject(
-                                name = "partial",
-                                value = ContractExamples.CONFIRM_COMPLETION_RESPONSE_PARTIAL,
-                            ),
-                            ExampleObject(
-                                name = "both",
+                                name = "completed",
                                 value = ContractExamples.CONFIRM_COMPLETION_RESPONSE_BOTH,
                             ),
                         ],
@@ -1052,6 +1047,10 @@ SIGNED 상태 계약에서 양측(SELLER + BUYER)이 각자 호출 → 본인 pa
                             ExampleObject(
                                 name = "notAccessible",
                                 value = ContractExamples.CONFIRM_COMPLETION_NOT_ACCESSIBLE,
+                            ),
+                            ExampleObject(
+                                name = "notBuyer",
+                                value = ContractExamples.CONFIRM_COMPLETION_NOT_BUYER,
                             ),
                         ],
                     ),
@@ -1077,10 +1076,6 @@ SIGNED 상태 계약에서 양측(SELLER + BUYER)이 각자 호출 → 본인 pa
                             ExampleObject(
                                 name = "notSigned",
                                 value = ContractExamples.CONFIRM_COMPLETION_NOT_IN_SIGNED,
-                            ),
-                            ExampleObject(
-                                name = "alreadyByParty",
-                                value = ContractExamples.CONFIRM_COMPLETION_ALREADY_BY_PARTY,
                             ),
                         ],
                     ),

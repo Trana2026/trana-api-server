@@ -148,6 +148,11 @@ enum class ErrorCode(
         "CONTRACT_403_NOT_RECEIVER_SELLER",
         "수신자(SELLER)만 호출할 수 있는 endpoint 입니다",
     ),
+    CONTRACT_NOT_BUYER(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_NOT_BUYER",
+        "구매자(BUYER)만 호출할 수 있는 endpoint 입니다",
+    ),
     CONTRACT_TERMS_MISMATCH(
         HttpStatus.BAD_REQUEST,
         "CONTRACT_400_TERMS",
@@ -162,11 +167,6 @@ enum class ErrorCode(
         HttpStatus.CONFLICT,
         "CONTRACT_409_NOT_SIGNED",
         "현재 SIGNED 상태가 아닙니다 (거래 완료는 SIGNED 이후에만 가능)",
-    ),
-    CONTRACT_ALREADY_COMPLETED_BY_PARTY(
-        HttpStatus.CONFLICT,
-        "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
-        "이미 거래 완료를 클릭한 사용자입니다",
     ),
 
     // === 분쟁 (DISPUTE_*) ===

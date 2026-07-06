@@ -230,6 +230,14 @@ sealed class ContractException(
             "수신자(SELLER)만 보증기간을 변경할 수 있습니다 (publicCode=$publicCode, userId=$userId)",
         )
 
+    class NotBuyer(
+        publicCode: String,
+        userId: Long,
+    ) : ContractException(
+            ErrorCode.CONTRACT_NOT_BUYER,
+            "거래 완료 확정은 구매자(BUYER)만 가능합니다 (publicCode=$publicCode, userId=$userId)",
+        )
+
     class TermsMismatch(
         expected: String,
         actual: List<Long>,
@@ -252,13 +260,5 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_NOT_IN_SIGNED_STATE,
             "현재 SIGNED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
-        )
-
-    class AlreadyCompletedByParty(
-        publicCode: String,
-        userId: Long,
-    ) : ContractException(
-            ErrorCode.CONTRACT_ALREADY_COMPLETED_BY_PARTY,
-            "이미 거래 완료를 클릭한 사용자입니다 (publicCode=$publicCode, userId=$userId)",
         )
 }

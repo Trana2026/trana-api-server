@@ -30,7 +30,7 @@ import java.time.Instant
  * - SHARED → 수신자 수락 (acceptInvitation)
  * - SHARED → RECEIVER_SIGNED (receiverSign, PDF v2, 알림톡)
  * - RECEIVER_SIGNED → SIGNED (creatorSign, PDF v3, 알림톡)
- * - SIGNED → COMPLETED (양측 confirmCompletion 두 번째 클릭, W7)
+ * - SIGNED → COMPLETED (구매자 confirmCompletion 단독 확정, W7 — 즉시 전이)
  *
  * #102 refactor Phase B — ContractStatusService 에서 4 메서드 통째 추출.
  * 알림톡 발송은 ContractAlimtalkDispatcher 위임 (Phase A 에서 추출).
@@ -219,26 +219,30 @@ class ContractSigningService(
         val myParty =
             contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
                 ?: throw ContractException.NotAccessible(publicCode, userId)
-        if (myParty.completedAt != null) {
-            throw ContractException.AlreadyCompletedByParty(publicCode, userId)
+        if (myParty.partyType != PartyType.BUYER) {
+            throw ContractException.NotBuyer(publicCode, userId)
         }
-        myParty.markCompleted()
 
         val parties = contractPartyRepository.findAllByContractId(contract.id!!)
-        val bothCompleted = parties.size == 2 && parties.all { it.completedAt != null }
-        if (bothCompleted) {
-            val from = contract.status
-            contract.markCompleted()
-            publishStatusChanged(contract, from, userId, "양측 거래 완료 확정")
-        }
+        val seller =
+            parties.firstOrNull { it.partyType == PartyType.SELLER }
+                ?: error("seller party 없음 (contractId=${contract.id})")
+        val buyer =
+            parties.firstOrNull { it.partyType == PartyType.BUYER }
+                ?: error("buyer party 없음 (contractId=${contract.id})")
 
-        val seller = parties.firstOrNull { it.partyType == PartyType.SELLER }
-        val buyer = parties.firstOrNull { it.partyType == PartyType.BUYER }
+        seller.markCompleted()
+        buyer.markCompleted()
+
+        val from = contract.status
+        contract.markCompleted()
+        publishStatusChanged(contract, from, userId, "구매자 거래 완료 확정")
+
         return ConfirmCompletionView(
             publicCode = contract.publicCode,
             status = contract.status,
-            sellerCompletedAt = seller?.completedAt,
-            buyerCompletedAt = buyer?.completedAt,
+            sellerCompletedAt = seller.completedAt,
+            buyerCompletedAt = buyer.completedAt,
             completedAt = contract.completedAt,
         )
     }

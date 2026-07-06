@@ -794,16 +794,6 @@ internal object ContractExamples {
             }
         """
 
-    const val CONFIRM_COMPLETION_RESPONSE_PARTIAL = """
-              {
-                "publicCode": "Yx7Kp2qLm9Nz",
-                "status": "SIGNED",
-                "sellerCompletedAt": "2026-06-02T10:00:00Z",
-                "buyerCompletedAt": null,
-                "completedAt": null
-              }
-          """
-
     const val CONFIRM_COMPLETION_RESPONSE_BOTH = """
               {
                 "publicCode": "Yx7Kp2qLm9Nz",
@@ -825,17 +815,6 @@ internal object ContractExamples {
               }
           """
 
-    const val CONFIRM_COMPLETION_ALREADY_BY_PARTY = """
-              {
-                "type": "about:blank",
-                "title": "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
-                "status": 409,
-                "detail": "이미 거래 완료를 클릭한 사용자입니다 (publicCode=Yx7Kp2qLm9Nz, userId=42)",
-                "code": "CONTRACT_409_ALREADY_COMPLETED_BY_PARTY",
-                "timestamp": "2026-06-02T10:00:00Z"
-              }
-          """
-
     const val CONFIRM_COMPLETION_NOT_ACCESSIBLE = """
               {
                 "type": "about:blank",
@@ -846,4 +825,15 @@ internal object ContractExamples {
                 "timestamp": "2026-06-02T10:00:00Z"
               }
           """
+
+    const val CONFIRM_COMPLETION_NOT_BUYER = """
+                {
+                  "type": "about:blank",
+                  "title": "CONTRACT_403_NOT_BUYER",
+                  "status": 403,
+                  "detail": "거래 완료 확정은 구매자(BUYER)만 가능합니다 (publicCode=Yx7Kp2qLm9Nz, userId=42)",
+                  "code": "CONTRACT_403_NOT_BUYER",
+                  "timestamp": "2026-06-02T10:00:00Z"
+                }
+            """
 }
