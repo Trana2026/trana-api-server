@@ -19,7 +19,7 @@ RUN sed -i '/org.gradle.java.home/d' gradle.properties
 
 # 의존성 사전 다운로드 — BuildKit cache mount 로 ~/.gradle/caches 재사용
 # 두 번째 빌드부터 dependency 재다운로드 X (수십 MB → 0)
-RUN --mount=type=cache,target=/root/.gradle/caches,id=gradle-cache \
+RUN --mount=type=cache,id=s/e728073e-cf90-477a-821c-9857f70d7b0c-/root/.gradle/caches,target=/root/.gradle/caches \
   ./gradlew --no-daemon dependencies
 
 # 소스 복사 + 빌드
@@ -27,7 +27,7 @@ COPY src src
 
 # bootJar 도 gradle caches + Kotlin compiler daemon 캐시 재사용
 # 증분 컴파일 유지되어 소스 변경분만 재컴파일
-RUN --mount=type=cache,target=/root/.gradle/caches,id=gradle-cache \
+RUN --mount=type=cache,id=s/e728073e-cf90-477a-821c-9857f70d7b0c-/root/.gradle/caches,target=/root/.gradle/caches \
   ./gradlew --no-daemon bootJar
 
 # ============================================
