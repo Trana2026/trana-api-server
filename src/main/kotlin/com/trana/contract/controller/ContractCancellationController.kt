@@ -43,6 +43,14 @@ class ContractCancellationController(
         service.confirm(publicCode = publicCode, userId = userId)
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    override fun revoke(
+        @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
+        @PathVariable publicCode: String,
+    ) {
+        service.revoke(publicCode = publicCode, userId = userId)
+    }
+
     override fun getActive(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,

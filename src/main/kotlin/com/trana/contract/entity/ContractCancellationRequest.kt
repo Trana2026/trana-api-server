@@ -16,9 +16,11 @@ import java.time.Instant
  *
  * - 한 계약 활성(REQUESTED) 취소요청 1건만 (V12 partial UNIQUE)
  * - 요청 가능 시점: contract.status ∈ {SHARED, RECEIVER_SIGNED} (Contract entity 가 강제)
- * - 부분 WORM: contract_id / requester_user_id / reason / detail / requester_ip / requested_at immutable
+ * - 부분 WORM: contract_id / requester_user_id / reason / detail / requester_ip /
+ *   requested_at / previous_status immutable
  *   (DB trigger + entity val 이중 방어)
- * - 상태 전이: REQUESTED → CONFIRMED (상대 측 확정 시)
+ * - 상태 전이: REQUESTED → CONFIRMED (상대 측 확정) 또는 REQUESTED → REVOKED (요청자 본인 취소)
+ * - previousStatus: 요청 시점 contract.status 스냅샷. revoke 시 복구 대상 (SHARED | RECEIVER_SIGNED)
  */
 @Entity
 @Table(name = "contract_cancellation_requests")
@@ -33,6 +35,9 @@ class ContractCancellationRequest(
     val detail: String,
     @Column(name = "requester_ip", length = IP_MAX_LENGTH)
     val requesterIp: String? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previous_status", nullable = false, length = 30)
+    val previousStatus: ContractStatus,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +61,10 @@ class ContractCancellationRequest(
     var confirmedByUserId: Long? = null
         protected set
 
+    @Column(name = "revoked_at")
+    var revokedAt: Instant? = null
+        protected set
+
     /**
      * 상대 측이 취소 확정 — REQUESTED → CONFIRMED.
      * service 가 confirmer != requester 검증 후 호출.
@@ -72,6 +81,21 @@ class ContractCancellationRequest(
         this.confirmedByUserId = confirmerUserId
     }
 
+    /**
+     * 요청자 본인이 요청 취소 — REQUESTED → REVOKED.
+     * service 가 revoker == requester 검증 후 호출.
+     */
+    fun markRevoked(revokerUserId: Long) {
+        check(status == CancellationStatus.REQUESTED) {
+            "revoke 는 REQUESTED 상태에서만 가능 (current=$status)"
+        }
+        check(revokerUserId == requesterUserId) {
+            "요청자 본인만 자기 요청 revoke 가능 — service 가 사전 검증"
+        }
+        this.status = CancellationStatus.REVOKED
+        this.revokedAt = Instant.now()
+    }
+
     companion object {
         const val REASON_MAX_LENGTH = 100
         private const val IP_MAX_LENGTH = 45
@@ -84,4 +108,7 @@ enum class CancellationStatus {
 
     /** 상대 측이 확정 — 계약 자체도 CANCELLED 전이. */
     CONFIRMED,
+
+    /** 요청자 본인이 취소 — 계약 status 는 이전 상태 (previousStatus) 로 복구. */
+    REVOKED,
 }

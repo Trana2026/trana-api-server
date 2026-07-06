@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@Tag(name = "Contract Cancellation", description = "계약 취소 요청 (W7) — 서명 요청 받은 측이 요청 / 상대 확정 / 활성 요청 조회")
+@Tag(name = "Contract Cancellation", description = "계약 취소 요청 (W7) — 서명 요청 받은 측이 요청 / 상대 확정 / 요청자 revoke / 활성 요청 조회")
 interface ContractCancellationApi {
     @Operation(
         operationId = "contractCancellationRequest",
@@ -139,6 +139,56 @@ interface ContractCancellationApi {
     )
     @PostMapping("/{publicCode}/cancellation-requests/confirm")
     fun confirm(
+        userId: Long,
+        @PathVariable publicCode: String,
+    )
+
+    @Operation(
+        operationId = "contractCancellationRevoke",
+        summary = "취소 요청 취소 (요청자 본인)",
+        description = """
+요청자 본인이 자기 취소 요청을 되돌림.
+
+흐름:
+- 활성 요청 없으면 404 NotFound
+- 요청자 본인 아닌 사람이 시도 시 403 NotEligibleRequester
+- 성공 시 contract.status → previousStatus 복구 (SHARED 또는 RECEIVER_SIGNED), request.status → REVOKED (audit)
+                """,
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "204", description = "revoke 완료"),
+            ApiResponse(
+                responseCode = "403",
+                description = "계약 참여자 아님 또는 요청자 아님",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [
+                            ExampleObject(name = "notAccessible", value = ContractCancellationExamples.NOT_ACCESSIBLE),
+                            ExampleObject(
+                                name = "notEligibleRequester",
+                                value = ContractCancellationExamples.NOT_ELIGIBLE_REQUESTER,
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "활성 취소 요청 없음",
+                content = [
+                    Content(
+                        schema = Schema(implementation = ProblemDetailResponse::class),
+                        examples = [ExampleObject(name = "notFound", value = ContractCancellationExamples.NOT_FOUND)],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @PostMapping("/{publicCode}/cancellation-requests/revoke")
+    fun revoke(
         userId: Long,
         @PathVariable publicCode: String,
     )

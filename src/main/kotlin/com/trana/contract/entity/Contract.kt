@@ -327,6 +327,22 @@ class Contract(
     }
 
     /**
+     * 취소 요청자가 자기 요청을 되돌림 → CANCEL_REQUESTED → previousStatus 복구.
+     * previousStatus 는 취소 요청 시점 스냅샷 (SHARED 또는 RECEIVER_SIGNED, ContractCancellationRequest 가 보관).
+     * service 가 요청자 본인 검증 + previousStatus 조회 후 호출.
+     */
+    fun markCancelRequestRevoked(previousStatus: ContractStatus) {
+        check(status == ContractStatus.CANCEL_REQUESTED) {
+            "CANCEL_REQUESTED 상태에서만 revoke 가능 (current=$status)"
+        }
+        check(deletedAt == null) { "삭제된 계약은 revoke 불가" }
+        check(previousStatus == ContractStatus.SHARED || previousStatus == ContractStatus.RECEIVER_SIGNED) {
+            "previousStatus 는 SHARED 또는 RECEIVER_SIGNED 만 가능 (given=$previousStatus)"
+        }
+        this.status = previousStatus
+    }
+
+    /**
      * 상대 측 취소 확정 → status CANCELLED 전이.
      * service 가 활성 취소 요청 row 존재 + confirmer != requester 검증 후 호출.
      */

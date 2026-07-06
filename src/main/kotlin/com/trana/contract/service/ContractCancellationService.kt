@@ -20,8 +20,9 @@ import org.springframework.transaction.annotation.Transactional
  *
  * - request: SHARED / RECEIVER_SIGNED 상태에서 서명 요청 받은 측이 취소 요청
  * - confirm: 상대 측이 확정 → CANCELLED 전이 (A'-4c)
+ * - revoke: 요청자 본인이 자기 요청 취소 → previousStatus 복구 (SHARED / RECEIVER_SIGNED)
  *
- * 알림톡 발송 (상대 측) 은 A'-7 wire 시 추가.
+ * 알림톡 발송 (상대 측) 은 request 시점만.
  */
 @Service
 @Transactional
@@ -65,6 +66,7 @@ class ContractCancellationService(
                     reason = reason,
                     detail = detail,
                     requesterIp = requesterIp,
+                    previousStatus = contract.status,
                 ),
             )
 
@@ -117,6 +119,46 @@ class ContractCancellationService(
                 toStatus = ContractStatus.CANCELLED,
                 actorUserId = userId,
                 reason = "양측 취소 확정",
+            ),
+        )
+    }
+
+    /**
+     * 요청자 본인이 자기 취소 요청을 되돌림.
+     * - contract.status → previousStatus (SHARED 또는 RECEIVER_SIGNED) 복구
+     * - request.status → REVOKED (audit)
+     *
+     * @param publicCode 대상 계약
+     * @param userId 요청자 (본인 검증)
+     */
+    fun revoke(
+        publicCode: String,
+        userId: Long,
+    ) {
+        val contract = accessGuard.loadAccessible(publicCode, userId)
+        val request =
+            cancellationRepository.findFirstByContractIdAndStatus(
+                contract.id!!,
+                CancellationStatus.REQUESTED,
+            ) ?: throw ContractCancellationException.NotFound(publicCode)
+
+        if (request.requesterUserId != userId) {
+            throw ContractCancellationException.NotEligibleRequester(publicCode, userId)
+        }
+
+        val fromStatus = contract.status
+        val previousStatus = request.previousStatus
+
+        request.markRevoked(userId)
+        contract.markCancelRequestRevoked(previousStatus)
+
+        eventPublisher.publishEvent(
+            ContractStatusChangedEvent(
+                contractId = contract.id,
+                fromStatus = fromStatus,
+                toStatus = previousStatus,
+                actorUserId = userId,
+                reason = "요청자 revoke",
             ),
         )
     }
