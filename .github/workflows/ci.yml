@@ -41,11 +41,5 @@ jobs:
       - name: Strip local java.home from gradle.properties
         run: sed -i '/org.gradle.java.home/d' gradle.properties
 
-      - name: ktlint check
-        run: ./gradlew ktlintCheck
-
-      - name: detekt
-        run: ./gradlew detekt
-
-      - name: Test
-        run: ./gradlew test
+      - name: Verify (ktlint + detekt + test)
+        run: ./gradlew ktlintCheck detekt test

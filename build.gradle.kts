@@ -86,6 +86,11 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("user.timezone", "UTC")
+
+    // Test 병렬 실행 — Gradle 9.4 공식 권장 (availableProcessors / 2)
+    // 로컬 (8~16 vCPU) → 4~8 병렬, CI (2 vCPU) → 1 병렬 (자동 스케일)
+    // 각 fork 는 별도 JVM — @DataJpaTest 격리 유지 (@Transactional rollback + Flyway 는 시작 시 1회)
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 }
 
 ktlint {
