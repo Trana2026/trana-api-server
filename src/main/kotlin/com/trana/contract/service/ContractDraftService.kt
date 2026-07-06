@@ -3,7 +3,6 @@ package com.trana.contract.service
 import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractAttachmentStorage
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractStatus
@@ -13,7 +12,6 @@ import com.trana.contract.repository.ContractAttachmentRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.user.entity.AgeGroup
-import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -31,9 +29,9 @@ import org.springframework.transaction.annotation.Transactional
  *
  * 상태 전이 / 공유 / 서명은 [ContractStatusService] 책임 (W6 분리).
  *
- * consentType 결정 (가입 흐름과 일치):
- * - ADULT user → NOT_APPLICABLE
- * - MINOR user → GUARDIAN_REQUIRED (보호자 동의는 W4 별도 endpoint)
+ * 미성년 계약 생성 정책:
+ * - MINOR + guardianVerifiedAt == null → 403 (가입 보호자 PASS 미완료)
+ * - 계약 단계 보호자 동의는 항상 선택 — 별도 endpoint (/guardian-consent/request)
  */
 @Service
 @Transactional
@@ -48,37 +46,21 @@ class ContractDraftService(
     private val contractAttachmentRepository: ContractAttachmentRepository,
     private val attachmentStorage: ContractAttachmentStorage,
 ) {
-    fun createDraft(
-        creatorUserId: Long,
-        deliveryType: DeliveryType?,
-        creatorRole: PartyType?,
-        requestedConsentType: ConsentType?,
-    ): Contract {
+    fun createDraft(creatorUserId: Long): Contract {
         val user =
             userRepository.findById(creatorUserId).orElseThrow {
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$creatorUserId)")
             }
-
-        val consentType = resolveConsentType(user, requestedConsentType)
+        if (user.ageGroup == AgeGroup.MINOR && user.guardianVerifiedAt == null) {
+            throw ContractException.GuardianNotVerified(requireNotNull(user.id))
+        }
 
         val contract =
             Contract.createDraft(
                 publicCode = tokenGenerator.generatePublicCode(),
                 creatorUserId = creatorUserId,
-                deliveryType = deliveryType,
-                consentType = consentType,
             )
         val saved = contractRepository.save(contract)
-
-        if (creatorRole != null) {
-            val party =
-                ContractParty.create(
-                    contractId = saved.id!!,
-                    userId = creatorUserId,
-                    partyType = creatorRole,
-                )
-            contractPartyRepository.save(party)
-        }
 
         eventPublisher.publishEvent(
             ContractStatusChangedEvent(
@@ -92,35 +74,6 @@ class ContractDraftService(
 
         return saved
     }
-
-    @Suppress("ThrowsCount")
-    private fun resolveConsentType(
-        user: User,
-        requested: ConsentType?,
-    ): ConsentType =
-        when (user.ageGroup) {
-            AgeGroup.ADULT -> {
-                if (requested != null && requested != ConsentType.NOT_APPLICABLE) {
-                    throw ContractException.InvalidConsentType(
-                        "성인은 NOT_APPLICABLE 만 가능합니다 (requested=$requested)",
-                    )
-                }
-                ConsentType.NOT_APPLICABLE
-            }
-
-            AgeGroup.MINOR -> {
-                if (user.guardianVerifiedAt == null) {
-                    throw ContractException.GuardianNotVerified(user.id!!)
-                }
-                requested ?: throw ContractException.InvalidConsentType(
-                    "미성년은 consentType 명시 필수 (GUARDIAN_REQUIRED / NOT_APPLICABLE)",
-                )
-            }
-
-            null -> {
-                throw ContractException.InvalidConsentType("ageGroup 미설정 user 는 계약 생성 불가")
-            }
-        }
 
     @Transactional(readOnly = true)
     fun getDraft(

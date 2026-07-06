@@ -1,7 +1,6 @@
 package com.trana.contract.service
 
 import com.trana.contract.ContractException
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.repository.ContractPartyRepository
@@ -69,20 +68,6 @@ class ContractAccessGuard(
         return contract
     }
 
-    /** loadOwned + consentType=GUARDIAN_REQUIRED 검증 — 보호자 동의 흐름 진입 시 (refactor h). */
-    fun loadOwnedConsentRequired(
-        publicCode: String,
-        userId: Long,
-    ): Contract {
-        val contract = loadOwned(publicCode, userId)
-        if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
-            throw ContractException.InvalidConsentType(
-                "보호자 동의가 불필요한 계약입니다 (consentType=${contract.consentType})",
-            )
-        }
-        return contract
-    }
-
     /** 수정 가능 상태 검증 (IN_PROGRESS / DRAFT — updateDraft / softDelete 진입 시) */
     fun ensureEditable(contract: Contract) {
         if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
@@ -112,11 +97,14 @@ class ContractAccessGuard(
         if (contract.conditionSummary == null) missing.add("conditionSummary")
         if (contract.conditionDetails == null) missing.add("conditionDetails")
         if (contract.deliveryType == null) missing.add("deliveryType")
+        val creatorPartyExists =
+            contractPartyRepository.findFirstByContractIdAndUserId(
+                contract.id!!,
+                contract.creatorUserId,
+            ) != null
+        if (!creatorPartyExists) missing.add("creatorRole")
         if (missing.isNotEmpty()) {
             throw ContractException.NotReadyEligible(contract.publicCode, missing.joinToString(", "))
-        }
-        if (contract.consentType == ConsentType.GUARDIAN_REQUIRED && contract.guardianConsentAt == null) {
-            throw ContractException.GuardianConsentRequired(contract.publicCode)
         }
     }
 }

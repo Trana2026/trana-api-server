@@ -6,7 +6,6 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractRevisionRequestResponse
 import com.trana.contract.dto.ContractStatusLogResponse
-import com.trana.contract.dto.CreateContractDraftRequest
 import com.trana.contract.dto.CreatorSignRequest
 import com.trana.contract.dto.CreatorSignResponse
 import com.trana.contract.dto.ReceiverSignRequest
@@ -50,15 +49,8 @@ class ContractDraftController(
 ) : ContractDraftApi {
     override fun createDraft(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
-        @RequestBody request: CreateContractDraftRequest,
     ): ContractResponse {
-        val contract =
-            service.createDraft(
-                creatorUserId = userId,
-                deliveryType = request.deliveryType,
-                creatorRole = request.creatorRole,
-                requestedConsentType = request.consentType,
-            )
+        val contract = service.createDraft(creatorUserId = userId)
         return contract.toResponse()
     }
 
@@ -237,7 +229,6 @@ private fun Contract.toResponse(riskSignals: RiskSignalsResponse? = null): Contr
         status = status,
         disputeState = disputeState,
         deliveryType = deliveryType,
-        consentType = consentType,
         tradingPlatform = tradingPlatform,
         title = title,
         price = price,

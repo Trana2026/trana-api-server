@@ -1,10 +1,8 @@
 package com.trana.contract.repository
 
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractStatus
-import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.PartyType
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
@@ -31,8 +29,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-001",
                         creatorUserId = 1L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 contractRepository.save(contract)
 
@@ -48,8 +44,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-002",
                         creatorUserId = 1L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 contract.softDelete()
                 contractRepository.save(contract)
@@ -68,8 +62,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-003",
                         creatorUserId = 1L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 contractRepository.save(contract)
 
@@ -90,15 +82,11 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-101",
                         creatorUserId = 999_001L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val theirs =
                     Contract.createDraft(
                         publicCode = "TST-REPO-102",
                         creatorUserId = 999_002L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 contractRepository.saveAll(listOf(mine, theirs))
 
@@ -114,15 +102,11 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-103",
                         creatorUserId = 999_010L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val draft =
                     Contract.createDraft(
                         publicCode = "TST-REPO-104",
                         creatorUserId = 999_010L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 draft.updateDraft(
                     title = "아이폰",
@@ -145,15 +129,11 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-105",
                         creatorUserId = 999_011L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val deleted =
                     Contract.createDraft(
                         publicCode = "TST-REPO-106",
                         creatorUserId = 999_011L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 deleted.softDelete()
                 contractRepository.saveAll(listOf(active, deleted))
@@ -173,8 +153,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-201",
                         creatorUserId = 999_020L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val saved = contractRepository.save(contract)
                 val party =
@@ -202,8 +180,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-202",
                         creatorUserId = 999_030L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 iphone.updateDraft(
                     title = "아이폰 15 Pro",
@@ -216,8 +192,6 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-203",
                         creatorUserId = 999_030L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 galaxy.updateDraft(
                     title = "갤럭시 S24",
@@ -245,15 +219,11 @@ class ContractRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-REPO-204",
                         creatorUserId = 999_040L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val titled =
                     Contract.createDraft(
                         publicCode = "TST-REPO-205",
                         creatorUserId = 999_040L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 titled.updateDraft(
                     title = "아이폰 15 Pro",

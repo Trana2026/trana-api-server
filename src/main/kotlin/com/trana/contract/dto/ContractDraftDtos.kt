@@ -1,6 +1,5 @@
 package com.trana.contract.dto
 
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DeliveryType
 import com.trana.contract.entity.DisputeState
@@ -14,32 +13,6 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
 import java.time.Instant
-
-@Schema(
-    description = """
-계약 DRAFT 생성 요청 — 세 필드 모두 nullable (PATCH 로 채울 수 있음).
-
-흐름별 권장:
-- 성인: 한 번에 deliveryType + creatorRole 같이 전송 (consentType 생략 가능 → NOT_APPLICABLE 자동)
-- 미성년 (a 동의 요청): consentType=GUARDIAN_REQUIRED 만 먼저, role/deliveryType 은 보호자 동의 후 PATCH
-- 미성년 (b 동의 없이 진행): consentType=NOT_APPLICABLE 만 먼저, role/deliveryType 은 이어서 PATCH
-
-검증:
-- 성인이 consentType=GUARDIAN_REQUIRED 보내면 400
-- 미성년이 guardianVerifiedAt=null 이면 403 (가입 보호자 eKYC 미완료)
-  """,
-)
-data class CreateContractDraftRequest(
-    @field:Schema(description = "거래 방식 (대면 / 택배) — 생략 가능, 이후 PATCH 로 채움", example = "DIRECT")
-    val deliveryType: DeliveryType? = null,
-    @field:Schema(description = "작성자 본인의 역할 (SELLER / BUYER) — 생략 가능, 이후 PATCH 로 채움", example = "SELLER")
-    val creatorRole: PartyType? = null,
-    @field:Schema(
-        description = "보호자 동의 유형. 성인은 생략 또는 NOT_APPLICABLE. 미성년은 GUARDIAN_REQUIRED / NOT_APPLICABLE 명시.",
-        example = "GUARDIAN_REQUIRED",
-    )
-    val consentType: ConsentType? = null,
-)
 
 @Schema(description = "계약 DRAFT 부분 수정 요청 — null 인 필드는 변경 없음")
 data class UpdateContractDraftRequest(
@@ -84,8 +57,8 @@ data class UpdateContractDraftRequest(
 data class RiskSignalsResponse(
     @field:Schema(
         description =
-            "상대방 미성년 creator + 본 계약에서 보호자 동의 안 받은 상태 — " +
-                "receiver 화면 경고 표시. (creator 측에서 본 receiver 보호자 동의는 backend 가 서명 시 강제)",
+            "상대방이 미성년 + 본 계약 단계 보호자 동의 미완료 (양방향) — 서명 팝업 경고 표시. " +
+                "계약 단계 보호자 동의는 항상 선택 — 미완료여도 서명 가능.",
         example = "false",
     )
     val guardianNotConsented: Boolean,
@@ -125,8 +98,6 @@ data class ContractResponse(
     val disputeState: DisputeState,
     @field:Schema(description = "거래 방식 (IN_PROGRESS 단계에서 미정 가능 — null). markReady 시점에 NOT NULL 강제.")
     val deliveryType: DeliveryType?,
-    @field:Schema(description = "보호자 동의 유형")
-    val consentType: ConsentType,
     @field:Schema(description = "거래 발견 플랫폼", example = "당근마켓")
     val tradingPlatform: String?,
     val title: String?,
@@ -135,7 +106,7 @@ data class ContractResponse(
     val conditionDetails: String?,
     @field:Schema(description = "보증 기간 (일)", example = "3")
     val warrantyPeriodDays: Int,
-    @field:Schema(description = "보호자 동의 완료 시각 (미성년 계약 + 동의 완료 시에만 채워짐)")
+    @field:Schema(description = "creator 미성년의 계약 단계 보호자 동의 완료 시각 (선택 — 미완료 시 null)")
     val guardianConsentAt: Instant?,
     @field:Schema(description = "리비전 버전 (W5+)", example = "1")
     val version: Int,

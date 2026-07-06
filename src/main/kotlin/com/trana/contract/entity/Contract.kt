@@ -18,10 +18,10 @@ import java.time.Instant
  *
  * - 작성/수정/삭제 권한: creatorUserId 만 (DRAFT 단계)
  * - 상태: status × disputeState 직교 모델
- * - 미성년 분기: consentType + guardianConsentAt
+ * - 미성년 창건자 계약 단계 보호자 동의 (선택): guardianId + guardianConsentAt (receiver 는 ContractParty)
  *
  * 흐름 (W4~W6):
- * - createDraft → IN_PROGRESS 빈 row 생성 (delivery/consent 만 결정)
+ * - createDraft → IN_PROGRESS 빈 row 생성 (delivery 만 결정)
  * - updateDraft → 사진/AI 추출 후 필드 채움.
  *   4 필드 (title/price/conditionSummary/conditionDetails) 완성 시 자동 DRAFT,
  *   하나라도 비면 자동 IN_PROGRESS
@@ -41,7 +41,6 @@ import java.time.Instant
  * - DRAFT ↔ READY 전이는 markReady / markRevertToDraft 만 (Service 가 사전 검증, Entity 가 defense-in-depth)
  * - markReady 는 pdfS3Key + sha256 필수 (READY 는 항상 PDF 존재)
  * - revert 시 pdfS3Key/contentHash/pdfGeneratedAt 클리어 (S3 옛 버전은 Versioning 보존)
- * - GUARDIAN_REQUIRED 인데 guardianConsentAt=null 이면 READY 진입 금지
  * - SHARED 진입 후 본문 변경 불가 (W6 — 공유 후 수정 불가 정책)
  */
 @Entity
@@ -57,9 +56,6 @@ class Contract(
     var deliveryType: DeliveryType? = null,
     @Column(name = "trading_platform", length = 50)
     var tradingPlatform: String? = null,
-    @Enumerated(EnumType.STRING)
-    @Column(name = "consent_type", nullable = false, length = 30)
-    var consentType: ConsentType,
     @Column(name = "title", length = 200)
     var title: String? = null,
     @Column(name = "price")
@@ -172,10 +168,11 @@ class Contract(
             conditionDetails != null &&
             tradingPlatform != null
 
+    /**
+     * 미성년의 계약 단계 보호자 동의 (항상 선택 — role 결정 전에도 진행 가능).
+     * receiver 미성년은 [ContractParty.markGuardianConsented] 사용.
+     */
     fun markGuardianConsented(boundGuardianId: Long) {
-        check(consentType == ConsentType.GUARDIAN_REQUIRED) {
-            "GUARDIAN_REQUIRED 계약만 보호자 동의 가능"
-        }
         check(guardianConsentAt == null) { "이미 보호자 동의 완료된 계약" }
         this.guardianId = boundGuardianId
         this.guardianConsentAt = Instant.now()
@@ -194,9 +191,6 @@ class Contract(
         check(conditionSummary != null) { "conditionSummary 미입력" }
         check(conditionDetails != null) { "conditionDetails 미입력" }
         check(tradingPlatform != null) { "tradingPlatform 미입력 — AI 추출 또는 수동 입력 필요" }
-        if (consentType == ConsentType.GUARDIAN_REQUIRED) {
-            check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
-        }
         this.status = ContractStatus.READY
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
@@ -260,7 +254,7 @@ class Contract(
      * - status REVISION_REQUESTED → SHARED → 수신자에게 알림톡 재발송 (Service 책임)
      *
      * 필수 필드 invariant: markReady 와 동일 검증
-     * (title/price/conditionSummary/conditionDetails/tradingPlatform + GUARDIAN_REQUIRED 면 동의 완료).
+     * (title/price/conditionSummary/conditionDetails/tradingPlatform).
      */
     fun markReshared(
         pdfS3Key: String,
@@ -275,9 +269,6 @@ class Contract(
         check(conditionSummary != null) { "conditionSummary 미입력" }
         check(conditionDetails != null) { "conditionDetails 미입력" }
         check(tradingPlatform != null) { "tradingPlatform 미입력" }
-        if (consentType == ConsentType.GUARDIAN_REQUIRED) {
-            check(guardianConsentAt != null) { "GUARDIAN_REQUIRED 인데 보호자 동의 미완료" }
-        }
         this.status = ContractStatus.SHARED
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
@@ -388,14 +379,10 @@ class Contract(
         fun createDraft(
             publicCode: String,
             creatorUserId: Long,
-            deliveryType: DeliveryType? = null,
-            consentType: ConsentType,
         ): Contract =
             Contract(
                 publicCode = publicCode,
                 creatorUserId = creatorUserId,
-                deliveryType = deliveryType,
-                consentType = consentType,
             )
     }
 }
@@ -416,5 +403,3 @@ enum class ContractStatus {
 enum class DisputeState { NONE, REPORTED }
 
 enum class DeliveryType { DIRECT, SHIPPING }
-
-enum class ConsentType { GUARDIAN_REQUIRED, NONE, NOT_APPLICABLE }

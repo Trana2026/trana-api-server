@@ -1,10 +1,8 @@
 package com.trana.contract.repository
 
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
-import com.trana.contract.entity.DeliveryType
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -30,8 +28,6 @@ class ContractStatusLogRepositoryTest
                     Contract.createDraft(
                         publicCode = "TST-LOG-001",
                         creatorUserId = 999_060L,
-                        deliveryType = DeliveryType.DIRECT,
-                        consentType = ConsentType.NONE,
                     )
                 val contractId = contractRepository.save(contract).id!!
 

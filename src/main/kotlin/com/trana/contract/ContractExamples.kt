@@ -3,33 +3,6 @@ package com.trana.contract
 @Suppress("LargeClass")
 internal object ContractExamples {
     // ───── 진입 (eligibility / 보호자 동의 링크) ─────
-
-    const val ELIGIBILITY_ADULT = """
-              {
-                "ageGroup": "ADULT",
-                "consentRequired": false,
-                "consentType": "NOT_APPLICABLE"
-              }
-          """
-
-    const val ELIGIBILITY_MINOR_PENDING = """
-              {
-                "ageGroup": "MINOR",
-                "consentRequired": true,
-                "consentType": "GUARDIAN_REQUIRED",
-                "guardianConsentAt": null
-              }
-          """
-
-    const val ELIGIBILITY_MINOR_CONSENTED = """
-              {
-                "ageGroup": "MINOR",
-                "consentRequired": false,
-                "consentType": "GUARDIAN_REQUIRED",
-                "guardianConsentAt": "2026-05-20T10:30:00Z"
-              }
-          """
-
     const val GUARDIAN_CONSENT_LINK_CREATED = """
               {
                 "token": "V1StGXR8_Z5jdHi6B-myT",
@@ -78,40 +51,19 @@ internal object ContractExamples {
                   "type": "about:blank",
                   "title": "CONTRACT_400_CONSENT_TYPE",
                   "status": 400,
-                  "detail": "보호자 동의가 불필요한 계약입니다 (consentType=NOT_APPLICABLE)",
+                  "detail": "계약 보호자 동의 처리 중 부적합한 요청입니다 (예: 성인 사용자 호출 / 잘못된 토큰 purpose)",
                   "code": "CONTRACT_400_CONSENT_TYPE",
                   "timestamp": "2026-05-20T11:00:00Z"
                 }
             """
 
     // ───── DRAFT 생성 / 수정 / 삭제 ─────
-
-    const val DRAFT_CREATE_REQUEST_ADULT = """
-              {
-                "creatorRole": "SELLER",
-                "deliveryType": "DIRECT"
-              }
-          """
-
-    const val DRAFT_CREATE_REQUEST_MINOR_GUARDIAN = """
-              {
-                "consentType": "GUARDIAN_REQUIRED"
-              }
-          """
-
-    const val DRAFT_CREATE_REQUEST_MINOR_NO_CONSENT = """
-              {
-                "consentType": "NOT_APPLICABLE"
-              }
-          """
-
     const val DRAFT_CREATE_RESPONSE = """
                 {
                   "publicCode": "Vh7sK2x9Pq3R",
                   "status": "IN_PROGRESS",
                   "disputeState": "NONE",
                   "deliveryType": "DIRECT",
-                  "consentType": "NOT_APPLICABLE",
                   "title": null,
                   "price": null,
                   "conditionSummary": null,
@@ -123,25 +75,6 @@ internal object ContractExamples {
                   "updatedAt": "2026-05-20T10:00:00Z"
                 }
             """
-
-    const val DRAFT_CREATE_RESPONSE_MINOR_PLACEHOLDER = """
-              {
-                "publicCode": "Vh7sK2x9Pq3R",
-                "status": "IN_PROGRESS",
-                "disputeState": "NONE",
-                "deliveryType": null,
-                "consentType": "GUARDIAN_REQUIRED",
-                "title": null,
-                "price": null,
-                "conditionSummary": null,
-                "conditionDetails": null,
-                "warrantyPeriodDays": 3,
-                "guardianConsentAt": null,
-                "version": 1,
-                "createdAt": "2026-05-31T10:00:00Z",
-                "updatedAt": "2026-05-31T10:00:00Z"
-              }
-          """
 
     const val DRAFT_UPDATE_REQUEST = """
               {
@@ -294,7 +227,6 @@ internal object ContractExamples {
                   "status": "DRAFT",
                   "disputeState": "NONE",
                   "deliveryType": "DIRECT",
-                  "consentType": "NOT_APPLICABLE",
                   "title": "에어팟 프로 2세대",
                   "price": 180000,
                   "conditionSummary": "사용감 적음",
@@ -435,17 +367,6 @@ internal object ContractExamples {
               }
           """
 
-    const val GUARDIAN_CONSENT_REQUIRED = """
-              {
-                "type": "about:blank",
-                "title": "CONTRACT_409_GUARDIAN_REQUIRED",
-                "status": 409,
-                "detail": "보호자 동의가 완료되지 않은 계약입니다 (publicCode=Vh7sK2x9Pq3R)",
-                "code": "CONTRACT_409_GUARDIAN_REQUIRED",
-                "timestamp": "2026-05-20T10:00:00Z"
-              }
-          """
-
     const val AI_IMAGE_COUNT_INVALID = """
               {
                 "type": "about:blank",
@@ -465,7 +386,6 @@ internal object ContractExamples {
                     "status": "READY",
                     "disputeState": "NONE",
                     "deliveryType": "DIRECT",
-                    "consentType": "NOT_APPLICABLE",
                     "title": "에어팟 프로 2세대",
                     "price": 180000,
                     "conditionSummary": "사용감 적음",
@@ -535,7 +455,6 @@ internal object ContractExamples {
                       "status": "SHARED",
                       "disputeState": "NONE",
                       "deliveryType": "DIRECT",
-                      "consentType": "NOT_APPLICABLE",
                       "title": "에어팟 프로 2세대",
                       "price": 180000,
                       "conditionSummary": "사용감 적음",
@@ -579,7 +498,6 @@ internal object ContractExamples {
                       "status": "REVISION_REQUESTED",
                       "disputeState": "NONE",
                       "deliveryType": "DIRECT",
-                      "consentType": "NOT_APPLICABLE",
                       "title": "에어팟 프로 2세대",
                       "price": 180000,
                       "conditionSummary": "사용감 적음",
@@ -642,7 +560,6 @@ internal object ContractExamples {
                         "status": "SHARED",
                         "disputeState": "NONE",
                         "deliveryType": "DIRECT",
-                        "consentType": "NOT_APPLICABLE",
                         "title": "에어팟 프로 2세대",
                         "price": 180000,
                         "conditionSummary": "사용감 적음",
@@ -675,7 +592,6 @@ internal object ContractExamples {
                         "status": "SHARED",
                         "disputeState": "NONE",
                         "deliveryType": "DIRECT",
-                        "consentType": "NOT_APPLICABLE",
                         "title": "에어팟 프로 2세대 (수정됨)",
                         "price": 150000,
                         "conditionSummary": "사용감 적음",

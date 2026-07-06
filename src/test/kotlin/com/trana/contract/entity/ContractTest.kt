@@ -5,16 +5,11 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class ContractTest {
-    private fun draftContract(
-        publicCode: String = "TST-CTR-FIX",
-        consentType: ConsentType = ConsentType.NONE,
-    ): Contract {
+    private fun draftContract(publicCode: String = "TST-CTR-FIX"): Contract {
         val contract =
             Contract.createDraft(
                 publicCode = publicCode,
                 creatorUserId = 1L,
-                deliveryType = DeliveryType.DIRECT,
-                consentType = consentType,
             )
         contract.updateDraft(
             title = "아이폰 15 Pro",
@@ -65,8 +60,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-001",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
 
             Assertions.assertEquals(ContractStatus.IN_PROGRESS, contract.status)
@@ -83,8 +76,7 @@ class ContractTest {
 
             Assertions.assertEquals("TST-CTR-001", contract.publicCode)
             Assertions.assertEquals(1L, contract.creatorUserId)
-            Assertions.assertEquals(DeliveryType.DIRECT, contract.deliveryType)
-            Assertions.assertEquals(ConsentType.NONE, contract.consentType)
+            Assertions.assertNull(contract.deliveryType)
         }
     }
 
@@ -96,8 +88,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-002",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
 
             contract.updateDraft(
@@ -122,8 +112,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-003",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
 
             contract.updateDraft(
@@ -148,8 +136,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-004",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
 
             contract.updateDraft(
@@ -176,8 +162,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-005",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
             contract.updateDraft(
                 title = "아이폰 15 Pro",
@@ -200,8 +184,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-006",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
                 )
             contract.softDelete()
 
@@ -235,21 +217,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-102",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
-                )
-
-            Assertions.assertThrows(IllegalStateException::class.java) {
-                contract.markReady(pdfS3Key = "fake-key", pdfSha256 = "fake-sha")
-            }
-        }
-
-        @Test
-        fun throwsWhenGuardianRequiredButNotConsented() {
-            val contract =
-                draftContract(
-                    publicCode = "TST-CTR-103",
-                    consentType = ConsentType.GUARDIAN_REQUIRED,
                 )
 
             Assertions.assertThrows(IllegalStateException::class.java) {
@@ -262,7 +229,6 @@ class ContractTest {
             val contract =
                 draftContract(
                     publicCode = "TST-CTR-104",
-                    consentType = ConsentType.GUARDIAN_REQUIRED,
                 )
             contract.markGuardianConsented(boundGuardianId = 42L)
 
@@ -285,8 +251,6 @@ class ContractTest {
                 Contract.createDraft(
                     publicCode = "TST-CTR-201",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.GUARDIAN_REQUIRED,
                 )
 
             contract.markGuardianConsented(boundGuardianId = 99L)
@@ -296,28 +260,11 @@ class ContractTest {
         }
 
         @Test
-        fun throwsWhenConsentTypeIsNone() {
-            val contract =
-                Contract.createDraft(
-                    publicCode = "TST-CTR-202",
-                    creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.NONE,
-                )
-
-            Assertions.assertThrows(IllegalStateException::class.java) {
-                contract.markGuardianConsented(boundGuardianId = 99L)
-            }
-        }
-
-        @Test
         fun throwsWhenAlreadyConsented() {
             val contract =
                 Contract.createDraft(
                     publicCode = "TST-CTR-203",
                     creatorUserId = 1L,
-                    deliveryType = DeliveryType.DIRECT,
-                    consentType = ConsentType.GUARDIAN_REQUIRED,
                 )
             contract.markGuardianConsented(boundGuardianId = 99L)
 

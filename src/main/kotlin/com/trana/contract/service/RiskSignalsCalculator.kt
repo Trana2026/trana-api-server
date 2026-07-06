@@ -2,6 +2,7 @@ package com.trana.contract.service
 
 import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.entity.Contract
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.dispute.repository.DisputeRecordRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
@@ -13,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional
  * 서명 시 위험 신호 + 거래 상대방 신뢰 정보 계산.
  *
  * 위험 신호:
- * - guardianNotConsented : 상대 미성년 creator + contract.guardianConsentAt == null
- *                          (NOT_APPLICABLE 또는 GUARDIAN_REQUIRED 미동의)
+ * - guardianNotConsented : 상대 미성년 + 본 계약 단계 보호자 동의 미완료 (양방향)
+ *                          counterpart=creator → contract.guardianConsentAt / receiver → party.guardianConsentAt
  * - hasReportHistory : 상대가 다른 계약에서 활성 신고 받은 적 있음
  * - trustScoreZero : 상대 trust_score == 0 ("주의 거래자" 배지, 명세 2.5.1)
  *
@@ -29,6 +30,7 @@ class RiskSignalsCalculator(
     private val counterpartyResolver: CounterpartyResolver,
     private val userRepository: UserRepository,
     private val disputeRecordRepository: DisputeRecordRepository,
+    private val contractPartyRepository: ContractPartyRepository,
 ) {
     @Transactional(readOnly = true)
     fun calculate(
@@ -47,17 +49,24 @@ class RiskSignalsCalculator(
     }
 
     /**
-     * "상대방이 미성년 creator + 본 계약에서 보호자 동의 안 받음" → true.
-     * 의도: 미성년이 NOT_APPLICABLE 자유 선택한 경우 receiver 화면에 경고 표시.
-     * - viewer 가 creator 면 counterpart 는 receiver → 항상 false (receiver 보호자 동의는 backend 가 서명 시 강제)
-     * - viewer 가 receiver 면 counterpart 는 creator → 미성년 + guardianConsentAt 비어있으면 true
+     * "상대방이 미성년 + 본 계약 단계 보호자 동의 미완료" → true (양방향).
+     * - counterpart=creator 미성년: contract.guardianConsentAt 확인 (계약 레벨)
+     * - counterpart=receiver 미성년: counterpartParty.guardianConsentAt 확인 (party 레벨)
+     * 계약 단계 보호자 동의는 항상 선택 — 미완료 시 상대에게 표기용.
      */
     private fun isGuardianNotConsented(
         contract: Contract,
         counterpart: User?,
-    ): Boolean =
-        counterpart != null &&
-            counterpart.id == contract.creatorUserId &&
-            counterpart.ageGroup == AgeGroup.MINOR &&
+    ): Boolean {
+        if (counterpart == null || counterpart.ageGroup != AgeGroup.MINOR) return false
+        return if (counterpart.id == contract.creatorUserId) {
             contract.guardianConsentAt == null
+        } else {
+            val counterpartParty =
+                contractPartyRepository
+                    .findAllByContractId(contract.id!!)
+                    .firstOrNull { it.userId == counterpart.id }
+            counterpartParty?.guardianConsentAt == null
+        }
+    }
 }

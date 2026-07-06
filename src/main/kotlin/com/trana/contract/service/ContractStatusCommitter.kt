@@ -112,10 +112,6 @@ class ContractStatusCommitter(
                 IllegalStateException("수신자 user 조회 실패 (userId=$userId)")
             }
 
-        if (receiver.ageGroup == AgeGroup.MINOR && myParty.guardianConsentAt == null) {
-            throw ContractException.GuardianConsentRequired(publicCode)
-        }
-
         return ReceiverSignPreview(
             contract = contract,
             partyType = myParty.partyType,
@@ -320,14 +316,6 @@ class ContractStatusCommitter(
                 ?: error("receiver party 없음 (contractId=$contractId, RECEIVER_SIGNED 인데 party 1개?)")
 
         validateUserReady(receiverParty.userId)
-
-        val receiverForGuardianCheck =
-            userRepository.findById(receiverParty.userId).orElseThrow {
-                IllegalStateException("수신자 user 조회 실패 (userId=${receiverParty.userId})")
-            }
-        if (receiverForGuardianCheck.ageGroup == AgeGroup.MINOR && receiverParty.guardianConsentAt == null) {
-            throw ContractException.GuardianConsentRequired(publicCode)
-        }
 
         val expectedTerms = termsLoader.load()
         val expectedIds = expectedTerms.map { it.id!! }.toSet()

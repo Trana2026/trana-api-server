@@ -3,7 +3,6 @@ package com.trana.contract.service
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.contract.ContractException
-import com.trana.contract.entity.ConsentType
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.repository.ContractPartyRepository
@@ -21,11 +20,12 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 /**
- * 미성년자 계약 보호자 동의 흐름.
+ * 미성년자 계약 보호자 동의 흐름 (항상 선택 — 미완료여도 서명 진행 가능, 상대에게 riskSignal 로 표기).
  *
  * 흐름:
- * 1. requestConsent(publicCode, minorUserId)
- *    - 미성년자가 본인 계약(GUARDIAN_REQUIRED + DRAFT + 미동의)에 대해 호출
+ * 1. requestConsent(publicCode, minorUserId) — creator 미성년 자기 계약 (role 결정 전에도 진행 가능)
+ *    requestPartyConsent(publicCode, minorUserId) — receiver 미성년 party
+ *    - IN_PROGRESS / DRAFT + 미동의 상태 대상
  *    - GuardianLinkService.createForContract 위임 → 토큰 발급
  *    - 응답 토큰을 보호자에게 공유 (URL 변환은 Controller 가 web base URL 결합)
  *
@@ -33,15 +33,11 @@ import java.time.Instant
  *    - 보호자가 web 단순 동의 (token URL 클릭 + 약관 동의 클릭) 시 호출
  *    - 토큰 검증 (active + purpose=CONTRACT_CONSENT)
  *    - 미성년 user 의 가입 단계 보호자 ID 자동 매핑 (identity_verifications.purpose=GUARDIAN + SUCCESS)
- *    - contract.markGuardianConsented(guardianId) + link.markUsed()
- *    - 매번 full eKYC 안 함 — 가입 단계 보호자 KYC 1회로 신원 검증 끝
+ *    - creator 는 contract.markGuardianConsented / receiver 는 party.markGuardianConsented
+ *    - 매번 full PASS 안 함 — 가입 단계 보호자 PASS 1회로 신원 검증 끝
  *
  * 트랜잭션:
- * - approveConsent 는 contract / link 양쪽 변경 → @Transactional 안에서 일관성 보장
- *
- * TODO (W4+):
- * - approve 시 audit (CONTRACT_GUARDIAN_CONSENT_APPROVED)
- * - 재발급 시 기존 active link 강제 만료 처리 (현재는 TTL 자연 만료 의존)
+ * - approveConsent 는 contract / party / link 변경 → @Transactional 안에서 일관성 보장
  */
 @Service
 @Transactional
@@ -54,13 +50,21 @@ class ContractGuardianConsentService(
     private val contractPartyRepository: ContractPartyRepository,
     private val userRepository: UserRepository,
 ) {
+    @Suppress("ThrowsCount")
     fun requestConsent(
         publicCode: String,
         minorUserId: Long,
     ): GuardianLink {
-        val contract = accessGuard.loadOwnedConsentRequired(publicCode, minorUserId)
+        val contract = accessGuard.loadOwned(publicCode, minorUserId)
         if (contract.status != ContractStatus.IN_PROGRESS && contract.status != ContractStatus.DRAFT) {
             throw ContractException.NotDraft(publicCode, contract.status.name)
+        }
+        val user =
+            userRepository.findById(minorUserId).orElseThrow {
+                IllegalStateException("계약 작성자 user 조회 실패 (userId=$minorUserId)")
+            }
+        if (user.ageGroup != AgeGroup.MINOR) {
+            throw ContractException.InvalidConsentType("성인은 보호자 동의가 불필요합니다")
         }
         if (contract.guardianConsentAt != null) {
             throw ContractException.GuardianConsentAlready(publicCode)
@@ -132,11 +136,6 @@ class ContractGuardianConsentService(
 
         val (consentedAt, targetType) =
             if (link.userId == contract.creatorUserId) {
-                if (contract.consentType != ConsentType.GUARDIAN_REQUIRED) {
-                    throw ContractException.InvalidConsentType(
-                        "보호자 동의가 불필요한 계약 (consentType=${contract.consentType})",
-                    )
-                }
                 if (contract.guardianConsentAt != null) {
                     throw ContractException.GuardianConsentAlready(contract.publicCode)
                 }

@@ -12,8 +12,8 @@ import com.trana.common.exception.ErrorCode
  * - AlreadyDeleted: soft delete 된 계약 접근
  * - MaxAttachments: 사진 7장 초과 등록 시도
  * - AttachmentNotFound: 첨부 id 매칭 실패
- * - InvalidConsentType: 성인이 GUARDIAN_REQUIRED 또는 미성년이 NOT_APPLICABLE 같은 모순
- * - GuardianConsentRequired: 미성년 GUARDIAN_REQUIRED 인데 guardianConsentAt 없음
+ * - InvalidConsentType: 계약 보호자 동의 처리 중 부적합 (성인 요청 / 잘못된 토큰 purpose 등)
+ * - GuardianConsentRequired: 계약 보호자 동의 승인 시 미성년의 가입 단계 보호자 verification 매핑 실패
  * - GuardianConsentAlready: 이미 보호자 동의 완료 상태에서 재요청
  * - AiExtractionFailed: OpenAI 호출 실패 (5xx / timeout)
  * - AiResponseInvalid: OpenAI 응답 JSON 파싱 / schema 검증 실패
@@ -78,7 +78,7 @@ sealed class ContractException(
         reason: String,
     ) : ContractException(
             ErrorCode.CONTRACT_INVALID_CONSENT_TYPE,
-            "계약 생성 시 보호자 동의 유형이 올바르지 않습니다: $reason",
+            "계약 보호자 동의 처리 중 부적합한 요청입니다: $reason",
         )
 
     class GuardianConsentRequired(

@@ -25,16 +25,16 @@ interface ContractGuardianConsentApi {
         operationId = "contractGuardianConsentRequest",
         summary = "보호자 동의 링크 발급 (미성년자)",
         description = """
-본인 계약(GUARDIAN_REQUIRED + DRAFT + 미동의)에 대해 보호자 동의용 토큰 발급.
+본인 미성년 계약 (IN_PROGRESS / DRAFT + 미동의) 에 대해 보호자 동의용 토큰 발급 (항상 선택 — 미완료여도 서명 가능).
 
 흐름:
 - 응답 verifyUrl 을 카카오톡/SMS 로 보호자에게 공유
-- 보호자가 trana-web-guardian 에서 토큰으로 KYC 진행
-- Compare SUCCESS 후 보호자가 /guardian-consent/approve 호출
+- 보호자가 trana-web 에서 토큰 URL 진입 → 약관 동의 → /guardian-consent/approve 호출
+- approve 시 보호자 신원은 미성년의 가입 단계 보호자 PASS verification 자동 매핑 (매번 full PASS 안 함)
 
 주의:
 - 재발급 가능 (기존 active 토큰 강제 만료 X — TTL 자연 만료)
-- 성인 계약(consentType=NOT_APPLICABLE) 호출은 400
+- 성인 호출은 400 InvalidConsentType
               """,
     )
     @SecurityRequirement(name = "bearerAuth")
@@ -54,7 +54,7 @@ interface ContractGuardianConsentApi {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "보호자 동의가 불필요한 계약",
+                description = "성인 호출 (보호자 동의 불필요)",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
@@ -219,7 +219,7 @@ interface ContractGuardianConsentApi {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "토큰 purpose 잘못됨 또는 계약이 NOT_APPLICABLE",
+                description = "토큰 purpose 잘못됨 (CONTRACT_CONSENT 이외)",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),

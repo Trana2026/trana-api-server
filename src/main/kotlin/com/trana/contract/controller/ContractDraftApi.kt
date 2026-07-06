@@ -8,7 +8,6 @@ import com.trana.contract.dto.ContractPdfDownloadResponse
 import com.trana.contract.dto.ContractResponse
 import com.trana.contract.dto.ContractRevisionRequestResponse
 import com.trana.contract.dto.ContractStatusLogResponse
-import com.trana.contract.dto.CreateContractDraftRequest
 import com.trana.contract.dto.CreatorSignRequest
 import com.trana.contract.dto.CreatorSignResponse
 import com.trana.contract.dto.ReceiverSignRequest
@@ -50,19 +49,18 @@ interface ContractDraftApi {
         operationId = "contractCreateDraft",
         summary = "계약 DRAFT 생성",
         description = """
-계약 placeholder (IN_PROGRESS) 생성. 본인을 SELLER/BUYER 로 등록할 수도 있고 (성인 흐름), 역할/거래방식 없이 빈 IN_PROGRESS 만 만들 수도 있음 (미성년 임시저장 흐름).
+계약 placeholder (IN_PROGRESS) 생성. 빈 body 로 시작하는 게 기본. 원한다면 body 에 미리 담아도 됨 (모두 nullable).
 
-흐름:
-- JWT 인증 필요
-- consentType 명시: 성인은 생략 또는 NOT_APPLICABLE. 미성년은 명시 필수 (GUARDIAN_REQUIRED / NOT_APPLICABLE)
-- 미성년이 GUARDIAN_REQUIRED → 이어서 /guardian-consent endpoint 로 보호자 토큰 발급 → 보호자 full eKYC + 약관 동의 → guardianConsentAt 채움 → 역할 선택 PATCH → 본문 PATCH → markReady
-- 미성년이 NOT_APPLICABLE → 바로 역할 선택 PATCH → 본문 PATCH → markReady
-- 성인 → 한 번에 deliveryType + creatorRole 같이 전송 (consentType 생략 가능) → 본문 PATCH → markReady
+UI 흐름 (성인/미성년 공통):
+1. POST /v1/contracts (빈 body)
+2. (미성년만, 선택) POST /guardian-consent/request → 보호자 web 동의
+3. PATCH /v1/contracts/{publicCode} { "creatorRole": "SELLER" | "BUYER" }
+4. PATCH /v1/contracts/{publicCode} { title, price, conditionSummary, conditionDetails, tradingPlatform, deliveryType }
+5. POST /v1/contracts/{publicCode}/ready → SHARED
 
 검증:
-- 미성년 + guardianVerifiedAt=null → 403 (가입 보호자 eKYC 미완료, 계약 생성 자격 없음)
-- 성인 + consentType=GUARDIAN_REQUIRED → 400
-- 미성년 + consentType=null → 400 (명시 필수)
+- 미성년 + guardianVerifiedAt=null → 403 (가입 보호자 PASS 미완료)
+- 미성년 계약 단계 보호자 동의는 항상 선택 — 미완료여도 서명 가능, 상대에게 riskSignal 로 표기
               """,
     )
     @ApiResponses(
@@ -79,7 +77,7 @@ interface ContractDraftApi {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "요청 본문 validation 실패 또는 consentType 부적합 (성인이 GUARDIAN_REQUIRED, 미성년이 null 등)",
+                description = "요청 본문 validation 실패",
                 content = [Content(schema = Schema(implementation = ProblemDetailResponse::class))],
             ),
             ApiResponse(
@@ -106,10 +104,7 @@ interface ContractDraftApi {
     )
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun createDraft(
-        userId: Long,
-        @RequestBody @Valid request: CreateContractDraftRequest,
-    ): ContractResponse
+    fun createDraft(userId: Long): ContractResponse
 
     @Tag(name = "Contract Draft", description = "전자계약 작성 (CRUD)")
     @Operation(
@@ -327,7 +322,6 @@ IN_PROGRESS / DRAFT / REVISION_REQUESTED 3 상태에서 호출 가능. null 인 
 조건 (서버 검증):
 - DRAFT 상태여야 함 (이미 READY 면 409)
 - title / price / conditionSummary / conditionDetails 모두 채워져 있어야 함 (누락 시 400)
-- GUARDIAN_REQUIRED 면 guardianConsentAt 채워져 있어야 함 (미완료 시 409)
 
 효과:
 - contracts.status = READY
@@ -362,16 +356,12 @@ IN_PROGRESS / DRAFT / REVISION_REQUESTED 3 상태에서 호출 가능. null 인 
             ),
             ApiResponse(
                 responseCode = "409",
-                description = "DRAFT 가 아님 또는 보호자 동의 미완료",
+                description = "DRAFT 가 아님",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
                         examples = [
                             ExampleObject(name = "notDraft", value = ContractExamples.NOT_DRAFT),
-                            ExampleObject(
-                                name = "guardianRequired",
-                                value = ContractExamples.GUARDIAN_CONSENT_REQUIRED,
-                            ),
                         ],
                     ),
                 ],
@@ -728,7 +718,7 @@ REVISION_REQUESTED 상태 계약에서 생성자가 본문 수정 완료 → SHA
 전제:
 - 권한: creator only (수신자 호출 시 403 NotOwner)
 - 계약 status = REVISION_REQUESTED (그 외 상태면 409)
-- markReady 와 동일 필수 필드 검증 (title/price/conditionSummary/conditionDetails/tradingPlatform + GUARDIAN_REQUIRED 면 보호자 동의)
+- markReady 와 동일 필수 필드 검증 (title/price/conditionSummary/conditionDetails/tradingPlatform)
 
 효과:
 - PDF v1 → v1' (S3 Versioning 으로 옛 v1 보존, content_hash 갱신, version += 1)
@@ -785,7 +775,7 @@ REVISION_REQUESTED 상태 계약에서 생성자가 본문 수정 완료 → SHA
             ),
             ApiResponse(
                 responseCode = "409",
-                description = "REVISION_REQUESTED 상태 아님 또는 보호자 동의 미완료",
+                description = "REVISION_REQUESTED 상태 아님",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
@@ -793,10 +783,6 @@ REVISION_REQUESTED 상태 계약에서 생성자가 본문 수정 완료 → SHA
                             ExampleObject(
                                 name = "notRevisionRequested",
                                 value = ContractExamples.NOT_IN_REVISION_REQUESTED_STATE,
-                            ),
-                            ExampleObject(
-                                name = "guardianRequired",
-                                value = ContractExamples.GUARDIAN_CONSENT_REQUIRED,
                             ),
                         ],
                     ),
@@ -1442,16 +1428,12 @@ DRAFT 상태에서 markReady 전 PDF 미리보기. 같은 템플릿 / 동일 렌
             ),
             ApiResponse(
                 responseCode = "409",
-                description = "DRAFT 아님 또는 보호자 동의 미완료",
+                description = "DRAFT 아님",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),
                         examples = [
                             ExampleObject(name = "notDraft", value = ContractExamples.NOT_DRAFT),
-                            ExampleObject(
-                                name = "guardianRequired",
-                                value = ContractExamples.GUARDIAN_CONSENT_REQUIRED,
-                            ),
                         ],
                     ),
                 ],
