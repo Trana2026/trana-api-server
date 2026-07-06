@@ -1384,24 +1384,24 @@ S3 Versioning ON 이므로 markReady 마다 새 버전. 이 endpoint 는 항상 
     @Tag(name = "Contract PDF", description = "전자계약 PDF (preview / download)")
     @Operation(
         operationId = "contractPreviewPdf",
-        summary = "DRAFT 미리보기 PDF (markReady 전)",
+        summary = "DRAFT / REVISION_REQUESTED 미리보기 PDF",
         description = """
-DRAFT 상태에서 markReady 전 PDF 미리보기. 같은 템플릿 / 동일 렌더링 → 최종 PDF 와 시각적으로 100% 일치.
+DRAFT 또는 REVISION_REQUESTED 상태에서 PDF 미리보기 — 즉석 렌더링 (현재 필드값 그대로 반영). 같은 템플릿 / 동일 렌더링 → 최종 PDF 와 시각적으로 100% 일치.
 
 조건:
-- DRAFT 상태에서만 호출 가능. READY 이상은 `GET /pdf` 사용 (S3 영구 버전)
-- markReady 와 동일 검증: title / price / conditionSummary / conditionDetails 모두 채워져 있어야 함 (누락 시 400)
-- 미성년자: 보호자 동의 완료되어 있어야 함 (미완료 시 409)
+- DRAFT 또는 REVISION_REQUESTED 상태만 호출 가능 (그 외 409). READY 이상 저장본은 `GET /pdf` 사용
+- markReady 와 동일 필수 필드 검증 (title / price / conditionSummary / conditionDetails / tradingPlatform / deliveryType + creator role) — 누락 시 400
 - 본인 계약만 (403)
 
 특징:
 - S3 업로드 X — 매번 새로 렌더링 후 byte stream 직접 응답
+- REVISION_REQUESTED 에서 PATCH 후 즉시 반영된 PDF 재렌더링 (수정 완료 확인용)
 - response Content-Type: application/pdf
 - 브라우저/Flutter PDF viewer 에서 직접 표시 가능
 
 활용:
 - "수정하기" / "생성하기" 버튼 있는 미리보기 화면
-- 사용자가 markReady 클릭 직전 마지막 검토
+- 사용자가 markReady / reshare 클릭 직전 마지막 검토
                 """,
     )
     @ApiResponses(
@@ -1428,7 +1428,7 @@ DRAFT 상태에서 markReady 전 PDF 미리보기. 같은 템플릿 / 동일 렌
             ),
             ApiResponse(
                 responseCode = "409",
-                description = "DRAFT 아님",
+                description = "DRAFT / REVISION_REQUESTED 아님",
                 content = [
                     Content(
                         schema = Schema(implementation = ProblemDetailResponse::class),

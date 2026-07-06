@@ -58,6 +58,13 @@ class ContractAccessGuard(
         }
     }
 
+    /** preview 진입 검증 — DRAFT 또는 REVISION_REQUESTED 허용 (수정 요청 상태에서 PATCH 후 재미리보기 지원). */
+    fun ensurePreviewable(contract: Contract) {
+        if (contract.status != ContractStatus.DRAFT && contract.status != ContractStatus.REVISION_REQUESTED) {
+            throw ContractException.NotDraft(contract.publicCode, contract.status.name)
+        }
+    }
+
     /** loadOwned + IN_PROGRESS/DRAFT 검증 — 첨부 / AI 추출 진입 시 (refactor h). */
     fun loadOwnedEditable(
         publicCode: String,

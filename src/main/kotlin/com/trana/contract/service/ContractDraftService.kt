@@ -201,7 +201,7 @@ class ContractDraftService(
         userId: Long,
     ): ByteArray {
         val contract = accessGuard.loadOwned(publicCode, userId)
-        accessGuard.ensureDraft(contract)
+        accessGuard.ensurePreviewable(contract)
         accessGuard.validateReadyEligible(contract)
         return pdfRenderer.render(ContractPdfRenderInput(contract))
     }
