@@ -46,7 +46,7 @@ trana:
       image-url-ttl-minutes: 5
       timeout-seconds: 60
     web:
-      base-url: ${TRANA_CONTRACT_WEB_BASE_URL:https://trana.app}
+      base-url: ${TRANA_CONTRACT_WEB_BASE_URL:https://trana.kr}
   cors:
     allowed-origins:
       - https://dev-kyc.trana.kr

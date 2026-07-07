@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component
  *
  * - Guardian 도메인 URL (보호자 web) — guardianProperties.webBaseUrl 기반
  * - Contract 도메인 URL (모바일 앱 / 계약 web) — contractWebProperties.baseUrl 기반
- * - `openExternalBrowser=1` 카카오톡 인앱 브라우저 우회 일관 처리
  * - 이전 INVITATION_BASE_URL 하드코딩 + 4 곳 분산 빌딩 통합 → dev/prod 분기 가능
  */
 @Component
@@ -18,8 +17,7 @@ class WebUrlBuilder(
     private val contractWebProperties: ContractWebProperties,
 ) {
     /** 가입 단계 보호자 KYC 진입 URL (SIGNUP 토큰). */
-    fun guardianSignupVerify(token: String): String =
-        "${guardianProperties.webBaseUrl}/verify/$token?openExternalBrowser=1"
+    fun guardianSignupVerify(token: String): String = "${guardianProperties.webBaseUrl}/verify/$token"
 
     /** 계약 보호자 동의 진입 URL (CONTRACT_CONSENT 토큰). */
     fun guardianContractConsent(token: String): String = "${guardianProperties.webBaseUrl}/contract/$token"
