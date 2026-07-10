@@ -10,13 +10,16 @@
 -- ============================================================
 CREATE TABLE device_tokens
 (
-    id              BIGSERIAL PRIMARY KEY,
-    user_id         BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_encrypted TEXT        NOT NULL,
-    token_hash      VARCHAR(64) NOT NULL,
-    platform        VARCHAR(16) NOT NULL,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    last_used_at    TIMESTAMPTZ,
+    id               BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    token_encrypted  TEXT        NOT NULL,
+    token_hash       VARCHAR(64) NOT NULL,
+    platform         VARCHAR(16) NOT NULL,
+    device_model     VARCHAR(100),
+    location_city    VARCHAR(100),
+    location_country VARCHAR(2),
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at     TIMESTAMPTZ,
 
     CONSTRAINT chk_device_tokens_platform
         CHECK (platform IN ('ANDROID', 'IOS')),
@@ -43,3 +46,9 @@ COMMENT ON INDEX uq_device_tokens_hash IS
     '같은 단말이 재로그인해도 token_hash 동일 → row 1개 유지 (C-4 가 user_id 갱신 또는 delete+insert 결정)';
 COMMENT ON COLUMN device_tokens.last_used_at IS
     '마이페이지 기기 관리 "최근 활동 시각" — Flutter ping endpoint / FCM 발송 성공 시 갱신';
+COMMENT ON COLUMN device_tokens.device_model IS
+    'Flutter device_info_plus 로 식별한 기기 모델명 (예: "iPhone 15 Pro" / "SM-G998N"). 마이페이지 기기 관리 UX 노출용';
+COMMENT ON COLUMN device_tokens.location_city IS
+    'ipinfo.io 로 등록 시 IP → 도시 조회 (예: "Seoul"). 정확도 낮음 (VPN/proxy). 조회 실패 시 NULL';
+COMMENT ON COLUMN device_tokens.location_country IS
+    'ISO 3166-1 alpha-2 국가 코드 (예: "KR"). ipinfo.io country 필드';

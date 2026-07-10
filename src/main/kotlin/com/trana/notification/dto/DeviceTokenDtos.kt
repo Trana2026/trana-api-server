@@ -22,6 +22,14 @@ data class RegisterDeviceTokenRequest(
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
     val platform: DevicePlatform,
+    @field:Schema(
+        description =
+            "Flutter device_info_plus 로 식별한 기기 모델명. 마이페이지 기기 관리 UX 노출용. " +
+                "앱 이전 버전 호환 위해 optional — 미전송 시 목록에 모델명 안 뜸",
+        example = "iPhone 15 Pro",
+        nullable = true,
+    )
+    val deviceModel: String? = null,
 )
 
 @Schema(description = "FCM 디바이스 토큰 등록 응답 — 마이페이지 '현재 단말' 식별용 id 반환")
@@ -54,10 +62,30 @@ data class DeviceTokenSummaryResponse(
     val id: Long,
     @Schema(description = "단말 플랫폼", example = "ANDROID")
     val platform: DevicePlatform,
+    @Schema(
+        description = "Flutter 가 등록 시 전송한 기기 모델명. 앱 이전 버전 / 미전송 시 null",
+        example = "iPhone 15 Pro",
+        nullable = true,
+    )
+    val deviceModel: String?,
+    @Schema(
+        description = "ipinfo.io 로 등록 시 IP → 도시 조회 결과. 조회 실패 / 앱 이전 버전 시 null",
+        example = "Seoul",
+        nullable = true,
+    )
+    val locationCity: String?,
+    @Schema(
+        description = "ISO 3166-1 alpha-2 국가 코드. 조회 실패 / 앱 이전 버전 시 null",
+        example = "KR",
+        nullable = true,
+    )
+    val locationCountry: String?,
     @Schema(description = "등록 시각 (UTC)")
     val createdAt: Instant,
     @Schema(
-        description = "마지막 활동 시각 (앱 foreground 진입 시 Flutter 가 ping endpoint 호출). 등록 직후 발송 이력 없는 신규 단말은 null",
+        description =
+            "마지막 활동 시각 (앱 foreground 진입 시 Flutter 가 ping endpoint 호출). " +
+                "등록 직후 발송 이력 없는 신규 단말은 null",
         nullable = true,
     )
     val lastUsedAt: Instant?,

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -32,10 +33,22 @@ interface DeviceTokenApi {
 앱 최초 실행 또는 FCM 토큰 갱신 시 호출 (명세서 2.4.2 / 토큰 관리).
 
 동작 (멱등):
-- 같은 token_hash 의 기존 row + 같은 user → no-op
-- 같은 token_hash 의 기존 row + 다른 user → userId 갱신 (단말 재로그인)
-- 없으면 새 INSERT
+- 같은 token_hash 의 기존 row + 같은 user → no-op (deviceModel/location 갱신 X)
+- 같은 token_hash 의 기존 row + 다른 user → userId 갱신 (단말 재로그인, deviceModel/location 유지)
+- 없으면 새 INSERT — deviceModel + 서버가 IP → city/country 조회한 결과 함께 저장
 - token 은 AES-256-GCM 암호화 + SHA-256 hash (UNIQUE 매칭) 분리 저장
+
+응답:
+- 등록된 device_tokens.id 반환 → Flutter secure storage 에 저장 → GET 목록의 id 와 비교해 "현재 단말" 식별
+
+deviceModel:
+- Flutter device_info_plus 로 식별한 기기 모델명 (예: "iPhone 15 Pro", "Samsung Galaxy S24")
+- 앱 이전 버전 호환 위해 optional (미전송 시 목록에 모델명 안 뜸)
+
+location:
+- 서버가 X-Forwarded-For / remoteAddr → ipinfo.io 조회 (등록 시점 1회, 서버 처리)
+- 조회 실패 (rate limit / VPN / 사설 IP / API 장애) 시 city/country null — 등록 자체는 항상 성공
+- 정확도 낮음 (프론트 GPS 아님)
 
 multi-device 지원 — 한 user 가 여러 단말 (Android + iOS) 동시 등록 가능.
             """,
@@ -89,6 +102,7 @@ multi-device 지원 — 한 user 가 여러 단말 (Android + iOS) 동시 등록
     fun register(
         @Parameter(hidden = true) userId: Long,
         @Valid @RequestBody request: RegisterDeviceTokenRequest,
+        @Parameter(hidden = true) httpRequest: HttpServletRequest,
     ): RegisterDeviceTokenResponse
 
     @Operation(
@@ -151,11 +165,15 @@ multi-device 지원 — 한 user 가 여러 단말 (Android + iOS) 동시 등록
 마이페이지 "기기 관리" 화면용 본인 단말 목록 (등록순 desc).
 
 응답 필드:
-- id / platform / createdAt / lastUsedAt
+- id / platform / deviceModel / locationCity / locationCountry / createdAt / lastUsedAt
+
+deviceModel / locationCity / locationCountry:
+- 등록 시점 값 (register endpoint 참고). 이후 갱신 X — 재등록 (멱등) / reassign 시에도 유지
+- 앱 이전 버전 / ipinfo 조회 실패 시 null
 
 lastUsedAt: Flutter 가 앱 foreground 진입 시 ping endpoint 호출 → 갱신. 등록 직후 신규 단말은 null.
 
-"현재 단말" 식별은 응답에 노출 X — Flutter 가 자기 id 기억해서 비교 (강제 해제 confirm 다이얼로그로 실수 방어).
+"현재 단말" 식별은 응답에 노출 X — Flutter 가 register 응답의 id 를 secure storage 에 저장 → 이 목록의 id 와 비교 (강제 해제 confirm 다이얼로그로 실수 방어).
           """,
     )
     @ApiResponses(
