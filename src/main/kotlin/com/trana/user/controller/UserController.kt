@@ -3,6 +3,7 @@ package com.trana.user.controller
 import com.trana.user.dto.InquiryDetailResponse
 import com.trana.user.dto.InquirySummaryResponse
 import com.trana.user.dto.MeResponse
+import com.trana.user.dto.UpdateProfileRequest
 import com.trana.user.entity.User
 import com.trana.user.entity.UserInquiry
 import com.trana.user.service.UserInquiryService
@@ -22,6 +23,11 @@ class UserController(
     override fun getMe(
         @AuthenticationPrincipal userId: Long,
     ): MeResponse = userService.getById(userId).toMeResponse()
+
+    override fun updateProfile(
+        @AuthenticationPrincipal userId: Long,
+        request: UpdateProfileRequest,
+    ): MeResponse = userService.updateProfile(userId, request.email, request.gender).toMeResponse()
 
     override fun withdraw(
         @AuthenticationPrincipal userId: Long,

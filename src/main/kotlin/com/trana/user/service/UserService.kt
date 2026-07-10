@@ -5,6 +5,7 @@ import com.trana.audit.AuditLogger
 import com.trana.common.util.TokenGenerator
 import com.trana.trustscore.service.FraudUserHashService
 import com.trana.user.UserException
+import com.trana.user.dto.UpdateGenderValue
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.Gender
 import com.trana.user.entity.User
@@ -115,6 +116,38 @@ class UserService(
     ): User {
         val user = getById(userId)
         user.changePushEnabled(enabled)
+        return user
+    }
+
+    /**
+     * 마이페이지 정보 수정 (email / gender partial update).
+     *
+     * - email: null → 변경 X. 값 있으면 UNIQUE 검증 (본인 기존 값과 같으면 skip). WITHDRAWN 차단은 Entity.updateEmail 담당
+     * - gender: null → 변경 X. UpdateGenderValue.NONE → user.gender=null (미등록). MALE/FEMALE → 해당 값
+     *
+     * dirty checking 으로 자동 UPDATE.
+     */
+    fun updateProfile(
+        userId: Long,
+        email: String?,
+        gender: UpdateGenderValue?,
+    ): User {
+        val user = getById(userId)
+        if (email != null && email != user.email) {
+            if (userRepository.existsByEmail(email)) {
+                throw UserException.EmailAlreadyExists(email)
+            }
+            user.updateEmail(email)
+        }
+        gender?.let {
+            val newGender =
+                when (it) {
+                    UpdateGenderValue.MALE -> Gender.MALE
+                    UpdateGenderValue.FEMALE -> Gender.FEMALE
+                    UpdateGenderValue.NONE -> null
+                }
+            user.updateGender(newGender)
+        }
         return user
     }
 }

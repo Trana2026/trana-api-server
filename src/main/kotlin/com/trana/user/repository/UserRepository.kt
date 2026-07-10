@@ -36,4 +36,10 @@ interface UserRepository : JpaRepository<User, Long> {
         withdrawnAtThreshold: Instant,
         fraudReportReceivedCount: Int,
     ): List<User>
+
+    /**
+     * 마이페이지 이메일 수정 시 UNIQUE 충돌 사전 검증.
+     * WITHDRAWN user 는 email null 처리되므로 conflict 대상 아님 (naked existsByEmail 로 충분).
+     */
+    fun existsByEmail(email: String): Boolean
 }

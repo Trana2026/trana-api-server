@@ -22,6 +22,13 @@ sealed class UserException(
             message = "이미 탈퇴한 사용자입니다 (userId=$userId)",
         )
 
+    class EmailAlreadyExists(
+        email: String,
+    ) : UserException(
+            errorCode = ErrorCode.USER_EMAIL_ALREADY_EXISTS,
+            message = "이미 사용 중인 이메일입니다 (email=$email)",
+        )
+
     class InquiryNotFound(
         publicCode: String,
     ) : UserException(

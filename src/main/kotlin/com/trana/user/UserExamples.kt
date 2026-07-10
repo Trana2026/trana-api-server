@@ -30,4 +30,23 @@ object UserExamples {
     "pushEnabled": true
   }
   """
+
+    const val UPDATE_PROFILE_EMAIL_ONLY = """
+    {
+      "email": "new@example.com"
+    }
+    """
+
+    const val UPDATE_PROFILE_GENDER_NONE = """
+    {
+      "gender": "NONE"
+    }
+    """
+
+    const val UPDATE_PROFILE_BOTH = """
+    {
+      "email": "new@example.com",
+      "gender": "FEMALE"
+    }
+    """
 }

@@ -25,6 +25,7 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "users")
+@Suppress("TooManyFunctions")
 class User(
     @Column(name = "public_code", nullable = false, unique = true, length = 20)
     val publicCode: String,
@@ -132,6 +133,18 @@ class User(
     /** 마이페이지 푸시 토글 — PATCH /v1/users/me/push-enabled. */
     fun changePushEnabled(enabled: Boolean) {
         this.pushEnabled = enabled
+    }
+
+    /** 마이페이지 이메일 수정 — PATCH /v1/users/me/profile. UNIQUE 충돌 검증은 Service. */
+    fun updateEmail(newEmail: String) {
+        check(status == UserStatus.ACTIVE) { "탈퇴 사용자 email 변경 불가" }
+        this.email = newEmail
+    }
+
+    /** 마이페이지 성별 수정 — PATCH /v1/users/me/profile. null 은 UpdateGenderValue.NONE 매핑 ("미등록"). */
+    fun updateGender(newGender: Gender?) {
+        check(status == UserStatus.ACTIVE) { "탈퇴 사용자 gender 변경 불가" }
+        this.gender = newGender
     }
 
     /**
