@@ -17,10 +17,14 @@ import org.springframework.stereotype.Component
  */
 @Component
 class IpExtractor {
+    private val log = org.slf4j.LoggerFactory.getLogger(javaClass)
+
     fun extract(request: HttpServletRequest): String? {
         val xff = request.getHeader(HEADER_XFF)
+        val remoteAddr = request.remoteAddr
+        log.info("[IpExtractor] X-Forwarded-For='{}' remoteAddr='{}'", xff, remoteAddr)
         if (!xff.isNullOrBlank()) return xff.substringBefore(",").trim()
-        return request.remoteAddr
+        return remoteAddr
     }
 
     companion object {
