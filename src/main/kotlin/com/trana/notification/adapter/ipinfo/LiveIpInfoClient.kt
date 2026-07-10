@@ -56,7 +56,6 @@ class LiveIpInfoClient(
                         log.info("[IPINFO] bogon ip={} → null", ip)
                         null
                     } else {
-                        log.info("[IPINFO] lookup ip={} → city={} country={}", ip, it.city, it.country)
                         IpLocationResult(city = it.city, country = it.country)
                     }
                 }
