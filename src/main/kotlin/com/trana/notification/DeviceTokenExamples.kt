@@ -8,6 +8,12 @@ internal object DeviceTokenExamples {
             }
         """
 
+    const val REGISTER_RESPONSE = """
+              {
+                "id": 12
+              }
+          """
+
     const val UNREGISTER_REQUEST = """
             {
               "token": "dXr8...실제FCM토큰...AB12"

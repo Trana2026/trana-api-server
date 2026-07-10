@@ -24,6 +24,17 @@ data class RegisterDeviceTokenRequest(
     val platform: DevicePlatform,
 )
 
+@Schema(description = "FCM 디바이스 토큰 등록 응답 — 마이페이지 '현재 단말' 식별용 id 반환")
+data class RegisterDeviceTokenResponse(
+    @Schema(
+        description =
+            "등록된 device_tokens.id. Flutter 가 secure storage 에 저장 → GET 목록의 id 와 비교해 " +
+                "'현재 단말' 식별 (강제 해제 confirm UX). 같은 token 재등록 (멱등) 시에도 동일 id 반환",
+        example = "12",
+    )
+    val id: Long,
+)
+
 @Schema(description = "FCM 디바이스 토큰 해제 요청 본문")
 data class UnregisterDeviceTokenRequest(
     @field:NotBlank

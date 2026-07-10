@@ -5,6 +5,7 @@ import com.trana.notification.DeviceTokenExamples
 import com.trana.notification.dto.DeviceTokenSummaryResponse
 import com.trana.notification.dto.PingDeviceTokenRequest
 import com.trana.notification.dto.RegisterDeviceTokenRequest
+import com.trana.notification.dto.RegisterDeviceTokenResponse
 import com.trana.notification.dto.UnregisterDeviceTokenRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -50,7 +51,16 @@ multi-device 지원 — 한 user 가 여러 단말 (Android + iOS) 동시 등록
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "204", description = "등록 성공"),
+            ApiResponse(
+                responseCode = "200",
+                description = "등록 성공 — 등록된 device_tokens.id 반환",
+                content = [
+                    Content(
+                        schema = Schema(implementation = RegisterDeviceTokenResponse::class),
+                        examples = [ExampleObject(name = "register", value = DeviceTokenExamples.REGISTER_RESPONSE)],
+                    ),
+                ],
+            ),
             ApiResponse(
                 responseCode = "400",
                 description = "token 누락 / platform invalid",
@@ -75,12 +85,11 @@ multi-device 지원 — 한 user 가 여러 단말 (Android + iOS) 동시 등록
             ),
         ],
     )
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping
     fun register(
         @Parameter(hidden = true) userId: Long,
         @Valid @RequestBody request: RegisterDeviceTokenRequest,
-    )
+    ): RegisterDeviceTokenResponse
 
     @Operation(
         summary = "FCM 디바이스 토큰 해제",

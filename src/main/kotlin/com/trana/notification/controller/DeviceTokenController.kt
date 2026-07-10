@@ -3,6 +3,7 @@ package com.trana.notification.controller
 import com.trana.notification.dto.DeviceTokenSummaryResponse
 import com.trana.notification.dto.PingDeviceTokenRequest
 import com.trana.notification.dto.RegisterDeviceTokenRequest
+import com.trana.notification.dto.RegisterDeviceTokenResponse
 import com.trana.notification.dto.UnregisterDeviceTokenRequest
 import com.trana.notification.entity.DeviceToken
 import com.trana.notification.service.DeviceTokenService
@@ -21,8 +22,9 @@ class DeviceTokenController(
     override fun register(
         @AuthenticationPrincipal userId: Long,
         request: RegisterDeviceTokenRequest,
-    ) {
-        deviceTokenService.register(userId, request.token, request.platform)
+    ): RegisterDeviceTokenResponse {
+        val deviceToken = deviceTokenService.register(userId, request.token, request.platform)
+        return RegisterDeviceTokenResponse(id = deviceToken.id!!)
     }
 
     override fun unregister(
