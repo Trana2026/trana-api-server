@@ -1,5 +1,6 @@
--- V13: FCM 디바이스 토큰 도메인 (Phase C 시작)
--- - device_tokens: 사용자별 FCM 토큰 다중 등록 (multi-device 지원 — 명세서 2.4.5)
+-- V9: 알림 도메인 (device_tokens + notifications)
+-- - device_tokens: 사용자별 FCM 토큰 다중 등록 (multi-device — 명세서 2.4.5)
+-- - notifications: 앱 안 알림함 (목록/읽음/삭제)
 -- - token_encrypted (AES-256-GCM) + token_hash (SHA-256 hex 64자) 분리
 --   → 랜덤 IV 로 평문 매칭 불가 문제를 hash 보조 컬럼으로 해소 (identity.identifier_hash 동일 패턴)
 -- - platform CHECK = ANDROID | IOS (명세서 P 카테고리 OS 푸시만)
@@ -52,3 +53,38 @@ COMMENT ON COLUMN device_tokens.location_city IS
     'ipinfo.io 로 등록 시 IP → 도시 조회 (예: "Seoul"). 정확도 낮음 (VPN/proxy). 조회 실패 시 NULL';
 COMMENT ON COLUMN device_tokens.location_country IS
     'ISO 3166-1 alpha-2 국가 코드 (예: "KR"). ipinfo.io country 필드';
+
+-- ============================================================
+-- notifications
+-- ============================================================
+CREATE TABLE notifications
+(
+    id         BIGSERIAL PRIMARY KEY,
+    user_id    BIGINT        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    category   VARCHAR(32)   NOT NULL,
+    title      VARCHAR(200)  NOT NULL,
+    body       VARCHAR(1000) NOT NULL,
+    deep_link  VARCHAR(500),
+    read_at    TIMESTAMPTZ,
+    created_at TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_notifications_user_created
+    ON notifications (user_id, created_at DESC);
+
+COMMENT ON TABLE notifications IS
+    '앱 안 알림함 — user 별 알림 목록. push 발송 여부와 무관 저장 (pushEnabled=false 여도 리스트 노출). audit 성격 아님 (hard delete)';
+COMMENT ON COLUMN notifications.user_id IS
+    '알림 소유자 (ON DELETE CASCADE — 탈퇴 시 알림 자동 정리)';
+COMMENT ON COLUMN notifications.category IS
+    'CONTRACT (계약 서명/완료/수정 요청/취소 등). CHECK 제약 X — 코드 enum NotificationCategory 로만 제약, 카테고리 확장 유연';
+COMMENT ON COLUMN notifications.title IS
+    '알림 제목 — Flutter 리스트 카드 상단 (예: "새 계약서 도착")';
+COMMENT ON COLUMN notifications.body IS
+    '알림 본문 — Flutter 리스트 카드 하단 (예: "홍길동님이 서명을 요청했어요")';
+COMMENT ON COLUMN notifications.deep_link IS
+    'Flutter 앱 라우팅 URL (예: "trana://contracts/{publicCode}"). 리스트 탭 시 이동. null 이면 이동 X';
+COMMENT ON COLUMN notifications.read_at IS
+    '읽음 처리 시각 (null=미읽음). PATCH /v1/notifications/{id}/read 로 갱신 (idempotent — 이미 읽음이면 no-op)';
+COMMENT ON INDEX idx_notifications_user_created IS
+    '알림 리스트 최신순 페이징 (createdAt DESC 서버 강제)';

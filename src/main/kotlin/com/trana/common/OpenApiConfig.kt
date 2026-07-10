@@ -63,10 +63,7 @@ class OpenApiConfig {
                 "Terms",
                 "Consent",
                 "Auth",
-                "Apple Sign In",
-                "Identity",
                 "Identity PASS",
-                "Guardian Identity",
                 "Guardian Identity PASS",
                 "Guardian",
                 "User",
@@ -75,6 +72,7 @@ class OpenApiConfig {
                 "User Preference",
                 "Trust Score",
                 "Device Token",
+                "Notification",
                 "Contract Draft",
                 "Contract Attachment",
                 "Contract AI Extraction",
@@ -97,17 +95,6 @@ class OpenApiConfig {
     private fun sortPaths(openApi: io.swagger.v3.oas.models.OpenAPI) {
         val order =
             listOf(
-                // 성인 KYC (5-step)
-                "/v1/identity/id-card",
-                "/v1/identity/id-card/image",
-                "/v1/identity/verify-id-card",
-                "/v1/identity/phone",
-                "/v1/identity/face-compare",
-                // 보호자 KYC (4-step)
-                "/v1/identity/guardian/id-card",
-                "/v1/identity/guardian/id-card/image",
-                "/v1/identity/guardian/verify-id-card",
-                "/v1/identity/guardian/face-compare",
                 // PASS 표준창
                 "/v1/identity/pass/req-client-info",
                 "/v1/identity/pass/return",
@@ -148,6 +135,7 @@ class OpenApiConfig {
                 "/v1/users/**",
                 "/v1/auth/refresh",
                 "/v1/contracts/**",
+                "/v1/notifications/**",
             ).pathsToExclude(
                 "/v1/identity/guardian/**",
                 "/v1/contracts/*/guardian-consent",
@@ -168,6 +156,7 @@ class OpenApiConfig {
                 "/v1/identity/pass/**",
                 "/v1/users/**",
                 "/v1/contracts/**",
+                "/v1/notifications/**",
             ).addOpenApiCustomizer(sortingCustomizer)
             .build()
 }

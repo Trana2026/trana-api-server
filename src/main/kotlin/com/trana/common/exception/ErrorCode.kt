@@ -230,4 +230,11 @@ enum class ErrorCode(
         "TRUST_SCORE_409_NO_TICKET",
         "보유한 면제 티켓이 없습니다",
     ),
+
+    // === 알림 (NOTIFICATION_*) ===
+    NOTIFICATION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "NOTIFICATION_404",
+        "알림을 찾을 수 없습니다",
+    ),
 }
