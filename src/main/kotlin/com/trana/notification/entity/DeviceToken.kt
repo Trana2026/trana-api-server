@@ -34,6 +34,12 @@ class DeviceToken(
     @Enumerated(EnumType.STRING)
     @Column(name = "platform", nullable = false, length = 16)
     val platform: DevicePlatform,
+    @Column(name = "device_model", length = 100)
+    val deviceModel: String? = null,
+    @Column(name = "location_city", length = 100)
+    val locationCity: String? = null,
+    @Column(name = "location_country", length = 2)
+    val locationCountry: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

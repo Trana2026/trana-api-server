@@ -83,3 +83,5 @@ trana:
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}
+  ipinfo:
+    token: ${TRANA_IPINFO_TOKEN:}

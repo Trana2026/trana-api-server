@@ -68,5 +68,7 @@ trana:
          cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
   fcm:
        service-account-base64: <base64 인코딩한 firebase-adminsdk-xxx.json 한 줄 — 비워두면 Mock>
+  ipinfo:
+       token: <ipinfo.io API token — 비워두면 Mock (SPRING_PROFILES_ACTIVE 에 ipinfo-live 추가 시 실호출)>
   slack:
        webhook-url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX

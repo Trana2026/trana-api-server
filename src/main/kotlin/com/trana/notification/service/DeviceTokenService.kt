@@ -2,6 +2,7 @@ package com.trana.notification.service
 
 import com.trana.common.crypto.Sha256Hasher
 import com.trana.notification.DeviceTokenException
+import com.trana.notification.adapter.ipinfo.IpInfoClient
 import com.trana.notification.entity.DevicePlatform
 import com.trana.notification.entity.DeviceToken
 import com.trana.notification.repository.DeviceTokenRepository
@@ -14,20 +15,24 @@ import org.springframework.transaction.annotation.Transactional
 class DeviceTokenService(
     private val repository: DeviceTokenRepository,
     private val textEncryptor: TextEncryptor,
+    private val ipInfoClient: IpInfoClient,
 ) {
     /**
      * 디바이스 토큰 등록 (멱등).
      *
-     * - 같은 token_hash 기존 row + 같은 user → no-op
-     * - 같은 token_hash 기존 row + 다른 user → reassignTo (단말 재로그인)
-     * - 없으면 새 INSERT
+     * - 같은 token_hash 기존 row + 같은 user → no-op (deviceModel/location 갱신 X)
+     * - 같은 token_hash 기존 row + 다른 user → reassignTo (단말 재로그인, 마찬가지로 deviceModel/location 유지)
+     * - 없으면 새 INSERT (deviceModel + IP → city/country 조회 결과 함께 저장)
      *
-     * dirty checking 으로 reassignTo 후 자동 UPDATE — 명시 save 불필요.
+     * ip 는 nullable — IpExtractor 로 X-Forwarded-For / remoteAddr 파싱 실패 시 null 허용.
+     * IpInfoClient 조회는 실패해도 null 반환 → 등록 흐름 자체는 항상 성공.
      */
     fun register(
         userId: Long,
         token: String,
         platform: DevicePlatform,
+        deviceModel: String? = null,
+        ip: String? = null,
     ): DeviceToken {
         val tokenHash = Sha256Hasher.hashHex(token)
         val existing = repository.findByTokenHash(tokenHash)
@@ -37,12 +42,16 @@ class DeviceTokenService(
             }
             return existing
         }
+        val location = ip?.let { ipInfoClient.lookup(it) }
         return repository.save(
             DeviceToken(
                 userId = userId,
                 tokenEncrypted = textEncryptor.encrypt(token),
                 tokenHash = tokenHash,
                 platform = platform,
+                deviceModel = deviceModel,
+                locationCity = location?.city,
+                locationCountry = location?.country,
             ),
         )
     }
