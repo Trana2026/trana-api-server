@@ -87,6 +87,26 @@ data class RiskSignalsResponse(
         example = "false",
     )
     val counterpartyIsMinor: Boolean,
+    @field:Schema(
+        description = "상대방 PASS 본인확인 완료 여부 (identity_verifications SUCCESS 존재). counterparty 없는 단계면 false",
+        example = "true",
+    )
+    val counterpartyVerified: Boolean,
+    @field:Schema(
+        description = "상대방의 완료된 거래 건수 (COMPLETED 상태 계약 참여). counterparty 없는 단계면 0",
+        example = "5",
+    )
+    val counterpartyTradeCount: Int,
+    @field:Schema(
+        description = "상대방이 신고당한 건수 (dispute_records 전체 상태). counterparty 없는 단계면 0",
+        example = "0",
+    )
+    val counterpartyDisputeCount: Int,
+    @field:Schema(
+        description = "상대방이 신고당한 것 중 사기 확정 (resolution=CONFIRMED) 건수. counterparty 없는 단계면 0",
+        example = "0",
+    )
+    val counterpartyConfirmedReportCount: Int,
 )
 
 @Schema(description = "계약 단건 응답")

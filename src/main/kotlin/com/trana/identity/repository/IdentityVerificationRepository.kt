@@ -39,4 +39,13 @@ interface IdentityVerificationRepository : JpaRepository<IdentityVerification, L
     fun deleteAllBySubjectUserId(
         @Param("subjectUserId") subjectUserId: Long,
     ): Int
+
+    /**
+     * PASS 본인확인 완료 여부 (RiskSignals 노출용).
+     */
+    fun existsByUserIdAndPurposeAndStatus(
+        userId: Long,
+        purpose: VerificationPurpose,
+        status: VerificationStatus,
+    ): Boolean
 }

@@ -3,6 +3,8 @@ package com.trana.dispute.repository
 import com.trana.dispute.entity.DisputeRecord
 import com.trana.dispute.entity.DisputeStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface DisputeRecordRepository : JpaRepository<DisputeRecord, Long> {
     /**
@@ -46,7 +48,7 @@ interface DisputeRecordRepository : JpaRepository<DisputeRecord, Long> {
      * - 본인이 신고자가 아닌 row 만 (자기가 신고당한 신고)
      * - CANCELLED_BY_REPORTER 제외 (활성만)
      */
-    @org.springframework.data.jpa.repository.Query(
+    @Query(
         value = """
           SELECT EXISTS (
               SELECT 1 FROM dispute_records dr
@@ -67,4 +69,37 @@ interface DisputeRecordRepository : JpaRepository<DisputeRecord, Long> {
     fun existsReportAgainstUser(
         @org.springframework.data.repository.query.Param("userId") userId: Long,
     ): Boolean
+
+    /**
+     * 특정 user 가 신고당한 총 dispute 수 — 자신이 신고자가 아닌 계약의 dispute count (RiskSignals disputeCount).
+     */
+    @Query(
+        """
+          SELECT COUNT(d) FROM DisputeRecord d
+          WHERE d.reporterUserId <> :userId
+            AND d.contractId IN (
+                SELECT cp.contractId FROM ContractParty cp WHERE cp.userId = :userId
+            )
+          """,
+    )
+    fun countReportedAgainstUser(
+        @Param("userId") userId: Long,
+    ): Long
+
+    /**
+     * 위 중 resolution=FRAUD_CONFIRMED 만 (RiskSignals confirmedReportCount).
+     */
+    @Query(
+        """
+          SELECT COUNT(d) FROM DisputeRecord d
+          WHERE d.reporterUserId <> :userId
+            AND d.resolution = com.trana.dispute.entity.DisputeResolution.FRAUD_CONFIRMED
+            AND d.contractId IN (
+                SELECT cp.contractId FROM ContractParty cp WHERE cp.userId = :userId
+            )
+          """,
+    )
+    fun countConfirmedReportedAgainstUser(
+        @Param("userId") userId: Long,
+    ): Long
 }

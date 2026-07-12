@@ -2,7 +2,11 @@ package com.trana.contract.service
 
 import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.entity.Contract
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.dispute.repository.DisputeRecordRepository
+import com.trana.identity.entity.VerificationPurpose
+import com.trana.identity.entity.VerificationStatus
+import com.trana.identity.repository.IdentityVerificationRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
@@ -29,6 +33,8 @@ class RiskSignalsCalculator(
     private val counterpartyResolver: CounterpartyResolver,
     private val userRepository: UserRepository,
     private val disputeRecordRepository: DisputeRecordRepository,
+    private val identityVerificationRepository: IdentityVerificationRepository,
+    private val contractPartyRepository: ContractPartyRepository,
 ) {
     @Transactional(readOnly = true)
     fun calculate(
@@ -37,12 +43,28 @@ class RiskSignalsCalculator(
     ): RiskSignalsResponse {
         val counterpartId = counterpartyResolver.resolveCounterpartUserId(contract, viewerUserId)
         val counterpart: User? = counterpartId?.let { userRepository.findById(it).orElse(null) }
+        val verified =
+            counterpartId?.let {
+                identityVerificationRepository.existsByUserIdAndPurposeAndStatus(
+                    it,
+                    VerificationPurpose.SIGNUP,
+                    VerificationStatus.SUCCESS,
+                )
+            } ?: false
+        val tradeCount = counterpartId?.let { contractPartyRepository.countCompletedByUserId(it) } ?: 0L
+        val disputeCount = counterpartId?.let { disputeRecordRepository.countReportedAgainstUser(it) } ?: 0L
+        val confirmedReportCount =
+            counterpartId?.let { disputeRecordRepository.countConfirmedReportedAgainstUser(it) } ?: 0L
         return RiskSignalsResponse(
             hasReportHistory = counterpartId?.let { disputeRecordRepository.existsReportAgainstUser(it) } ?: false,
             trustScoreZero = counterpart?.trustScore == 0,
             counterpartyTrustScore = counterpart?.trustScore,
             counterpartyTrustGrade = counterpart?.trustGrade,
             counterpartyIsMinor = counterpart?.ageGroup == AgeGroup.MINOR,
+            counterpartyVerified = verified,
+            counterpartyTradeCount = tradeCount.toInt(),
+            counterpartyDisputeCount = disputeCount.toInt(),
+            counterpartyConfirmedReportCount = confirmedReportCount.toInt(),
         )
     }
 }

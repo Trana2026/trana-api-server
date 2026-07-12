@@ -3,6 +3,8 @@ package com.trana.contract.repository
 import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.PartyType
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface ContractPartyRepository : JpaRepository<ContractParty, Long> {
     /** 계약의 모든 당사자 (W4 = 1명, W5 = 2명). */
@@ -30,4 +32,20 @@ interface ContractPartyRepository : JpaRepository<ContractParty, Long> {
         userId: Long,
         contractIds: Collection<Long>,
     ): List<ContractParty>
+
+    /**
+     * 특정 user 가 party 인 COMPLETED 계약 수 (RiskSignals tradeCount).
+     */
+    @Query(
+        """
+          SELECT COUNT(cp) FROM ContractParty cp
+          WHERE cp.userId = :userId
+            AND cp.contractId IN (
+                SELECT c.id FROM Contract c WHERE c.status = com.trana.contract.entity.ContractStatus.COMPLETED
+            )
+          """,
+    )
+    fun countCompletedByUserId(
+        @Param("userId") userId: Long,
+    ): Long
 }
