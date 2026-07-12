@@ -76,10 +76,12 @@ trana:
         completed: UJ_2901
         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+        guardian-contract-completed: UI_PENDING_GUARDIAN_COMPLETED
         emtitle-new-contract: "안전 거래 계약 서명 요청"
         emtitle-receiver-signed: "최종 서명 요청"
         emtitle-revision-requested: "안전 거래 계약 수정 요청"
         emtitle-completed: "안전 거래 계약 최종 완료"
+        emtitle-guardian-contract-completed: "미성년 자녀 계약 체결 통보"
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}

@@ -90,6 +90,18 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
         )
     }
 
+    override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
+        log.info(
+            "[MockKakaoAlimtalk] sendGuardianContractCompleted (skip Live send) — " +
+                "recipient={}, minor={}, counterparty={}, title={}, price={}",
+            message.recipientPhone,
+            message.minorName,
+            message.counterpartyName,
+            message.contractTitle,
+            message.price,
+        )
+    }
+
     /** 010-1234-5678 → 010-****-5678 (PII 마스킹) */
     private fun maskPhone(phone: String): String =
         if (phone.length < MIN_PHONE_LENGTH) {

@@ -200,6 +200,33 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendCancellationRequested", to = message.recipientPhone)
     }
 
+    override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
+        val body =
+            """
+            [Trana] 안전 거래 계약이 체결되었습니다.
+
+            자녀 (${message.minorName}) 님이 ${message.counterpartyName} 님과 계약을 체결했습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+
+            민법상 미성년자가 당사자인 계약은 취소할 수 있습니다.
+            취소를 원하실 경우 아래 버튼으로 접수 방법을 확인해 주세요.
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.guardianContractCompleted)
+                add("emtitle_1", aligoProperties.tplCode.emtitleGuardianContractCompleted)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "계약 체결 통보")
+                add("message_1", body)
+                add("button_1", buildButtonJson("계약 내용 확인", message.contractDetailUrl))
+            }
+
+        send(formData, label = "sendGuardianContractCompleted", to = message.recipientPhone)
+    }
+
     /** 공통 필드 6개 (apikey/userid/senderkey/sender/testmode/failover) 미리 채운 form data 생성. */
     private fun newFormData(): LinkedMultiValueMap<String, String> =
         LinkedMultiValueMap<String, String>().apply {

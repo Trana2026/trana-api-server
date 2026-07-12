@@ -2,14 +2,21 @@ package com.trana.contract.service
 
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.adapter.kakao.ContractCompletedMessage
+import com.trana.contract.adapter.kakao.GuardianContractCompletedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
 import com.trana.contract.adapter.kakao.ReceiverSignedMessage
 import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
+import com.trana.contract.repository.ContractPartyRepository
+import com.trana.identity.entity.VerificationPurpose
+import com.trana.identity.entity.VerificationStatus
+import com.trana.identity.repository.IdentityVerificationRepository
+import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -26,7 +33,11 @@ class ContractAlimtalkDispatcher(
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val userRepository: UserRepository,
     private val webUrlBuilder: WebUrlBuilder,
+    private val contractPartyRepository: ContractPartyRepository,
+    private val identityVerificationRepository: IdentityVerificationRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     fun sendNewContract(
         contract: Contract,
         sellerUserId: Long,
@@ -96,6 +107,56 @@ class ContractAlimtalkDispatcher(
                 ),
             )
         }
+    }
+
+    /**
+     * SIGNED 전이 시 미성년자 party 의 가입 보호자에게 계약 체결 통보.
+     * 미성년자 없거나 보호자 phone 조회 실패 시 skip (silent).
+     */
+    fun sendGuardianContractCompleted(contract: Contract) {
+        val creator = userRepository.findById(contract.creatorUserId).orElse(null)
+        val receiverParty =
+            contractPartyRepository
+                .findAllByContractId(contract.id!!)
+                .firstOrNull { it.userId != contract.creatorUserId }
+        val receiver = receiverParty?.let { userRepository.findById(it.userId).orElse(null) }
+
+        val minorAndCounterparty: Pair<com.trana.user.entity.User, com.trana.user.entity.User>? =
+            when {
+                creator?.ageGroup == AgeGroup.MINOR && receiver != null -> creator to receiver
+                receiver?.ageGroup == AgeGroup.MINOR && creator != null -> receiver to creator
+                else -> null
+            }
+        if (minorAndCounterparty == null) return
+
+        val (minor, counterparty) = minorAndCounterparty
+        val guardianPhone =
+            identityVerificationRepository
+                .findFirstBySubjectUserIdAndPurposeAndStatus(
+                    subjectUserId = minor.id!!,
+                    purpose = VerificationPurpose.GUARDIAN,
+                    status = VerificationStatus.SUCCESS,
+                )?.phone
+
+        if (guardianPhone == null) {
+            log.warn(
+                "[Alimtalk] 보호자 phone 조회 실패 — minorId={} publicCode={}. 알림톡 skip",
+                minor.id,
+                contract.publicCode,
+            )
+            return
+        }
+
+        kakaoAlimtalkClient.sendGuardianContractCompleted(
+            GuardianContractCompletedMessage(
+                recipientPhone = guardianPhone,
+                minorName = minor.name ?: "미성년 자녀",
+                counterpartyName = counterparty.name ?: "거래 상대방",
+                contractTitle = contract.title ?: "(제목 없음)",
+                price = requireNotNull(contract.price) { "price 누락 (SIGNED 전이 후 invariant)" },
+                contractDetailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+            ),
+        )
     }
 
     fun sendRevisionRequested(

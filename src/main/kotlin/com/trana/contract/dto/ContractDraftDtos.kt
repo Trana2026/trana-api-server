@@ -79,6 +79,14 @@ data class RiskSignalsResponse(
         example = "TRUST",
     )
     val counterpartyTrustGrade: TrustGrade?,
+    @field:Schema(
+        description =
+            "상대방이 미성년 (만 19세 미만) — 프론트 서명 화면에서 위험 고지 확인 유도 + 미성년자 본인 서명 시 " +
+                "\"체결 시 보호자에게 알림이 전송됩니다\" 안내 표기 판별. " +
+                "counterparty 없는 단계 (DRAFT/READY) 면 false",
+        example = "false",
+    )
+    val counterpartyIsMinor: Boolean,
 )
 
 @Schema(description = "계약 단건 응답")

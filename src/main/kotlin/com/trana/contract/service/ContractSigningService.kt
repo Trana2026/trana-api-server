@@ -195,6 +195,7 @@ class ContractSigningService(
             )
 
         contractAlimtalkDispatcher.sendCompleted(result.contract, result.creator, result.receiver)
+        contractAlimtalkDispatcher.sendGuardianContractCompleted(result.contract)
 
         return CreatorSignView(
             publicCode = result.contract.publicCode,

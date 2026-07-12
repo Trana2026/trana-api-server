@@ -30,3 +30,13 @@ data class MinorDisclosureConfirmationResponse(
     @Schema(description = "저장된 문구 버전", example = "v1")
     val templateVersion: String,
 )
+
+@Schema(description = "미성년자 위험 고지 문구 응답 — 프론트 서명 화면 노출용")
+data class MinorDisclosureTemplateResponse(
+    @Schema(description = "문구 버전 (confirm 요청 시 templateVersion 필드로 함께 전달)", example = "v1")
+    val version: String,
+    @Schema(description = "제목", example = "미성년자와의 거래입니다")
+    val title: String,
+    @Schema(description = "본문 항목 5개, 순서대로 노출. 개행 문자 (\\n) 그대로 유지")
+    val items: List<String>,
+)

@@ -49,5 +49,9 @@ data class AligoProperties(
         val emtitleRevisionRequested: String,
         /** UI_4037 강조 타이틀. */
         val emtitleCompleted: String,
+        /** UI_???? — SIGNED 시 미성년자 party 의 가입 보호자에게 (계약 체결 통보, Task #208 등록 후 templateId 반영). */
+        val guardianContractCompleted: String,
+        /** 강조 타이틀 (심사 시 강조 표기형 결정, 우선 필드만 추가). */
+        val emtitleGuardianContractCompleted: String,
     )
 }

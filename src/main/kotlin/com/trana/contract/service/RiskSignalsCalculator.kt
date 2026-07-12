@@ -3,6 +3,7 @@ package com.trana.contract.service
 import com.trana.contract.dto.RiskSignalsResponse
 import com.trana.contract.entity.Contract
 import com.trana.dispute.repository.DisputeRecordRepository
+import com.trana.user.entity.AgeGroup
 import com.trana.user.entity.User
 import com.trana.user.repository.UserRepository
 import org.springframework.stereotype.Component
@@ -41,6 +42,7 @@ class RiskSignalsCalculator(
             trustScoreZero = counterpart?.trustScore == 0,
             counterpartyTrustScore = counterpart?.trustScore,
             counterpartyTrustGrade = counterpart?.trustGrade,
+            counterpartyIsMinor = counterpart?.ageGroup == AgeGroup.MINOR,
         )
     }
 }

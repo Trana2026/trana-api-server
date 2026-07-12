@@ -16,6 +16,7 @@ import java.time.Instant
  * - [RevisionRequestedMessage] : REVISION_REQUESTED 전이 시 → 생성자
  * - [DisputeReportedMessage] : 신고 접수 시 → 피신고자
  * - [CancellationRequestedMessage] : 취소 요청 접수 시 → 피요청자
+ * - [GuardianContractCompletedMessage] : SIGNED 시 미성년 party 의 가입 보호자에게
  */
 interface KakaoAlimtalkClient {
     /** SHARED 전이 시 수신자에게 — `[Trana] 새 계약서 도착` 템플릿 */
@@ -35,6 +36,9 @@ interface KakaoAlimtalkClient {
 
     /** 취소 요청 접수 시 상대 측에게 — `[Trana] 계약 취소 요청` 템플릿 (UI_????) */
     fun sendCancellationRequested(message: CancellationRequestedMessage)
+
+    /** SIGNED 전이 시 미성년자 가입 보호자에게 — `[Trana] 계약 체결 통보` 템플릿 (심사 대기 UI_????) */
+    fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage)
 }
 
 /**
@@ -133,4 +137,25 @@ data class CancellationRequestedMessage(
     val contractTitle: String,
     val requestedAt: Instant,
     val detailUrl: String,
+)
+
+/**
+ * SIGNED 전이 시 미성년자 party 의 가입 보호자에게 계약 체결 통보.
+ * 정보성 알림 (마케팅 무관). 취소권 존재 안내 + 문의 창구.
+ *
+ * @param recipientPhone 보호자 phone (identity_verifications.phone WHERE purpose=GUARDIAN, subject=미성년, status=SUCCESS)
+ * @param minorName 미성년자 이름 (계약 당사자)
+ * @param counterpartyName 성인 상대방 이름
+ * @param contractTitle 상품명
+ * @param price 거래 금액
+ * @param contractDetailUrl 계약 상세 웹 URL
+ * 알리고 템플릿 : UI_???? (심사 신청 후 templateId 반영, Task #208)
+ */
+data class GuardianContractCompletedMessage(
+    val recipientPhone: String,
+    val minorName: String,
+    val counterpartyName: String,
+    val contractTitle: String,
+    val price: Long,
+    val contractDetailUrl: String,
 )
