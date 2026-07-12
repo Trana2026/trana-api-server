@@ -3,8 +3,10 @@ package com.trana.dispute.repository
 import com.trana.dispute.entity.DisputeRecord
 import com.trana.dispute.entity.DisputeStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.Instant
 
 interface DisputeRecordRepository : JpaRepository<DisputeRecord, Long> {
     /**
@@ -102,4 +104,21 @@ interface DisputeRecordRepository : JpaRepository<DisputeRecord, Long> {
     fun countConfirmedReportedAgainstUser(
         @Param("userId") userId: Long,
     ): Long
+
+    /**
+     * 3년 이상 resolve 된 dispute cleanup — 사기 확인 (FRAUD_CONFIRMED) 은 영구 보존.
+     * PENDING 은 삭제 X (미해결 유지).
+     */
+    @Modifying
+    @Query(
+        """
+          DELETE FROM DisputeRecord d
+          WHERE d.resolvedAt IS NOT NULL
+            AND d.resolvedAt < :threshold
+            AND d.resolution <> com.trana.dispute.entity.DisputeResolution.FRAUD_CONFIRMED
+          """,
+    )
+    fun deleteResolvedBeforeAndResolutionNotConfirmed(
+        @Param("threshold") threshold: Instant,
+    ): Int
 }
