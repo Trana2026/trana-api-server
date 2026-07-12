@@ -18,7 +18,6 @@ import java.time.Instant
  *
  * - 작성/수정/삭제 권한: creatorUserId 만 (DRAFT 단계)
  * - 상태: status × disputeState 직교 모델
- * - 미성년 창건자 계약 단계 보호자 동의 (선택): guardianId + guardianConsentAt (receiver 는 ContractParty)
  *
  * 흐름 (W4~W6):
  * - createDraft → IN_PROGRESS 빈 row 생성 (delivery 만 결정)
@@ -79,14 +78,6 @@ class Contract(
     @Enumerated(EnumType.STRING)
     @Column(name = "dispute_state", nullable = false, length = 20)
     var disputeState: DisputeState = DisputeState.NONE
-        protected set
-
-    @Column(name = "guardian_id")
-    var guardianId: Long? = null
-        protected set
-
-    @Column(name = "guardian_consent_at")
-    var guardianConsentAt: Instant? = null
         protected set
 
     @Column(name = "version", nullable = false)
@@ -167,16 +158,6 @@ class Contract(
             conditionSummary != null &&
             conditionDetails != null &&
             tradingPlatform != null
-
-    /**
-     * 미성년의 계약 단계 보호자 동의 (항상 선택 — role 결정 전에도 진행 가능).
-     * receiver 미성년은 [ContractParty.markGuardianConsented] 사용.
-     */
-    fun markGuardianConsented(boundGuardianId: Long) {
-        check(guardianConsentAt == null) { "이미 보호자 동의 완료된 계약" }
-        this.guardianId = boundGuardianId
-        this.guardianConsentAt = Instant.now()
-    }
 
     fun markReady(
         pdfS3Key: String,

@@ -29,7 +29,6 @@ enum class AuditEvent {
 
     // Guardian 도메인
     GUARDIAN_LINK_CREATED,
-    CONTRACT_GUARDIAN_LINK_CREATED,
 
     // Consent (약관 동의)
     CONSENT_AGREED,
@@ -38,7 +37,4 @@ enum class AuditEvent {
     USER_SIGNED_IN,
     USER_SIGNED_OUT,
     APPLE_REVOKE_NOTIFICATION,
-
-    // Contract 도메인 — 보호자 동의 승인 (web 단순 동의)
-    CONTRACT_GUARDIAN_CONSENT_APPROVED,
 }

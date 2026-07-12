@@ -13,12 +13,7 @@ import java.time.Instant
  * 미성년자 → 보호자 일회용 토큰 (jnanoid 21자, TTL 3일).
  *
  * 용도 (purpose):
- * - SIGNUP: 미성년 가입 시 보호자 KYC 연결 (기존)
- * - CONTRACT_CONSENT: 미성년자가 작성한 계약의 보호자 동의 (W4+)
- *
- * 불변식 (DB CHECK 제약과 일치):
- * - SIGNUP → contractId 반드시 null
- * - CONTRACT_CONSENT → contractId 반드시 non-null
+ * - SIGNUP: 미성년 가입 시 보호자 KYC 연결
  *
  * 흐름:
  * - 미성년자가 link 발급 → token 보호자에게 공유
@@ -38,21 +33,7 @@ class GuardianLink(
     @Enumerated(EnumType.STRING)
     @Column(name = "purpose", nullable = false, length = 30)
     val purpose: LinkPurpose = LinkPurpose.SIGNUP,
-    @Column(name = "contract_id")
-    val contractId: Long? = null,
 ) {
-    init {
-        when (purpose) {
-            LinkPurpose.SIGNUP -> {
-                require(contractId == null) { "SIGNUP 링크는 contractId 가 null 이어야 합니다" }
-            }
-
-            LinkPurpose.CONTRACT_CONSENT -> {
-                require(contractId != null) { "CONTRACT_CONSENT 링크는 contractId 가 필수입니다" }
-            }
-        }
-    }
-
     @Column(name = "used_at")
     var usedAt: Instant? = null
         protected set
@@ -72,4 +53,4 @@ class GuardianLink(
     }
 }
 
-enum class LinkPurpose { SIGNUP, CONTRACT_CONSENT }
+enum class LinkPurpose { SIGNUP }

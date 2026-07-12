@@ -13,8 +13,6 @@ import com.trana.common.exception.ErrorCode
  * - MaxAttachments: 사진 7장 초과 등록 시도
  * - AttachmentNotFound: 첨부 id 매칭 실패
  * - InvalidConsentType: 계약 보호자 동의 처리 중 부적합 (성인 요청 / 잘못된 토큰 purpose 등)
- * - GuardianConsentRequired: 계약 보호자 동의 승인 시 미성년의 가입 단계 보호자 verification 매핑 실패
- * - GuardianConsentAlready: 이미 보호자 동의 완료 상태에서 재요청
  * - AiExtractionFailed: OpenAI 호출 실패 (5xx / timeout)
  * - AiResponseInvalid: OpenAI 응답 JSON 파싱 / schema 검증 실패
  * - PdfNotGenerated: PDF 다운로드 요청 시 markReady 가 선행되지 않음
@@ -72,27 +70,6 @@ sealed class ContractException(
     ) : ContractException(
             ErrorCode.CONTRACT_ATTACHMENT_NOT_FOUND,
             "첨부 파일을 찾을 수 없습니다 (attachmentId=$attachmentId)",
-        )
-
-    class InvalidConsentType(
-        reason: String,
-    ) : ContractException(
-            ErrorCode.CONTRACT_INVALID_CONSENT_TYPE,
-            "계약 보호자 동의 처리 중 부적합한 요청입니다: $reason",
-        )
-
-    class GuardianConsentRequired(
-        publicCode: String,
-    ) : ContractException(
-            ErrorCode.CONTRACT_GUARDIAN_CONSENT_REQUIRED,
-            "보호자 동의가 완료되지 않은 계약입니다 (publicCode=$publicCode)",
-        )
-
-    class GuardianConsentAlready(
-        publicCode: String,
-    ) : ContractException(
-            ErrorCode.CONTRACT_GUARDIAN_CONSENT_ALREADY,
-            "이미 보호자 동의가 완료된 계약입니다 (publicCode=$publicCode)",
         )
 
     class AiExtractionFailed(

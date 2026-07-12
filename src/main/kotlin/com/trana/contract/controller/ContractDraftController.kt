@@ -235,7 +235,6 @@ private fun Contract.toResponse(riskSignals: RiskSignalsResponse? = null): Contr
         conditionSummary = conditionSummary,
         conditionDetails = conditionDetails,
         warrantyPeriodDays = warrantyPeriodDays,
-        guardianConsentAt = guardianConsentAt,
         version = version,
         contentHash = contentHash,
         createdAt = requireNotNull(createdAt) { "createdAt 은 @CreationTimestamp 로 채워져야 함" },

@@ -76,7 +76,6 @@ class OpenApiConfig {
                 "Contract Draft",
                 "Contract Attachment",
                 "Contract AI Extraction",
-                "Contract Guardian Consent",
                 "Contract Lifecycle",
                 "Contract PDF",
                 "Contract Invitation",
@@ -103,9 +102,6 @@ class OpenApiConfig {
                 "/v1/contracts/{publicCode}/attachments/presign",
                 "/v1/contracts/{publicCode}/attachments",
                 "/v1/contracts/{publicCode}/attachments/{attachmentId}",
-                // 계약 보호자 동의 (request → approve)
-                "/v1/contracts/{publicCode}/guardian-consent",
-                "/v1/contracts/guardian-consent/approve",
             )
         val originalPaths = openApi.paths ?: return
         val sorted = Paths()
@@ -121,42 +117,5 @@ class OpenApiConfig {
             .group("전체")
             .pathsToMatch("/v1/**")
             .addOpenApiCustomizer(sortingCustomizer)
-            .build()
-
-    @Bean
-    fun adultGroup(sortingCustomizer: OpenApiCustomizer): GroupedOpenApi =
-        GroupedOpenApi
-            .builder()
-            .group("성인")
-            .pathsToMatch(
-                "/v1/consents",
-                "/v1/terms/**",
-                "/v1/identity/**",
-                "/v1/users/**",
-                "/v1/auth/refresh",
-                "/v1/contracts/**",
-                "/v1/notifications/**",
-            ).pathsToExclude(
-                "/v1/identity/guardian/**",
-                "/v1/contracts/*/guardian-consent",
-                "/v1/contracts/guardian-consent/**",
-            ).addOpenApiCustomizer(sortingCustomizer)
-            .build()
-
-    @Bean
-    fun minorGroup(sortingCustomizer: OpenApiCustomizer): GroupedOpenApi =
-        GroupedOpenApi
-            .builder()
-            .group("미성년자")
-            .pathsToMatch(
-                "/v1/auth/**",
-                "/v1/terms/**",
-                "/v1/guardian/**",
-                "/v1/identity/guardian/**",
-                "/v1/identity/pass/**",
-                "/v1/users/**",
-                "/v1/contracts/**",
-                "/v1/notifications/**",
-            ).addOpenApiCustomizer(sortingCustomizer)
             .build()
 }

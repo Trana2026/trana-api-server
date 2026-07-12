@@ -21,7 +21,6 @@ import java.time.Instant
  * - (contract_id, party_type) UNIQUE — 한 계약에 같은 역할 중복 불가
  * - markValidated() 는 KYC SUCCESS + ACTIVE user 확인 후만 호출 (Service 책임)
  * - markCompleted() 는 멱등 X (이미 완료면 fail) — 양측 각자 1회만
- * - markGuardianConsented(guardianId) 는 1회용 — 미성년 party 의 계약 단위 보호자 동의 (가입 단계 보호자 KYC 와 별도)
  */
 @Entity
 @Table(name = "contract_parties")
@@ -50,14 +49,6 @@ class ContractParty(
     var completedAt: Instant? = null
         protected set
 
-    @Column(name = "guardian_consent_at")
-    var guardianConsentAt: Instant? = null
-        protected set
-
-    @Column(name = "guardian_user_id")
-    var guardianUserId: Long? = null
-        protected set
-
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)
     val joinedAt: Instant? = null
@@ -71,18 +62,6 @@ class ContractParty(
     fun markCompleted() {
         check(completedAt == null) { "이미 거래 완료를 클릭한 당사자" }
         this.completedAt = Instant.now()
-    }
-
-    /**
-     * 미성년 party 의 계약 단위 보호자 동의 시점 기록.
-     * 가입 단계 보호자 KYC (1회) 와 별도 — 계약마다 보호자가 web 단순 동의로 호출.
-     * 보호자 신원은 가입 단계 verification 의 guardianId 자동 매핑 (Service 책임).
-     * 1회용 — 이미 동의된 party 에 재호출 시 fail.
-     */
-    fun markGuardianConsented(guardianId: Long) {
-        check(guardianConsentAt == null) { "이미 보호자 동의된 party" }
-        this.guardianUserId = guardianId
-        this.guardianConsentAt = Instant.now()
     }
 
     companion object {

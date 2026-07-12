@@ -56,13 +56,6 @@ data class UpdateContractDraftRequest(
 @Schema(description = "서명 시 위험 신호 (서명 팝업 경고 문구 활성화 기준)")
 data class RiskSignalsResponse(
     @field:Schema(
-        description =
-            "상대방이 미성년 + 본 계약 단계 보호자 동의 미완료 (양방향) — 서명 팝업 경고 표시. " +
-                "계약 단계 보호자 동의는 항상 선택 — 미완료여도 서명 가능.",
-        example = "false",
-    )
-    val guardianNotConsented: Boolean,
-    @field:Schema(
         description = "상대방이 다른 계약에서 신고된 이력 — 경고 문구 노출 (W7, 활성 신고만 카운트)",
         example = "false",
     )
@@ -106,8 +99,6 @@ data class ContractResponse(
     val conditionDetails: String?,
     @field:Schema(description = "보증 기간 (일)", example = "3")
     val warrantyPeriodDays: Int,
-    @field:Schema(description = "creator 미성년의 계약 단계 보호자 동의 완료 시각 (선택 — 미완료 시 null)")
-    val guardianConsentAt: Instant?,
     @field:Schema(description = "리비전 버전 (W5+)", example = "1")
     val version: Int,
     @field:Schema(

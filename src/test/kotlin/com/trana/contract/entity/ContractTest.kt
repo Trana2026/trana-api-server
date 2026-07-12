@@ -64,8 +64,6 @@ class ContractTest {
 
             Assertions.assertEquals(ContractStatus.IN_PROGRESS, contract.status)
             Assertions.assertEquals(DisputeState.NONE, contract.disputeState)
-            Assertions.assertNull(contract.guardianId)
-            Assertions.assertNull(contract.guardianConsentAt)
             Assertions.assertEquals(0, contract.version)
             Assertions.assertNull(contract.pdfS3Key)
             Assertions.assertNull(contract.contentHash)
@@ -221,55 +219,6 @@ class ContractTest {
 
             Assertions.assertThrows(IllegalStateException::class.java) {
                 contract.markReady(pdfS3Key = "fake-key", pdfSha256 = "fake-sha")
-            }
-        }
-
-        @Test
-        fun allowsAfterGuardianConsented() {
-            val contract =
-                draftContract(
-                    publicCode = "TST-CTR-104",
-                )
-            contract.markGuardianConsented(boundGuardianId = 42L)
-
-            contract.markReady(
-                pdfS3Key = "contracts/TST-CTR-104/v1.pdf",
-                pdfSha256 = "fake-sha",
-            )
-
-            Assertions.assertEquals(ContractStatus.READY, contract.status)
-            Assertions.assertEquals(42L, contract.guardianId)
-            Assertions.assertNotNull(contract.guardianConsentAt)
-        }
-    }
-
-    @Nested
-    inner class MarkGuardianConsented {
-        @Test
-        fun setsGuardianIdAndConsentTimestamp() {
-            val contract =
-                Contract.createDraft(
-                    publicCode = "TST-CTR-201",
-                    creatorUserId = 1L,
-                )
-
-            contract.markGuardianConsented(boundGuardianId = 99L)
-
-            Assertions.assertEquals(99L, contract.guardianId)
-            Assertions.assertNotNull(contract.guardianConsentAt)
-        }
-
-        @Test
-        fun throwsWhenAlreadyConsented() {
-            val contract =
-                Contract.createDraft(
-                    publicCode = "TST-CTR-203",
-                    creatorUserId = 1L,
-                )
-            contract.markGuardianConsented(boundGuardianId = 99L)
-
-            Assertions.assertThrows(IllegalStateException::class.java) {
-                contract.markGuardianConsented(boundGuardianId = 100L)
             }
         }
     }

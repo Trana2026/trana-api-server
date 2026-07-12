@@ -2,61 +2,6 @@ package com.trana.contract
 
 @Suppress("LargeClass")
 internal object ContractExamples {
-    // ───── 진입 (eligibility / 보호자 동의 링크) ─────
-    const val GUARDIAN_CONSENT_LINK_CREATED = """
-              {
-                "token": "V1StGXR8_Z5jdHi6B-myT",
-                "expiresAt": "2026-05-23T10:30:00Z",
-                "verifyUrl": "https://guardian.trana.kr/contract?token=V1StGXR8_Z5jdHi6B-myT"
-              }
-          """
-
-    const val GUARDIAN_CONSENT_APPROVE_REQUEST = """
-              {
-                    "token": "V1StGXR8_Z5jdHi6B-myT"
-              }
-          """
-
-    const val GUARDIAN_CONSENT_APPROVE_RESPONSE = """
-                {
-                  "publicCode": "Vh7sK2x9Pq3R",
-                  "guardianConsentAt": "2026-05-20T11:00:00Z"
-                }
-            """
-
-    const val GUARDIAN_CONSENT_ALREADY = """
-                {
-                  "type": "about:blank",
-                  "title": "CONTRACT_409_GUARDIAN_ALREADY",
-                  "status": 409,
-                  "detail": "이미 보호자 동의가 완료된 계약입니다 (publicCode=Vh7sK2x9Pq3R)",
-                  "code": "CONTRACT_409_GUARDIAN_ALREADY",
-                  "timestamp": "2026-05-20T11:00:00Z"
-                }
-            """
-
-    const val GUARDIAN_CONSENT_LINK_INVALID = """
-                {
-                  "type": "about:blank",
-                  "title": "GUARDIAN_LINK_INVALID",
-                  "status": 410,
-                  "detail": "이미 사용되었거나 만료된 보호자 링크 토큰",
-                  "code": "GUARDIAN_LINK_INVALID",
-                  "timestamp": "2026-05-20T11:00:00Z"
-                }
-            """
-
-    const val GUARDIAN_CONSENT_INVALID_CONSENT_TYPE = """
-                {
-                  "type": "about:blank",
-                  "title": "CONTRACT_400_CONSENT_TYPE",
-                  "status": 400,
-                  "detail": "계약 보호자 동의 처리 중 부적합한 요청입니다 (예: 성인 사용자 호출 / 잘못된 토큰 purpose)",
-                  "code": "CONTRACT_400_CONSENT_TYPE",
-                  "timestamp": "2026-05-20T11:00:00Z"
-                }
-            """
-
     // ───── DRAFT 생성 / 수정 / 삭제 ─────
     const val DRAFT_CREATE_RESPONSE = """
                 {
@@ -69,7 +14,6 @@ internal object ContractExamples {
                   "conditionSummary": null,
                   "conditionDetails": null,
                   "warrantyPeriodDays": 3,
-                  "guardianConsentAt": null,
                   "version": 1,
                   "createdAt": "2026-05-20T10:00:00Z",
                   "updatedAt": "2026-05-20T10:00:00Z"
@@ -232,7 +176,6 @@ internal object ContractExamples {
                   "conditionSummary": "사용감 적음",
                   "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                   "warrantyPeriodDays": 3,
-                  "guardianConsentAt": null,
                   "version": 1,
                   "createdAt": "2026-05-20T10:00:00Z",
                   "updatedAt": "2026-05-20T10:07:00Z"
@@ -391,7 +334,6 @@ internal object ContractExamples {
                     "conditionSummary": "사용감 적음",
                     "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                     "warrantyPeriodDays": 3,
-                    "guardianConsentAt": null,
                     "version": 1,
                     "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "createdAt": "2026-05-20T10:00:00Z",
@@ -460,7 +402,6 @@ internal object ContractExamples {
                       "conditionSummary": "사용감 적음",
                       "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                       "warrantyPeriodDays": 3,
-                      "guardianConsentAt": null,
                       "version": 1,
                       "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                       "createdAt": "2026-05-20T10:00:00Z",
@@ -503,7 +444,6 @@ internal object ContractExamples {
                       "conditionSummary": "사용감 적음",
                       "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                       "warrantyPeriodDays": 3,
-                      "guardianConsentAt": null,
                       "version": 1,
                       "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                       "createdAt": "2026-05-20T10:00:00Z",
@@ -565,7 +505,6 @@ internal object ContractExamples {
                         "conditionSummary": "사용감 적음",
                         "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상",
                         "warrantyPeriodDays": 3,
-                        "guardianConsentAt": null,
                         "version": 2,
                         "contentHash": "f1b9d44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         "createdAt": "2026-05-20T10:00:00Z",
@@ -597,7 +536,6 @@ internal object ContractExamples {
                         "conditionSummary": "사용감 적음",
                         "conditionDetails": "1년 사용, 케이스 미세 흠집 외 기능 정상. 박스 손상 없음.",
                         "warrantyPeriodDays": 3,
-                        "guardianConsentAt": null,
                         "version": 2,
                         "contentHash": "a2c8d44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         "createdAt": "2026-05-20T10:00:00Z",
