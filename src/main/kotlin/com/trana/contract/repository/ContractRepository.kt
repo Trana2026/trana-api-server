@@ -5,6 +5,7 @@ import com.trana.contract.entity.ContractStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.Instant
 
 interface ContractRepository : JpaRepository<Contract, Long> {
     /** publicCode 로 단건 조회 (soft delete 제외). */
@@ -63,5 +64,14 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         @Param("userId") userId: Long,
         @Param("status") status: ContractStatus?,
         @Param("query") query: String?,
+    ): List<Contract>
+
+    /**
+     * SHARED / RECEIVER_SIGNED 상태 + statusUpdatedAt 이 threshold 이전인 계약 조회.
+     * ContractExpiryTask 가 72h 경과 만료 대상 배치 조회에 사용.
+     */
+    fun findAllByStatusInAndStatusUpdatedAtBefore(
+        statuses: Collection<ContractStatus>,
+        threshold: Instant,
     ): List<Contract>
 }

@@ -110,6 +110,10 @@ class Contract(
     var createdAt: Instant? = null
         protected set
 
+    @Column(name = "status_updated_at", nullable = false)
+    var statusUpdatedAt: Instant = Instant.now()
+        protected set
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant? = null
@@ -150,6 +154,7 @@ class Contract(
         if (status == ContractStatus.IN_PROGRESS || status == ContractStatus.DRAFT) {
             this.status = if (allRequiredFieldsFilled()) ContractStatus.DRAFT else ContractStatus.IN_PROGRESS
         }
+        this.statusUpdatedAt = Instant.now()
     }
 
     private fun allRequiredFieldsFilled(): Boolean =
@@ -177,12 +182,14 @@ class Contract(
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()
         this.version += 1
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markShared() {
         check(status == ContractStatus.READY) { "READY 상태에서만 SHARED 전이 가능 (current=$status)" }
         check(deletedAt == null) { "삭제된 계약은 공유 불가" }
         this.status = ContractStatus.SHARED
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markRevisionRequested() {
@@ -191,6 +198,7 @@ class Contract(
         }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.REVISION_REQUESTED
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markRevertToDraft() {
@@ -202,6 +210,7 @@ class Contract(
         this.pdfS3Key = null
         this.contentHash = null
         this.pdfGeneratedAt = null
+        this.statusUpdatedAt = Instant.now()
     }
 
     /**
@@ -255,6 +264,7 @@ class Contract(
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()
         this.version += 1
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markReceiverSigned(
@@ -269,6 +279,7 @@ class Contract(
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markSigned(
@@ -283,6 +294,7 @@ class Contract(
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
         this.pdfGeneratedAt = Instant.now()
+        this.statusUpdatedAt = Instant.now()
     }
 
     fun markCompleted() {
@@ -291,6 +303,7 @@ class Contract(
         }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.COMPLETED
+        this.statusUpdatedAt = Instant.now()
         this.completedAt = Instant.now()
     }
 
@@ -305,6 +318,7 @@ class Contract(
         }
         check(deletedAt == null) { "삭제된 계약은 취소 요청 불가" }
         this.status = ContractStatus.CANCEL_REQUESTED
+        this.statusUpdatedAt = Instant.now()
     }
 
     /**
@@ -321,6 +335,7 @@ class Contract(
             "previousStatus 는 SHARED 또는 RECEIVER_SIGNED 만 가능 (given=$previousStatus)"
         }
         this.status = previousStatus
+        this.statusUpdatedAt = Instant.now()
     }
 
     /**
@@ -333,6 +348,20 @@ class Contract(
         }
         check(deletedAt == null) { "삭제된 계약은 전이 불가" }
         this.status = ContractStatus.CANCELLED
+        this.statusUpdatedAt = Instant.now()
+    }
+
+    /**
+     * SHARED / RECEIVER_SIGNED 상태 72h 초과 시 자동 만료 (ContractExpiryTask 호출).
+     * COMPLETED / SIGNED / CANCELLED / EXPIRED 등에서는 호출 금지.
+     */
+    fun markExpired() {
+        check(
+            status == ContractStatus.SHARED ||
+                status == ContractStatus.RECEIVER_SIGNED,
+        ) { "만료 가능 상태 (SHARED / RECEIVER_SIGNED) 아님 (current=$status)" }
+        this.status = ContractStatus.EXPIRED
+        this.statusUpdatedAt = Instant.now()
     }
 
     /**
@@ -395,6 +424,7 @@ enum class ContractStatus {
     SIGNED,
     COMPLETED,
     CANCELLED,
+    EXPIRED,
 }
 
 enum class DisputeState { NONE, REPORTED }

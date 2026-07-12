@@ -42,6 +42,7 @@ CREATE TABLE contracts
     pdf_generated_at           TIMESTAMPTZ,
     version                    INT         NOT NULL DEFAULT 0,
     optimistic_version         BIGINT      NOT NULL DEFAULT 0,
+    status_updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -49,7 +50,7 @@ CREATE TABLE contracts
 
     CONSTRAINT chk_contracts_status
         CHECK (status IN ('IN_PROGRESS', 'DRAFT', 'READY', 'SHARED', 'REVISION_REQUESTED', 'RECEIVER_SIGNED',
-                          'CANCEL_REQUESTED', 'SIGNED', 'COMPLETED', 'CANCELLED')),
+                          'CANCEL_REQUESTED', 'SIGNED', 'COMPLETED', 'CANCELLED', 'EXPIRED')),
     CONSTRAINT chk_contracts_dispute_state
         CHECK (dispute_state IN ('NONE', 'REPORTED'))
 );
@@ -57,11 +58,14 @@ CREATE TABLE contracts
 CREATE INDEX idx_contracts_public_code ON contracts (public_code);
 CREATE INDEX idx_contracts_creator ON contracts (creator_user_id, created_at DESC);
 CREATE INDEX idx_contracts_status ON contracts (status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_contracts_status_updated_at
+    ON contracts (status, status_updated_at) WHERE status IN ('SHARED', 'RECEIVER_SIGNED');
 
 COMMENT ON TABLE contracts IS 'C2C 안전 거래 전자계약. status × dispute_state 직교';
 COMMENT ON COLUMN contracts.public_code IS 'jnanoid 12자 (외부 노출용)';
 COMMENT ON COLUMN contracts.creator_user_id IS '작성자 user_id (논리 FK — cascade 사고 방지)';
-COMMENT ON COLUMN contracts.status IS 'IN_PROGRESS | DRAFT | READY | SHARED | REVISION_REQUESTED | RECEIVER_SIGNED | CANCEL_REQUESTED | SIGNED | COMPLETED | CANCELLED';
+COMMENT ON COLUMN contracts.status IS 'IN_PROGRESS | DRAFT | READY | SHARED | REVISION_REQUESTED | RECEIVER_SIGNED | CANCEL_REQUESTED | SIGNED | COMPLETED | CANCELLED | EXPIRED';
+COMMENT ON COLUMN contracts.status_updated_at IS '상태 전이 시각 — SHARED/RECEIVER_SIGNED 72h 자동 만료 검사 기준 (2026-07 refactor)';
 COMMENT ON COLUMN contracts.dispute_state IS 'NONE | REPORTED | RESOLVED | DISMISSED (W7)';
 COMMENT ON COLUMN contracts.delivery_type IS '거래 방식. IN_PROGRESS 단계에서 nullable, READY 이상 NOT NULL 강제 (Service 검증)';
 COMMENT ON COLUMN contracts.trading_platform IS '거래 발견 플랫폼 (자유 텍스트 50자, 예: 당근마켓 / 번개장터 / 인스타그램 DM). 분쟁 audit + AI 자동 추출';
