@@ -49,7 +49,9 @@ class LiveAligoAlimtalkClient(
     override fun sendNewContract(message: NewContractMessage) {
         val body =
             """
-            안녕하세요. ${message.receiverName}님, ${message.sellerName}님으로부터 안전 거래 계약 서명 요청이 도착했습니다.
+            안녕하세요. ${message.receiverName}님,
+            ${message.sellerName}님으로부터
+            안전 거래 계약 서명 요청이 도착했습니다.
 
             아래 계약 내용을 확인하신 후 서명을 진행해 주세요.
 
@@ -73,9 +75,13 @@ class LiveAligoAlimtalkClient(
     override fun sendReceiverSigned(message: ReceiverSignedMessage) {
         val body =
             """
-            안녕하세요. ${message.creatorName}님, ${message.receiverName}님이 안전 거래 계약서에 서명을 완료했습니다.
+            안녕하세요. ${message.creatorName}님,
+            ${message.receiverName}님이
+            안전 거래 계약서에 서명을 완료했습니다.
 
-            이제 ${message.creatorName}님의 최종 서명이 완료되면 계약이 효력을 발휘합니다. 아래 링크를 통해 최종 서명을 진행해 주세요.
+            ${message.creatorName}님의 최종 서명이 완료되면 계약이 효력을 발휘합니다.${" "}
+
+            아래 링크를 통해 서명을 진행해 주세요.
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
@@ -88,7 +94,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "최종 서명 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("최종 서명하러 가기", message.reviewUrl))
+                add("button_1", buildButtonJson("최종 서명하기", message.reviewUrl))
             }
 
         send(formData, label = "sendReceiverSigned", to = message.creatorPhone)
@@ -97,9 +103,11 @@ class LiveAligoAlimtalkClient(
     override fun sendRevisionRequested(message: RevisionRequestedMessage) {
         val body =
             """
-            안녕하세요. ${message.creatorName}님, ${message.requesterName}님이 수정 요청을 보냈습니다.
+            안녕하세요. ${message.creatorName}님,${" "}
+            ${message.requesterName}님이 수정 요청을 보냈습니다.
 
-            아래 수정 사유를 확인하신 후, 계약 내용을 수정하여 다시 요청해 주세요.
+            아래 수정 사유를 확인하신 후,${" "}
+            계약 내용을 수정하여 다시 요청해 주세요.
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
@@ -113,7 +121,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "안전 거래 계약 수정 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약 수정하러 가기", message.reviewUrl))
+                add("button_1", buildButtonJson("계약 수정하기", message.reviewUrl))
             }
 
         send(formData, label = "sendRevisionRequested", to = message.creatorPhone)
@@ -125,12 +133,12 @@ class LiveAligoAlimtalkClient(
             안녕하세요, ${message.recipientName}님.
             진행 중이던 안전 거래 계약의 모든 서명이 완료되었습니다.
 
-            체결된 계약서 양식은 아래 링크를 통해 언제든지 다시 확인하실 수 있습니다.
+            체결된 계약서 양식은 아래 링크를 통해${" "}
+            언제든지 다시 확인하실 수 있습니다.
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
             계약 체결 일시: ${KstFormatter.DISPLAY.format(message.completedAt)}
-            ※ 안전한 거래를 위해 계약 내용을 준수해 주시기 바랍니다. 감사합니다.
             """.trimIndent()
 
         val formData =
@@ -140,7 +148,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "안전 거래 계약 최종 완료")
                 add("message_1", body)
-                add("button_1", buildButtonJson("최종 계약서 확인하기", message.downloadUrl))
+                add("button_1", buildButtonJson("계약서 확인하기", message.downloadUrl))
             }
 
         send(formData, label = "sendCompleted", to = message.recipientPhone)
@@ -208,6 +216,19 @@ class LiveAligoAlimtalkClient(
         label: String,
         to: String,
     ) {
+        log.info(
+            "[ALIGO] {} DIAG tpl={} emtitle=[{}] subject=[{}] message_1=[{}] button_1=[{}]",
+            label,
+            formData.getFirst("tpl_code"),
+            formData.getFirst("emtitle_1"),
+            formData.getFirst("subject_1"),
+            formData
+                .getFirst("message_1")
+                ?.replace("\r", "\\r")
+                ?.replace("\n", "\\n")
+                ?.replace("\u200B", "[ZWS]"),
+            formData.getFirst("button_1"),
+        )
         val response =
             restClient
                 .post()

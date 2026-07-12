@@ -70,10 +70,10 @@ trana:
   alimtalk:
     aligo:
       tpl-code:
-        new-contract: UI_4032
-        receiver-signed: UI_4033
-        revision-requested: UI_4034
-        completed: UI_4037
+        new-contract: UJ_2893
+        receiver-signed: UJ_2897
+        revision-requested: UJ_2905
+        completed: UJ_2901
         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
         emtitle-new-contract: "안전 거래 계약 서명 요청"

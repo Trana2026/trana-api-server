@@ -78,7 +78,7 @@ class ContractAlimtalkDispatcher(
         creator: User,
         receiver: User,
     ) {
-        val downloadUrl = webUrlBuilder.contractPdf(contract.publicCode)
+        val downloadUrl = webUrlBuilder.contractDetail(contract.publicCode)
         listOf(creator, receiver).forEach { recipient ->
             val recipientName = recipient.name ?: "Trana 사용자"
             val recipientPhone = recipient.phone ?: "(unknown)"
