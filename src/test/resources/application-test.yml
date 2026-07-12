@@ -76,4 +76,6 @@ trana:
     webhook-url: https://hooks.slack.com/services/test-dummy
   ipinfo:
     token: test-token
+  dev:
+    token-key: test-dummy
 

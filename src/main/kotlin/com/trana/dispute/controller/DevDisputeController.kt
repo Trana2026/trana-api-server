@@ -2,6 +2,7 @@ package com.trana.dispute.controller
 
 import com.trana.common.dev.DevProperties
 import com.trana.dispute.service.DisputeService
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
@@ -23,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException
  *
  * W7 RBAC 도입 + 운영자 admin endpoint 신설 후 이 controller 제거.
  */
-@Profile("local", "dev")
+@Profile("!prod")
 @RestController
 @RequestMapping("/v1/dev/disputes")
 @Tag(name = "Dev", description = "개발 전용 (local/dev profile)")
@@ -42,6 +43,7 @@ class DevDisputeController(
     prod 비활성. W7 RBAC + admin endpoint 도입 시 제거.
     """,
     )
+    @Hidden
     @PostMapping("/{disputeId}/resolve")
     fun resolve(
         @RequestHeader(value = "X-Dev-Token-Key", required = false) providedKey: String?,

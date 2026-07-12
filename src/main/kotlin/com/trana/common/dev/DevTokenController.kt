@@ -25,7 +25,7 @@ import java.time.Instant
  * - @Profile("local", "dev") — prod profile 에서는 빈 자체 안 로드 → 404
  * - **X-Dev-Token-Key 헤더 필수** — yml `trana.dev.token-key` 또는 환경변수 `TRANA_DEV_TOKEN_KEY` 와 일치
  */
-@Profile("local", "dev")
+@Profile("!prod")
 @RestController
 @RequestMapping("/v1/dev")
 @Tag(name = "Dev", description = "개발 전용 (local/dev profile)")

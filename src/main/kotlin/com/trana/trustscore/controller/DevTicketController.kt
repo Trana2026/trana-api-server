@@ -3,6 +3,7 @@ package com.trana.trustscore.controller
 import com.trana.common.dev.DevProperties
 import com.trana.trustscore.service.IssueBatchResult
 import com.trana.trustscore.service.WarrantyExemptionTicketService
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
@@ -23,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException
  *
  * 보안: @Profile("local", "dev") + X-Dev-Token-Key 헤더 (DevTokenController 패턴 동일).
  */
-@Profile("local", "dev")
+@Profile("!prod")
 @RestController
 @RequestMapping("/v1/dev/tickets")
 @Tag(name = "Dev", description = "개발 전용 (local/dev profile)")
@@ -31,6 +32,7 @@ class DevTicketController(
     private val ticketService: WarrantyExemptionTicketService,
     private val devProperties: DevProperties,
 ) {
+    @Hidden
     @Operation(summary = "면제 티켓 매월 발급 batch 즉시 발사 (dev only)")
     @PostMapping("/issue-monthly")
     fun issueMonthly(
@@ -40,6 +42,7 @@ class DevTicketController(
         return ticketService.issueMonthlyBatch()
     }
 
+    @Hidden
     @Operation(summary = "만료 batch 즉시 발사 (dev only)")
     @PostMapping("/expire")
     fun expire(
@@ -49,6 +52,7 @@ class DevTicketController(
         return ticketService.expireBatch()
     }
 
+    @Hidden
     @Operation(summary = "만료 임박 알림 batch 즉시 발사 (dev only)")
     @PostMapping("/notify-expiring-soon")
     fun notifyExpiringSoon(
@@ -64,6 +68,7 @@ class DevTicketController(
         }
     }
 
+    @Hidden
     @Operation(
         summary = "면제 티켓 1장 사용 (dev only)",
         description =
