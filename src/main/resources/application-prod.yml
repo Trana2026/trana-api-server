@@ -1,0 +1,7 @@
+trana:
+  jwt:
+    issuer: trana
+    audience: trana-app
+    secret: ${TRANA_JWT_SECRET}
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
