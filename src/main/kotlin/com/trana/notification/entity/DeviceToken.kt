@@ -36,10 +36,10 @@ class DeviceToken(
     val platform: DevicePlatform,
     @Column(name = "device_model", length = 100)
     val deviceModel: String? = null,
-    @Column(name = "location_city", length = 100)
-    val locationCity: String? = null,
-    @Column(name = "location_country", length = 2)
-    val locationCountry: String? = null,
+    @Column(name = "os_version", length = 32)
+    val osVersion: String? = null,
+    @Column(name = "app_version", length = 32)
+    val appVersion: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

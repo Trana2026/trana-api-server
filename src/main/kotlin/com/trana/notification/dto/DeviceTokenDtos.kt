@@ -3,6 +3,7 @@ package com.trana.notification.dto
 import com.trana.notification.entity.DevicePlatform
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import java.time.Instant
 
 @Schema(description = "FCM 디바이스 토큰 등록 요청 본문")
@@ -30,6 +31,24 @@ data class RegisterDeviceTokenRequest(
         nullable = true,
     )
     val deviceModel: String? = null,
+    @field:Size(max = 32)
+    @field:Schema(
+        description =
+            "Flutter Platform.operatingSystemVersion 결과 (예: \"iOS 18.2\", \"Android 14\"). " +
+                "앱 이전 버전 호환 optional — 미전송 시 목록에 OS 버전 안 뜸",
+        example = "iOS 18.2",
+        nullable = true,
+    )
+    val osVersion: String? = null,
+    @field:Size(max = 32)
+    @field:Schema(
+        description =
+            "Flutter package_info_plus.version (예: \"1.2.3+45\"). 마이페이지 기기 관리 표시용. " +
+                "앱 이전 버전 호환 optional",
+        example = "1.2.3+45",
+        nullable = true,
+    )
+    val appVersion: String? = null,
 )
 
 @Schema(description = "FCM 디바이스 토큰 등록 응답 — 마이페이지 '현재 단말' 식별용 id 반환")
@@ -69,17 +88,17 @@ data class DeviceTokenSummaryResponse(
     )
     val deviceModel: String?,
     @Schema(
-        description = "ipinfo.io 로 등록 시 IP → 도시 조회 결과. 조회 실패 / 앱 이전 버전 시 null",
-        example = "Seoul",
+        description = "Flutter Platform.operatingSystemVersion. 앱 이전 버전 / 미전송 시 null",
+        example = "iOS 18.2",
         nullable = true,
     )
-    val locationCity: String?,
+    val osVersion: String?,
     @Schema(
-        description = "ISO 3166-1 alpha-2 국가 코드. 조회 실패 / 앱 이전 버전 시 null",
-        example = "KR",
+        description = "Flutter package_info_plus.version. 앱 이전 버전 / 미전송 시 null",
+        example = "1.2.3+45",
         nullable = true,
     )
-    val locationCountry: String?,
+    val appVersion: String?,
     @Schema(description = "등록 시각 (UTC)")
     val createdAt: Instant,
     @Schema(

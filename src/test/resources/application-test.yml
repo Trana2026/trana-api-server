@@ -74,8 +74,6 @@ trana:
     service-account-base64: ""
   slack:
     webhook-url: https://hooks.slack.com/services/test-dummy
-  ipinfo:
-    token: test-token
   dev:
     token-key: test-dummy
 

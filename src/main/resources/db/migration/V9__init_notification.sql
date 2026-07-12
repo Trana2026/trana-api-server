@@ -5,22 +5,23 @@
 --   → 랜덤 IV 로 평문 매칭 불가 문제를 hash 보조 컬럼으로 해소 (identity.identifier_hash 동일 패턴)
 -- - platform CHECK = ANDROID | IOS (명세서 P 카테고리 OS 푸시만)
 -- - audit 성격 아님 — 갱신/삭제 자유 (WORM trigger 없음). user 탈퇴 시 ON DELETE CASCADE
+-- - 위치정보 (city/country) 는 위치정보법 개인위치정보 해당 → OS/앱 버전으로 대체 (2026-07-10 refactor)
 
 -- ============================================================
 -- device_tokens
 -- ============================================================
 CREATE TABLE device_tokens
 (
-    id               BIGSERIAL PRIMARY KEY,
-    user_id          BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token_encrypted  TEXT        NOT NULL,
-    token_hash       VARCHAR(64) NOT NULL,
-    platform         VARCHAR(16) NOT NULL,
-    device_model     VARCHAR(100),
-    location_city    VARCHAR(100),
-    location_country VARCHAR(2),
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    last_used_at     TIMESTAMPTZ,
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    token_encrypted TEXT        NOT NULL,
+    token_hash      VARCHAR(64) NOT NULL,
+    platform        VARCHAR(16) NOT NULL,
+    device_model    VARCHAR(100),
+    os_version      VARCHAR(32),
+    app_version     VARCHAR(32),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at    TIMESTAMPTZ,
 
     CONSTRAINT chk_device_tokens_platform
         CHECK (platform IN ('ANDROID', 'IOS')),
@@ -49,10 +50,10 @@ COMMENT ON COLUMN device_tokens.last_used_at IS
     '마이페이지 기기 관리 "최근 활동 시각" — Flutter ping endpoint / FCM 발송 성공 시 갱신';
 COMMENT ON COLUMN device_tokens.device_model IS
     'Flutter device_info_plus 로 식별한 기기 모델명 (예: "iPhone 15 Pro" / "SM-G998N"). 마이페이지 기기 관리 UX 노출용';
-COMMENT ON COLUMN device_tokens.location_city IS
-    'ipinfo.io 로 등록 시 IP → 도시 조회 (예: "Seoul"). 정확도 낮음 (VPN/proxy). 조회 실패 시 NULL';
-COMMENT ON COLUMN device_tokens.location_country IS
-    'ISO 3166-1 alpha-2 국가 코드 (예: "KR"). ipinfo.io country 필드';
+COMMENT ON COLUMN device_tokens.os_version IS
+    'Flutter Platform.operatingSystemVersion (예: "iOS 18.2", "Android 14"). 마이페이지 기기 관리 표시용. 앱 이전 버전 미전송 시 NULL';
+COMMENT ON COLUMN device_tokens.app_version IS
+    'Flutter package_info_plus.version (예: "1.2.3+45"). 마이페이지 기기 관리 표시용. 앱 이전 버전 미전송 시 NULL';
 
 -- ============================================================
 -- notifications

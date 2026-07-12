@@ -1,6 +1,5 @@
 package com.trana.notification.controller
 
-import com.trana.common.util.IpExtractor
 import com.trana.notification.dto.DeviceTokenSummaryResponse
 import com.trana.notification.dto.PingDeviceTokenRequest
 import com.trana.notification.dto.RegisterDeviceTokenRequest
@@ -9,7 +8,6 @@ import com.trana.notification.dto.UnregisterDeviceTokenRequest
 import com.trana.notification.entity.DeviceToken
 import com.trana.notification.service.DeviceTokenService
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -20,12 +18,10 @@ import org.springframework.web.bind.annotation.RestController
 @SecurityRequirement(name = "bearerAuth")
 class DeviceTokenController(
     private val deviceTokenService: DeviceTokenService,
-    private val ipExtractor: IpExtractor,
 ) : DeviceTokenApi {
     override fun register(
         @AuthenticationPrincipal userId: Long,
         request: RegisterDeviceTokenRequest,
-        httpRequest: HttpServletRequest,
     ): RegisterDeviceTokenResponse {
         val deviceToken =
             deviceTokenService.register(
@@ -33,7 +29,8 @@ class DeviceTokenController(
                 token = request.token,
                 platform = request.platform,
                 deviceModel = request.deviceModel,
-                ip = ipExtractor.extract(httpRequest),
+                osVersion = request.osVersion,
+                appVersion = request.appVersion,
             )
         return RegisterDeviceTokenResponse(id = deviceToken.id!!)
     }
@@ -69,8 +66,8 @@ private fun DeviceToken.toSummary(): DeviceTokenSummaryResponse =
         id = id!!,
         platform = platform,
         deviceModel = deviceModel,
-        locationCity = locationCity,
-        locationCountry = locationCountry,
+        osVersion = osVersion,
+        appVersion = appVersion,
         createdAt = createdAt!!,
         lastUsedAt = lastUsedAt,
     )

@@ -2,12 +2,14 @@ package com.trana.notification
 
 internal object DeviceTokenExamples {
     const val REGISTER_REQUEST = """
-              {
-                "token": "dXr8...실제FCM토큰...AB12",
-                "platform": "ANDROID",
-                "deviceModel": "iPhone 15 Pro"
-              }
-          """
+                {
+                  "token": "dXr8...실제FCM토큰...AB12",
+                  "platform": "ANDROID",
+                  "deviceModel": "iPhone 15 Pro",
+                  "osVersion": "iOS 18.2",
+                  "appVersion": "1.2.3+45"
+                }
+            """
 
     const val REGISTER_RESPONSE = """
               {
@@ -47,27 +49,27 @@ internal object DeviceTokenExamples {
           """
 
     const val LIST_RESPONSE = """
-            [
-              {
-                "id": 12,
-                "platform": "ANDROID",
-                "deviceModel": "Samsung Galaxy S24",
-                "locationCity": "Seoul",
-                "locationCountry": "KR",
-                "createdAt": "2026-06-19T12:34:56Z",
-                "lastUsedAt": "2026-06-19T13:20:00Z"
-              },
-              {
-                "id": 8,
-                "platform": "IOS",
-                "deviceModel": "iPhone 15 Pro",
-                "locationCity": null,
-                "locationCountry": null,
-                "createdAt": "2026-06-10T09:00:00Z",
-                "lastUsedAt": null
-              }
-            ]
-        """
+              [
+                {
+                  "id": 12,
+                  "platform": "ANDROID",
+                  "deviceModel": "Samsung Galaxy S24",
+                  "osVersion": "Android 14",
+                  "appVersion": "1.2.3+45",
+                  "createdAt": "2026-06-19T12:34:56Z",
+                  "lastUsedAt": "2026-06-19T13:20:00Z"
+                },
+                {
+                  "id": 8,
+                  "platform": "IOS",
+                  "deviceModel": "iPhone 15 Pro",
+                  "osVersion": null,
+                  "appVersion": null,
+                  "createdAt": "2026-06-10T09:00:00Z",
+                  "lastUsedAt": null
+                }
+              ]
+          """
 
     const val LIST_EMPTY = """[]"""
 
