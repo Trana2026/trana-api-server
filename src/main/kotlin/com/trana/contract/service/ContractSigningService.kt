@@ -48,6 +48,7 @@ class ContractSigningService(
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val committer: ContractStatusCommitter,
     private val contractAlimtalkDispatcher: ContractAlimtalkDispatcher,
+    private val minorDisclosureService: MinorDisclosureConfirmationService,
     private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Suppress("ThrowsCount")
@@ -101,6 +102,7 @@ class ContractSigningService(
         signerUserAgent: String?,
     ): ReceiverSignView {
         val preview = committer.loadReceiverSignPreview(publicCode, userId, agreedTermIds)
+        minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
 
         val partyInfo =
             PartyRenderInfo(
@@ -153,6 +155,7 @@ class ContractSigningService(
         signerUserAgent: String?,
     ): CreatorSignView {
         val preview = committer.loadCreatorSignPreview(publicCode, userId, agreedTermIds)
+        minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
 
         val creatorInfo =
             PartyRenderInfo(

@@ -357,3 +357,39 @@ CREATE TRIGGER trg_contract_revision_requests_worm
     ON contract_revision_requests
     FOR EACH ROW
 EXECUTE FUNCTION worm_protect();
+
+-- ============================================================
+-- minor_disclosure_confirmations
+-- 미성년자와 거래하는 상대(성인)의 서명 전 위험 고지 확인 audit
+-- 이용약관 제32조 제2항 의무 + 분쟁 시 고지 입증 유일 수단
+-- ============================================================
+CREATE TABLE minor_disclosure_confirmations
+(
+    id               BIGSERIAL PRIMARY KEY,
+    contract_id      BIGINT      NOT NULL REFERENCES contracts (id) ON DELETE CASCADE,
+    party_user_id    BIGINT      NOT NULL,
+    template_version VARCHAR(20) NOT NULL,
+    disclosed_at     TIMESTAMPTZ NOT NULL,
+    confirmed_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ip               INET,
+    user_agent       TEXT,
+    UNIQUE (contract_id, party_user_id)
+);
+
+CREATE INDEX idx_minor_disclosure_confirmations_contract
+    ON minor_disclosure_confirmations (contract_id);
+
+COMMENT ON TABLE minor_disclosure_confirmations IS
+    '미성년자와 거래하는 상대방(성인)의 위험 고지 확인 audit. 이용약관 제32조 제2항 의무 + 분쟁 시 고지 입증 유일 수단';
+COMMENT ON COLUMN minor_disclosure_confirmations.party_user_id IS
+    '확인한 상대방(성인) user_id — 논리 FK. 미성년자 계약에서 서명 전 게이트';
+COMMENT ON COLUMN minor_disclosure_confirmations.template_version IS
+    '고지 문구 버전 (예: "v1"). 코드 상수 MinorDisclosureTemplate.LATEST_VERSION 과 매핑';
+COMMENT ON COLUMN minor_disclosure_confirmations.disclosed_at IS
+    '프론트가 고지 화면 표시한 시각 — 확인 클릭 시 request body 로 전달';
+COMMENT ON COLUMN minor_disclosure_confirmations.confirmed_at IS
+    '서버에서 확인 버튼 처리한 시각';
+COMMENT ON COLUMN minor_disclosure_confirmations.ip IS
+    'inet 타입. 확인 시점 client IP (audit)';
+COMMENT ON COLUMN minor_disclosure_confirmations.user_agent IS
+    '확인 시점 브라우저/앱 UA (audit)';

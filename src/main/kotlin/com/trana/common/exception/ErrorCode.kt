@@ -166,6 +166,16 @@ enum class ErrorCode(
         "CONTRACT_409_NOT_SIGNED",
         "현재 SIGNED 상태가 아닙니다 (거래 완료는 SIGNED 이후에만 가능)",
     ),
+    CONTRACT_MINOR_DISCLOSURE_NOT_CONFIRMED(
+        HttpStatus.FORBIDDEN,
+        "CONTRACT_403_MINOR_DISCLOSURE",
+        "미성년자와 거래 시 서명 전 위험 고지 확인이 필요합니다",
+    ),
+    CONTRACT_MINOR_DISCLOSURE_NOT_APPLICABLE(
+        HttpStatus.CONFLICT,
+        "CONTRACT_409_MINOR_DISCLOSURE_NA",
+        "상대방이 미성년자가 아닌 계약에서는 위험 고지 확인이 불필요합니다",
+    ),
 
     // === 분쟁 (DISPUTE_*) ===
     DISPUTE_NOT_REPORTABLE(
