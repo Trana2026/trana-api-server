@@ -46,3 +46,17 @@ enum class TermsType {
     CONTRACT_AGREEMENT,
     ELECTRONIC_SIGNATURE,
 }
+
+/**
+ * 약관 조회 컨텍스트 — `GET /v1/terms?context=…` 필터 + 계약 서명 필수 약관 SoT.
+ *
+ * - CONTRACT: 계약 서명 단계 필수 약관. 현재 ELECTRONIC_SIGNATURE 1종
+ *   (CONTRACT_AGREEMENT 는 서명 화면·기록에서 제거 — plan 1-2).
+ *
+ * 이 매핑이 계약 필수 약관의 단일 진실원천 — ContractTermsLoader 가 재사용.
+ */
+enum class TermsContext(
+    val types: List<TermsType>,
+) {
+    CONTRACT(listOf(TermsType.ELECTRONIC_SIGNATURE)),
+}

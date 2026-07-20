@@ -277,7 +277,7 @@ data class RequestRevisionRequest(
             !conditionDetailsReason.isNullOrBlank()
 }
 
-@Schema(description = "수신자 서명 요청 — 계약 약관 + 전자서명 약관 동의 + PNG 서명 image base64")
+@Schema(description = "수신자 서명 요청 — 전자서명 약관 동의 + PNG 서명 image base64")
 data class ReceiverSignRequest(
     @field:NotBlank
     @field:Size(max = SIGNATURE_BASE64_MAX_LENGTH)
@@ -293,9 +293,9 @@ data class ReceiverSignRequest(
     @field:Size(min = REQUIRED_TERM_COUNT, max = MAX_TERM_COUNT)
     @field:Schema(
         description =
-            "동의한 약관 ID 목록 — CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 2개 필수. " +
+            "동의한 약관 ID 목록 — ELECTRONIC_SIGNATURE 1개 필수. " +
                 "frontend 가 GET /v1/terms?context=CONTRACT 로 조회한 ID 그대로 전달",
-        example = "[5, 6]",
+        example = "[6]",
     )
     val agreedTermIds: List<Long>,
 )
@@ -312,7 +312,7 @@ data class ReceiverSignResponse(
     val receiverSignedAt: Instant,
 )
 
-@Schema(description = "생성자 최종 서명 요청 — 계약 약관 + 전자서명 약관 동의 + PNG 서명 image base64")
+@Schema(description = "생성자 최종 서명 요청 — 전자서명 약관 동의 + PNG 서명 image base64")
 data class CreatorSignRequest(
     @field:NotBlank
     @field:Size(max = SIGNATURE_BASE64_MAX_LENGTH)
@@ -325,8 +325,8 @@ data class CreatorSignRequest(
     @field:NotEmpty
     @field:Size(min = REQUIRED_TERM_COUNT, max = MAX_TERM_COUNT)
     @field:Schema(
-        description = "동의한 약관 ID 목록 — CONTRACT_AGREEMENT + ELECTRONIC_SIGNATURE 2개 필수",
-        example = "[5, 6]",
+        description = "동의한 약관 ID 목록 — ELECTRONIC_SIGNATURE 1개 필수",
+        example = "[6]",
     )
     val agreedTermIds: List<Long>,
 )
@@ -401,6 +401,6 @@ private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"
 private const val REVISION_REASON_MAX_LENGTH = 500
 private const val SIGNATURE_BASE64_MAX_LENGTH = 262144
-private const val REQUIRED_TERM_COUNT = 2
+private const val REQUIRED_TERM_COUNT = 1
 private const val MAX_TERM_COUNT = 10
 private const val TRADING_PLATFORM_MAX_LENGTH = 50
