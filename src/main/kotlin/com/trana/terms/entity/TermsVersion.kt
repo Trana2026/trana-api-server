@@ -40,6 +40,7 @@ class TermsVersion(
 enum class TermsType {
     SERVICE,
     PRIVACY,
+    THIRD_PARTY,
     MARKETING,
     LOCATION,
     CONTRACT_AGREEMENT,
