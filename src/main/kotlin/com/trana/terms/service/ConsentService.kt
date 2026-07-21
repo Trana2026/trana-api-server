@@ -121,7 +121,12 @@ class ConsentService(
         return toBackfill.size
     }
 
-    /** 마이페이지 — 본인의 가입 약관 동의 내역 (최신순). 미성년자는 빈 배열 (본인 동의 X, 보호자가 GUARDIAN_CONSENT 로 동의). */
+    /**
+     * 마이페이지 — 본인의 가입 약관 동의 내역 (최신순). 미성년자는 빈 배열 (본인 동의 X, 보호자가 GUARDIAN_CONSENT 로 동의).
+     *
+     * 재동의 시 user_consents 에 새 row 가 쌓여(가입 흐름 unique 없음) 목록이 중복되므로,
+     * 약관 type 기준 최신 1건만 반환 (audit row 는 보존, 표시만 dedupe — plan 3-1).
+     */
     @Transactional(readOnly = true)
     fun findMyConsents(userId: Long): List<MyConsentResponse> {
         val consents =
@@ -134,18 +139,21 @@ class ConsentService(
         val termsIds = consents.map { it.termsVersionId }.distinct()
         val termsById = termsVersionRepository.findAllById(termsIds).associateBy { it.id }
 
-        return consents.map { consent ->
-            val terms =
-                termsById[consent.termsVersionId]
-                    ?: error("Orphan user_consent: id=${consent.id}, termsVersionId=${consent.termsVersionId}")
-            MyConsentResponse(
-                termsId = consent.termsVersionId,
-                type = terms.type,
-                version = terms.version,
-                title = terms.title,
-                agreedAt = consent.agreedAt!!,
-            )
-        }
+        return consents
+            .map { consent ->
+                val terms =
+                    termsById[consent.termsVersionId]
+                        ?: error("Orphan user_consent: id=${consent.id}, termsVersionId=${consent.termsVersionId}")
+                MyConsentResponse(
+                    termsId = consent.termsVersionId,
+                    type = terms.type,
+                    version = terms.version,
+                    title = terms.title,
+                    agreedAt = consent.agreedAt!!,
+                )
+            }
+            // agreedAt DESC 정렬 상태 → type 별 첫(=최신) 1건만 유지
+            .distinctBy { it.type }
     }
 
     private fun resolveSignupSessionId(command: AgreeCommand): UUID? =

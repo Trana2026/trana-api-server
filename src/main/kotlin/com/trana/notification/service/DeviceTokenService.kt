@@ -21,6 +21,8 @@ class DeviceTokenService(
      * - 같은 token_hash 기존 row + 같은 user → no-op (deviceModel/os/app 갱신 X)
      * - 같은 token_hash 기존 row + 다른 user → reassignTo (단말 재로그인, deviceModel/os/app 유지)
      * - 없으면 새 INSERT (deviceModel + osVersion + appVersion 함께 저장)
+     *   이때 같은 물리 기기(같은 user·platform·deviceModel)의 옛 토큰 row 는 제거 —
+     *   재설치 시 FCM 토큰이 바뀌어 중복 표시되던 문제 방지 (plan 3-2)
      *
      * 지역 (IP → city/country) 조회는 폐기 — 위치정보법 개인위치정보 대상. OS/앱 버전으로 대체 (2026-07-10 refactor).
      */
@@ -39,6 +41,13 @@ class DeviceTokenService(
                 existing.reassignTo(userId)
             }
             return existing
+        }
+        // 재설치 중복 제거 (plan 3-2): 같은 기기(모델)의 옛 토큰 row 삭제 후 새 토큰 INSERT.
+        // deviceModel 이 null 이면 기기 식별 불가 → 토큰 단위 유지(중복 제거 스킵).
+        if (deviceModel != null) {
+            repository
+                .findAllByUserIdAndPlatformAndDeviceModel(userId, platform, deviceModel)
+                .forEach { repository.delete(it) }
         }
         return repository.save(
             DeviceToken(

@@ -1,5 +1,6 @@
 package com.trana.notification.repository
 
+import com.trana.notification.entity.DevicePlatform
 import com.trana.notification.entity.DeviceToken
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -33,6 +34,16 @@ interface DeviceTokenRepository : JpaRepository<DeviceToken, Long> {
 
     /** 마이페이지 기기 목록 — 본인 단말, 최신 등록 순. */
     fun findAllByUserIdOrderByCreatedAtDesc(userId: Long): List<DeviceToken>
+
+    /**
+     * 같은 물리 기기 판별용 — (user, platform, deviceModel) 매칭.
+     * 재설치 시 FCM 토큰이 바뀌어 새 row 가 생기는 중복 제거에 사용 (plan 3-2).
+     */
+    fun findAllByUserIdAndPlatformAndDeviceModel(
+        userId: Long,
+        platform: DevicePlatform,
+        deviceModel: String,
+    ): List<DeviceToken>
 
     /** 마이페이지 강제 해제 — id + userId 매칭 (다른 user 의 id 추측 시 null → 404). */
     fun findByIdAndUserId(
