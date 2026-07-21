@@ -49,6 +49,7 @@ class ContractAiExtractionService(
         userId: Long,
         attachmentIds: List<Long>,
         consentedAt: Instant,
+        consenterIp: String? = null,
     ): AiExtractionStatusView {
         val contract = accessGuard.loadOwnedEditable(publicCode, userId)
 
@@ -58,7 +59,7 @@ class ContractAiExtractionService(
 
         // AI 국외이전 동의(개인정보보호법 §28-8, 필수) 를 계약 동의 audit 에 개별 기록 (재추출 멱등).
         // 면책 고지(AI_AUTOFILL_NOTICE, readonly)는 아래 consentTextVersion 으로 갈음.
-        recordCrossBorderConsentIfAbsent(contract.id!!, userId)
+        recordCrossBorderConsentIfAbsent(contract.id!!, userId, consenterIp)
 
         val contractAttachments = attachmentRepository.findAllByContractIdOrderBySortOrderAsc(contract.id!!)
         val attachmentMap = contractAttachments.associateBy { it.id!! }
@@ -122,6 +123,7 @@ class ContractAiExtractionService(
     private fun recordCrossBorderConsentIfAbsent(
         contractId: Long,
         userId: Long,
+        consenterIp: String?,
     ) {
         val term = termsLoader.loadActive(TermsType.AI_CROSS_BORDER)
         val termId = requireNotNull(term.id)
@@ -136,6 +138,7 @@ class ContractAiExtractionService(
                 userId = userId,
                 termId = termId,
                 termVersion = term.version,
+                consenterIp = consenterIp,
             ),
         )
     }

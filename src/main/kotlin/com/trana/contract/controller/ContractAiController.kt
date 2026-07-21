@@ -5,6 +5,7 @@ import com.trana.contract.dto.ExtractPrefillRequest
 import com.trana.contract.service.AiExtractionStatusView
 import com.trana.contract.service.ContractAiExtractionService
 import io.swagger.v3.oas.annotations.Parameter
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
@@ -21,6 +22,7 @@ class ContractAiController(
         @Parameter(hidden = true) @AuthenticationPrincipal userId: Long,
         @PathVariable publicCode: String,
         @RequestBody request: ExtractPrefillRequest,
+        @Parameter(hidden = true) httpRequest: HttpServletRequest,
     ): ResponseEntity<AiExtractionResponse> {
         val view =
             service.submit(
@@ -28,8 +30,14 @@ class ContractAiController(
                 userId = userId,
                 attachmentIds = request.attachmentIds,
                 consentedAt = request.consentedAt,
+                consenterIp = extractIp(httpRequest),
             )
         return ResponseEntity.accepted().body(view.toResponse())
+    }
+
+    private fun extractIp(request: HttpServletRequest): String {
+        val xff = request.getHeader("X-Forwarded-For")
+        return if (xff.isNullOrBlank()) request.remoteAddr else xff.split(",").first().trim()
     }
 
     override fun latest(
