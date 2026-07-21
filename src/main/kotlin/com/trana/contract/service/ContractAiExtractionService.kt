@@ -5,10 +5,13 @@ import com.trana.contract.adapter.openai.ExtractedPrefill
 import com.trana.contract.adapter.openai.OpenAiProperties
 import com.trana.contract.adapter.openai.OpenAiUsage
 import com.trana.contract.entity.ContractAiExtraction
+import com.trana.contract.entity.ContractConsent
 import com.trana.contract.entity.ExtractionStatus
 import com.trana.contract.repository.ContractAiExtractionRepository
 import com.trana.contract.repository.ContractAttachmentRepository
+import com.trana.contract.repository.ContractConsentRepository
 import com.trana.contract.repository.ContractRepository
+import com.trana.terms.entity.TermsType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -38,6 +41,8 @@ class ContractAiExtractionService(
     private val objectMapper: ObjectMapper,
     private val eventPublisher: ApplicationEventPublisher,
     private val accessGuard: ContractAccessGuard,
+    private val termsLoader: ContractTermsLoader,
+    private val contractConsentRepository: ContractConsentRepository,
 ) {
     fun submit(
         publicCode: String,
@@ -50,6 +55,10 @@ class ContractAiExtractionService(
         if (attachmentIds.size !in MIN_IMAGES..MAX_IMAGES) {
             throw ContractException.AiImageCountInvalid(attachmentIds.size)
         }
+
+        // AI 국외이전 동의(개인정보보호법 §28-8, 필수) 를 계약 동의 audit 에 개별 기록 (재추출 멱등).
+        // 면책 고지(AI_AUTOFILL_NOTICE, readonly)는 아래 consentTextVersion 으로 갈음.
+        recordCrossBorderConsentIfAbsent(contract.id!!, userId)
 
         val contractAttachments = attachmentRepository.findAllByContractIdOrderBySortOrderAsc(contract.id!!)
         val attachmentMap = contractAttachments.associateBy { it.id!! }
@@ -104,6 +113,31 @@ class ContractAiExtractionService(
             aiExtractionRepository.findFirstByContractIdOrderByExtractedAtDesc(contract.id!!)
                 ?: return null
         return toStatusView(extraction)
+    }
+
+    /**
+     * AI 국외이전 동의(AI_CROSS_BORDER)를 contract_consents 에 1회 기록.
+     * 재추출 시 같은 (contract, user, term) 중복 방지 — unique 제약 충돌 회피 위해 존재확인 후 INSERT.
+     */
+    private fun recordCrossBorderConsentIfAbsent(
+        contractId: Long,
+        userId: Long,
+    ) {
+        val term = termsLoader.loadActive(TermsType.AI_CROSS_BORDER)
+        val termId = requireNotNull(term.id)
+        val already =
+            contractConsentRepository
+                .findAllByContractIdAndUserIdOrderByConsentedAtAsc(contractId, userId)
+                .any { it.termId == termId }
+        if (already) return
+        contractConsentRepository.save(
+            ContractConsent.create(
+                contractId = contractId,
+                userId = userId,
+                termId = termId,
+                termVersion = term.version,
+            ),
+        )
     }
 
     private fun toStatusView(extraction: ContractAiExtraction): AiExtractionStatusView {

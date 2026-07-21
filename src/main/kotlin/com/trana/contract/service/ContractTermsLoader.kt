@@ -1,6 +1,7 @@
 package com.trana.contract.service
 
 import com.trana.terms.entity.TermsContext
+import com.trana.terms.entity.TermsType
 import com.trana.terms.entity.TermsVersion
 import com.trana.terms.repository.TermsVersionRepository
 import org.springframework.stereotype.Component
@@ -32,4 +33,12 @@ class ContractTermsLoader(
         }
         return picked
     }
+
+    /** 특정 타입의 현재 활성 약관 1개 (예: AI_CROSS_BORDER). 없으면 예외. */
+    @Transactional(readOnly = true)
+    fun loadActive(type: TermsType): TermsVersion =
+        termsVersionRepository
+            .findActiveByType(Instant.now())
+            .firstOrNull { it.type == type }
+            ?: error("활성 약관 없음 — terms_versions 확인 필요 (type=$type)")
 }
