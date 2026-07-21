@@ -19,7 +19,8 @@ interface TermsApi {
         description =
             "현재 시행 중인 약관 목록. type별 최신 1개. 비인증.\n" +
                 "- context 미지정: 전체 활성 약관\n" +
-                "- context=CONTRACT: 계약 서명 필수 약관 (ELECTRONIC_SIGNATURE)",
+                "- context=CONTRACT: 계약 서명 필수 약관 (ELECTRONIC_SIGNATURE)\n" +
+                "- context=GUARDIAN: 법정대리인 PASS 인증 필수 약관 (GUARDIAN_WARRANTY, GUARDIAN_PRIVACY, GUARDIAN_LEGAL_REP)",
     )
     @ApiResponses(
         value = [

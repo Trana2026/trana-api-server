@@ -65,6 +65,8 @@ enum class TermsType {
  *
  * - CONTRACT: 계약 서명 단계 필수 약관. 현재 ELECTRONIC_SIGNATURE 1종
  *   (CONTRACT_AGREEMENT 는 서명 화면·기록에서 제거 — plan 1-2).
+ * - GUARDIAN: 법정대리인 PASS 인증 단계 필수 약관 (보증·개인정보·법정대리인 확인 3종).
+ *   대리인 웹이 GET /v1/terms?context=GUARDIAN 으로 이 3종만 노출·동의.
  *
  * 이 매핑이 각 흐름 필수 약관의 단일 진실원천 — ContractTermsLoader 등이 재사용.
  */
@@ -72,4 +74,11 @@ enum class TermsContext(
     val types: List<TermsType>,
 ) {
     CONTRACT(listOf(TermsType.ELECTRONIC_SIGNATURE)),
+    GUARDIAN(
+        listOf(
+            TermsType.GUARDIAN_WARRANTY,
+            TermsType.GUARDIAN_PRIVACY,
+            TermsType.GUARDIAN_LEGAL_REP,
+        ),
+    ),
 }
