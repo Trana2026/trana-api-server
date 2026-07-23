@@ -19,4 +19,10 @@ interface MinorDisclosureConfirmationRepository : JpaRepository<MinorDisclosureC
         contractId: Long,
         partyUserId: Long,
     ): MinorDisclosureConfirmation?
+
+    /**
+     * PDF 별지 렌더용 — 계약의 고지 확인서 조회.
+     * 미성년 계약은 성인 상대방 1명만 확인하므로 사실상 ≤1건.
+     */
+    fun findAllByContractId(contractId: Long): List<MinorDisclosureConfirmation>
 }

@@ -7,7 +7,7 @@
     <style type="text/css">
         @page {
             size: A4;
-            margin: 98pt 84pt;
+            margin: 72pt 64pt;
         }
 
         * {
@@ -29,23 +29,30 @@
             font-weight: 700;
             font-size: 18pt;
             text-align: center;
-            margin: 0 0 24pt 0;
+            margin: 0 0 20pt 0;
         }
 
         .intro {
-            font-size: 10pt;
-            margin: 0 0 24pt 0;
+            font-size: 9.5pt;
+            margin: 0 0 10pt 0;
+            line-height: 1.6;
+        }
+
+        .notice-box {
+            font-size: 9.5pt;
+            font-weight: 700;
+            margin: 0 0 20pt 0;
             line-height: 1.6;
         }
 
         .clause {
-            margin-bottom: 24pt;
+            margin-bottom: 16pt;
         }
 
         .clause-heading {
             font-weight: 700;
-            font-size: 12pt;
-            margin: 0 0 8pt 0;
+            font-size: 11.5pt;
+            margin: 0 0 6pt 0;
         }
 
         .clause-body {
@@ -54,11 +61,11 @@
         }
 
         .clause-body p {
-            margin: 0 0 6pt 0;
+            margin: 0 0 5pt 0;
         }
 
         .clause-body ol {
-            margin: 6pt 0 0 0;
+            margin: 5pt 0 0 0;
             padding: 0 0 0 18pt;
         }
 
@@ -69,16 +76,20 @@
         .field-line {
             display: inline-block;
             border-bottom: 1pt solid #6F7270;
-            min-width: 200pt;
+            min-width: 180pt;
             padding: 0 4pt;
         }
 
         .field-line.short {
-            min-width: 100pt;
+            min-width: 90pt;
+        }
+
+        .field-line.tiny {
+            min-width: 48pt;
         }
 
         .checkbox-row {
-            margin: 0 0 6pt 0;
+            margin: 0 0 5pt 0;
         }
 
         .page-break {
@@ -86,24 +97,24 @@
         }
 
         .signature-section {
-            margin-top: 32pt;
+            margin-top: 20pt;
         }
 
         .signature-intro {
             font-weight: 500;
             font-size: 10pt;
-            margin: 0 0 32pt 0;
+            margin: 0 0 20pt 0;
             line-height: 1.6;
         }
 
         .party-block {
-            margin-bottom: 32pt;
+            margin-bottom: 24pt;
         }
 
         .party-heading {
             font-weight: 700;
-            font-size: 12pt;
-            margin: 0 0 12pt 0;
+            font-size: 11.5pt;
+            margin: 0 0 10pt 0;
         }
 
         .party-row {
@@ -113,7 +124,7 @@
 
         .party-label {
             display: inline-block;
-            width: 70pt;
+            width: 120pt;
         }
 
         .signature-row {
@@ -149,6 +160,31 @@
         .signature-line.signed {
             border: none;
         }
+
+        .annex-title {
+            font-weight: 700;
+            font-size: 15pt;
+            text-align: center;
+            margin: 0 0 20pt 0;
+        }
+
+        .annex-note {
+            font-size: 9.5pt;
+            margin: 0 0 6pt 0;
+        }
+
+        .annex-check {
+            margin: 0 0 8pt 0;
+            font-size: 10pt;
+        }
+
+        .annex-fields {
+            margin-top: 16pt;
+        }
+
+        .annex-fields .party-row .party-label {
+            width: 100pt;
+        }
     </style>
 </head>
 <body>
@@ -156,8 +192,15 @@
 <h1 class="title">물품 거래 계약서</h1>
 
 <p class="intro">
-    본 계약서는 안전 거래 플랫폼 <strong>Trana</strong>를 통하여, 사전에 PASS 앱을 통한 통신사 본인확인을 완료한 당사자 간에 체결되는 법적 구속력을 가진
-    전자계약서입니다.
+    <strong>[전문]</strong> 본 계약서는 안전 거래 플랫폼 <strong>Trana</strong>를 통하여, 사전에 PASS 앱을 통한 통신사 본인확인을 완료한 당사자 간에 체결되는 법적 구속력을 가진
+    전자계약서입니다. 본 계약의 각 조건은 당사자 간 개별 협의에 의해 확정되었으며, 당사자는 아래 각 조항을 개별적으로 확인하고 이에 동의합니다.
+    특히 제6조(위약벌) 및 제8조(플랫폼 면책)는 중요 조항으로서 당사자가 별도로 확인하고 동의한 사항입니다.
+</p>
+
+<p class="notice-box">
+    [위약벌 고지] 본 계약 제6조 제2항은 판매자가 고의적 기망 또는 사기 행위를 한 경우 거래금액의 2배를 위약벌로 지급하여야 하는 조항입니다.
+    이는 손해배상액의 예정이 아닌 위약벌로서, 구매자는 위약벌과 별도로 실손해에 대한 배상을 청구할 수 있습니다.
+    본 위약벌은 C2C 거래에서 사기 행위를 억지하고, 피해자가 사기 피해를 입은 후 실손해 회복이 어려운 현실을 반영하여 당사자 간 합의로 설정된 것입니다.
 </p>
 
 <div class="clause">
@@ -170,17 +213,19 @@
 <div class="clause">
     <div class="clause-heading">제2조 (거래 정보 및 방식)</div>
     <div class="clause-body">
-        <p>당사자는 다음 각호의 거래 조건을 확인하고 본 계약을 체결한다.</p>
+        <p>당사자는 다음 각 호의 거래 조건을 개별적으로 확인하고 본 계약을 체결한다.</p>
         <ol>
-            <li><strong>거래 플랫폼:</strong> <span class="field-line short" th:text="${tradingPlatform}">당근</span></li>
-            <li><strong>거래 방식:</strong>
-                <span th:text="${shippingMark}">[ ]</span>택배거래
+            <li>거래 플랫폼 : <span class="field-line short" th:text="${tradingPlatform}">당근마켓</span> (예: 당근마켓, 번개장터, 중고나라 등)</li>
+            <li>거래 방식 :
+                <span th:text="${shippingMark}">[ ]</span> 택배거래
                 /
-                <span th:text="${directMark}">[ ]</span>직거래
+                <span th:text="${directMark}">[ ]</span> 직거래
             </li>
-            <li><strong>거래 물품명:</strong> <span class="field-line short" th:text="${title}">맥북 프로 M1 16GB</span></li>
-            <li><strong>거래 금액:</strong> 금 <span class="field-line short" th:text="${priceFormatted}">500,000</span> 원정
+            <li>거래 물품명 : <span class="field-line short" th:text="${title}">맥북 프로 M1 16GB</span></li>
+            <li>거래 금액 : 금 <span class="field-line short" th:text="${priceFormatted}">500,000</span> 원정
+                (₩ <span class="field-line tiny" th:text="${priceFormatted}">500,000</span> )
             </li>
+            <li>거래 이행 기한 : 본 계약 서명 완료 후 <span class="field-line tiny">&#160;</span> 시간 이내 (미기재 시 24시간 적용)</li>
         </ol>
     </div>
 </div>
@@ -188,12 +233,13 @@
 <div class="clause">
     <div class="clause-heading">제3조 (물품 상태 및 상세 설명)</div>
     <div class="clause-body">
-        <p>판매자는 구매자에게 물품의 상태를 성실하게 고지하여야 하며, 구매자는 이를 확인하고 거래에 동의한다.</p>
+        <p>① 판매자는 구매자에게 물품의 상태를 성실하게 고지하여야 하며, 구매자는 이를 확인하고 거래에 동의한다.</p>
         <ol>
-            <li><strong>상품 상태:</strong> <span class="field-line" th:text="${conditionSummary}">사용감 적음</span></li>
-            <li><strong>상품 상세 설명:</strong> <span class="field-line" th:text="${conditionDetails}">1년 사용, 박스 미포함</span>
-            </li>
+            <li>상품 상태 : <span class="field-line" th:text="${conditionSummary}">사용감 적음</span></li>
+            <li>상품 상세 설명 : <span class="field-line" th:text="${conditionDetails}">1년 사용, 박스 미포함</span></li>
         </ol>
+        <p>② 판매자가 제1항에 따라 고지한 물품 상태 및 상세 설명은 본 계약의 일부를 구성하며, 판매자는 이를 사실대로 기재하였음을 보장한다.
+            판매자가 제1항의 기재 내용과 다른 물품을 인도하거나 중대한 하자를 고지하지 아니한 경우, 이는 제5조 제3호의 위반으로 간주된다.</p>
     </div>
 </div>
 
@@ -201,12 +247,12 @@
     <div class="clause-heading">제4조 (판매자 보증 제공 여부)</div>
     <div class="clause-body">
         <p>판매자는 제3조에 기재된 물품 상태 외의 중대한 하자가 발생할 경우에 대비하여, 다음과 같이 사후 보증(A/S 및 환불) 여부를 선택하여 구매자에게 제공한다.</p>
-        <p class="checkbox-row"><span th:text="${warrantyProvidedMark}">[✓]</span> <strong>보증 제공함:</strong> 물품 인도 후
-            <strong th:text="${warrantyPeriodDays > 0 ? warrantyPeriodDays : 3}">3</strong>일이내에
-            판매자가 고지하지 않은 기능적 하자가 발견될 경우, 판매자는 즉시 100% 환불 또는 배상할 의무를 진다.</p>
-        <p class="checkbox-row"><span th:text="${warrantyNotProvidedMark}">[ ]</span> <strong>보증 제공하지 않음 (현 상태
-            인도):</strong> 판매자는 사전에 고지한 물품 상태를 기준으로 양도하며, 구매자의 단순 변심이나
-            사전에 합의된 하자를 이유로 한 환불 의무를 지지 않는다. (단, 제5조의 '기본 진술 및 보장'을 위반한 사기 행위는 본 항으로 면책되지 아니한다.)</p>
+        <p class="checkbox-row"><span th:text="${warrantyProvidedMark}">[ ]</span> <strong>보증 제공함</strong> : 물품 인도 후
+            <strong th:text="${warrantyPeriodDays > 0 ? warrantyPeriodDays : 3}">3</strong>일 이내에 판매자가 고지하지 않은 기능적 하자가 발견될 경우,
+            판매자는 구매자의 요청에 따라 즉시 100% 환불 또는 수리·교환에 갈음하는 배상을 할 의무를 진다.</p>
+        <p class="checkbox-row"><span th:text="${warrantyNotProvidedMark}">[ ]</span> <strong>보증 제공하지 않음 (현 상태 인도)</strong> :
+            판매자는 사전에 고지한 물품 상태를 기준으로 양도하며, 구매자의 단순 변심이나 사전에 합의된 하자를 이유로 한 환불 의무를 지지 않는다.
+            단, 제5조의 필수 진술 및 보장을 위반한 사기 행위는 본 항으로 면책되지 아니한다.</p>
     </div>
 </div>
 
@@ -217,43 +263,120 @@
     <div class="clause-body">
         <p>제4조의 보증 제공 여부와 관계없이, 판매자는 다음 각 호의 사항을 필수적으로 보장하며, 이는 본 계약의 핵심 성립 조건이다.</p>
         <ol>
-            <li>판매자는 본 계약 체결 직전 수행한 PASS 본인확인이 본인의 유효한 명의이며, 타인의 명의를 도용하거나 기망하지 않았음을 진술한다.</li>
+            <li>판매자는 본 계약 체결 전 수행한 PASS 본인확인이 본인의 유효한 명의이며, 타인의 명의를 도용하거나 기망하지 않았음을 진술한다.</li>
             <li>본 거래 물품은 판매자의 정당한 소유물이며, 장물, 위조품(가품) 등 위법한 물품이 아님을 보장한다.</li>
-            <li>판매자는 고의로 물품의 중대한 하자(침수, 핵심 부품 고장 등)를 숨기고 기망하여 판매하지 않았음을 보장한다.</li>
+            <li>판매자는 고의로 물품의 중대한 하자(침수, 핵심 부품 고장, 불법 개조 등)를 숨기고 기망하여 판매하지 않았음을 보장한다.</li>
         </ol>
     </div>
 </div>
 
 <div class="clause">
-    <div class="clause-heading">제6조 (계약의 해제 및 위약벌)</div>
+    <div class="clause-heading">제6조 (계약의 해제, 원상회복 및 위약벌)</div>
     <div class="clause-body">
+        <p>① 판매자가 제5조의 필수 진술 및 보장을 위반하여 고의적인 기망 또는 사기 행위를 한 경우, 구매자는 즉시 본 계약을 해제할 수 있다.</p>
+        <p>② 제1항에 따라 계약이 해제될 경우, 판매자는 구매자에게 거래 금액의 <strong>2배</strong>에 해당하는 금액을 위약벌로 지급하여야 한다.
+            본 위약벌은 손해배상액의 예정이 아닌 위약벌로서, 구매자는 위약벌과 별도로 실손해에 대한 배상을 청구할 수 있다.</p>
+        <p>③ 제1항 또는 제4항에 따라 계약이 해제된 경우, 당사자는 다음 각 호에 따라 원상회복 의무를 부담한다.</p>
         <ol>
-            <li>판매자가 제5조(필수 진술 및 보장)를 위반하여 고의적인 기망 또는 사기 행위를 한 경우, 구매자는 즉시 본 계약을 해제할 수 있다.</li>
-            <li>본 조 제1항에 따라 계약이 해제될 경우, 위반 당사자(판매자)는 구매자에게 <strong>거래 금액의 [ 2 ]배에 해당하는 금액을 위약벌로 지급</strong>하여야 하며, 플랫폼
-                Trana 및 구매자의 사기죄 형사고소 등 민·형사상 법적 조치에 이의 없이 응하여야 한다.
-            </li>
-            <li><strong>(미이행 시 자동 해제)</strong> 본 계약 서명 완료 후, 당사자 간 별도의 합의가 없는 한 <strong>[ 24시간 ]</strong>이내에 대금 지급 또는
-                물품의 발송(택배) 및 인도(직거래)가 이루어지지 않을 경우, 본 계약은 당사자 일방의 통보로 즉시 해제될 수 있다.
-            </li>
+            <li>구매자가 대금을 지급한 경우 : 판매자는 수령한 대금 전액을 즉시 반환하여야 한다.</li>
+            <li>구매자가 물품을 수령한 경우 : 구매자는 물품을 판매자에게 반환하여야 하며, 반환에 소요되는 비용은 귀책사유 있는 당사자가 부담한다.</li>
+            <li>원상회복이 불가능한 경우 : 귀책사유 있는 당사자는 그에 상응하는 가액을 배상하여야 한다.</li>
         </ol>
+        <p>④ (미이행 시 해제) 본 계약 서명 완료 후, 당사자 간 별도의 합의가 없는 한 제2조 제5호에서 정한 이행 기한(미기재 시 24시간) 이내에
+            대금 지급 또는 물품의 발송(택배) 및 인도(직거래)가 이루어지지 않을 경우, 자신의 채무를 이행하였거나 이행의 제공을 한 당사자는
+            상대방에게 서면(앱 내 메시지 포함)으로 통보함으로써 본 계약을 해제할 수 있다. 이 경우 제3항의 원상회복 의무가 발생한다.</p>
+        <p>⑤ 판매자는 제2항의 위약벌 외에, Trana 및 구매자의 사기죄 형사고소 등 민·형사상 법적 조치에 이의 없이 응하여야 한다.</p>
     </div>
 </div>
 
 <div class="clause">
-    <div class="clause-heading">제7조 (분쟁 해결 및 관할법원)</div>
+    <div class="clause-heading">제7조 (전자계약서의 증거력 및 분쟁 해결)</div>
     <div class="clause-body">
-        <p>본 계약과 관련하여 분쟁이 발생하는 경우, 본 계약서에 기록된 전자서명 및 PASS 본인확인 로그 데이터를 최우선 법적 증거로 삼는다. 소송이 제기될 경우 <strong>[ 구매자 ]의 주소지
-            관할 법원</strong>을 합의관할법원으로 한다.</p>
-        <p><strong>(수사기관 협조 인지)</strong> 사기 등의 혐의로 수사기관의 적법한 요청이 발생할 경우, 당사자들은 플랫폼 Trana가 사전에 유저로부터 동의받은 '개인정보 처리방침'에
-            근거하여 본 계약 체결 전 수집된 PASS 본인확인 데이터(CI/DI 포함)를 수사기관에 제공할 수 있음을 상호 인지한다.</p>
+        <p>① (전자계약서의 증거력) 본 계약과 관련하여 분쟁이 발생하는 경우, 본 계약서에 기록된 전자서명, PASS 본인확인 로그 데이터, 계약 문서 해시값 및 타임스탬프를
+            우선적인 법적 증거로 삼는다. 다만, 이는 당사자 간의 약정으로서 법원 또는 수사기관의 증거 판단을 구속하지 아니한다.</p>
+        <p>② (관할법원) 본 계약에 관한 소송이 제기될 경우, 민사소송법에 따른 관할법원에 소를 제기한다.</p>
+        <p>③ (수사기관 협조 인지) 사기 등의 혐의로 수사기관의 적법한 요청(압수·수색영장, 형사소송법 제199조 제2항에 따른 수사협조 공문 등 법령에 근거한 요청에 한한다)이
+            발생할 경우, 당사자들은 플랫폼 Trana가 개인정보 보호법 제18조 제2항 제7호에 근거하여 본 계약 체결 전 수집된 PASS 본인확인 데이터(CI/DI)를
+            수사기관에 제공할 수 있음을 상호 인지한다.</p>
     </div>
 </div>
 
 <div class="clause">
     <div class="clause-heading">제8조 (플랫폼의 지위 및 면책)</div>
     <div class="clause-body">
-        <p>Trana는 당사자 간의 안전한 전자계약 시스템 및 PASS 기반 본인확인 솔루션을 제공할 뿐, 본 거래의 당사자가 아니다. 당사자 간의 대금 지급, 물품 인도 및 하자에 대한 모든 법적 책임은
-            거래 당사자에게 있으며 Trana는 이에 대해 면책된다.</p>
+        <p>① Trana는 당사자 간의 안전한 전자계약 시스템 및 PASS 기반 본인확인 솔루션을 제공할 뿐, 본 거래의 당사자가 아니다.
+            당사자 간의 대금 지급, 물품 인도 및 하자에 대한 모든 법적 책임은 거래 당사자에게 있으며, Trana는 이에 대해 면책된다.</p>
+        <p>② 단, Trana의 고의 또는 중대한 과실로 인하여 발생한 손해에 대해서는 제1항의 면책이 적용되지 아니한다.</p>
+        <p>③ Trana가 제공하는 PASS 본인확인 시스템은 통신사가 운영하는 인증 서비스를 연동한 것으로, Trana는 통신사의 시스템 오류 또는 제3자의 명의도용 등
+            Trana의 귀책사유 없이 발생한 인증 오류에 대해서는 책임을 지지 아니한다.</p>
+    </div>
+</div>
+
+<div class="page-break"></div>
+
+<div class="clause">
+    <div class="clause-heading">제9조 (미성년자 거래 특칙)</div>
+    <div class="clause-body">
+        <p>① 미성년자(만 19세 미만)가 본 계약의 당사자인 경우, 민법 제5조에 따라 법정대리인의 동의가 없으면 미성년자 본인 또는 법정대리인이 본 계약을 취소할 수 있다.</p>
+        <p>② Trana는 미성년자가 당사자인 계약에서 법정대리인의 PASS 본인확인을 통한 서비스 이용 동의를 온보딩 단계에서 최초 1회 확인한다.
+            계약 체결 시마다 법정대리인의 개별 동의 절차는 별도로 제공하지 아니하며, 이에 따라 미성년자 거래에서는 취소권이 존속한다.</p>
+        <p>③ Trana는 미성년자가 당사자인 계약이 체결된 경우, 계약 체결 즉시 법정대리인에게 알림(앱 내 알림 또는 문자메시지)으로 다음 각 호의 사항을 통지한다.</p>
+        <ol>
+            <li>계약 체결 사실(물품명, 거래금액, 체결 일시)</li>
+            <li>법정대리인이 동의하지 않는 경우 본 계약을 취소할 수 있다는 사실</li>
+            <li>취소권의 행사 방법 및 취소권 소멸 기간(민법 제146조)</li>
+        </ol>
+        <p>④ Trana는 미성년자가 당사자인 계약에서 거래 상대방(성인)이 전자서명을 하기 직전에 다음 각 호의 사항을 고지하고, 상대방으로부터 각 사항을 확인하였다는 체크를 받는다.
+            Trana는 고지 표시 시각, 확인 클릭 시각, IP 주소 및 기기 정보를 기록·보관한다. 고지 및 확인의 구체적 양식은 [별지] 미성년자 거래 상대방 고지 확인서에 따른다.</p>
+        <ol>
+            <li>계약 상대방이 만 19세 미만 미성년자라는 사실</li>
+            <li>법정대리인의 동의가 없는 경우 미성년자 본인 또는 법정대리인이 본 계약을 취소할 수 있다는 사실(민법 제5조 제2항)</li>
+            <li>계약이 취소될 경우 미성년자는 현존이익의 한도에서만 반환 의무를 부담하므로, 상대방이 지급한 대금 전부를 돌려받지 못할 수 있다는 사실(민법 제141조 단서)</li>
+            <li>상대방이 미성년자임을 알면서 전자서명을 완료한 경우, 상대방은 미성년자의 취소 전까지 본 계약의 청약을 철회할 수 없다는 사실(민법 제16조 제1항 단서)</li>
+            <li>위 제1호 내지 제4호의 고지 확인 사실과 시각이 기록된다는 사실</li>
+        </ol>
+        <p>⑤ 미성년자가 속임수로써 자신을 성년자로 믿게 한 경우에는 취소권이 배제된다(민법 제17조 제1항). 다만 단순히 자신이 성년자라고 말하는 것만으로는
+            민법 제17조 제1항의 속임수에 해당하지 아니한다(대법원 1971. 12. 14. 선고 71다2045 판결).</p>
+        <p>⑥ 미성년자 거래에서 계약이 취소된 경우, 제6조 제2항의 위약벌 조항은 소급하여 효력을 잃는다(민법 제141조).
+            다만 미성년자가 제5조의 필수 진술 및 보장을 위반하여 고의적인 기망 또는 사기 행위를 한 경우로서 취소권이 배제되는 때에는 그러하지 아니하다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제10조 (개인정보 처리)</div>
+    <div class="clause-body">
+        <p>① 당사자는 본 계약 체결 과정에서 수집된 개인정보(성명, 생년월일, 연락처, CI/DI 등)가 Trana의 개인정보 처리방침에 따라 처리됨을 확인한다.</p>
+        <p>② Trana는 개인정보 보호법 제18조 제2항 제7호에 따라 범죄의 수사와 공소의 제기 및 유지를 위하여 필요한 경우 수사기관의 적법한 요청에 따라 개인정보를 제공할 수 있다.</p>
+        <p>③ Trana는 제11조 제4항에서 정한 보관 기간이 경과한 경우 관련 법령에 따라 지체 없이 개인정보를 파기한다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제11조 (계약의 성립 및 효력)</div>
+    <div class="clause-body">
+        <p>① 본 계약은 판매자와 구매자가 각자 PASS 본인확인 절차를 완료하고 전자서명을 함으로써 성립하며, 전자서명이 완료된 시점부터 효력이 발생한다.</p>
+        <p>② 본 계약의 전자서명은 전자서명법 제3조 제2항에 따라 서명·서명날인 또는 기명날인으로서의 효력을 가진다.</p>
+        <p>③ Trana는 계약 성립 시 계약 문서의 해시값(SHA-256)을 생성하고 타임스탬프를 기록하여 계약서 원본을 위·변조가 불가능한 형태로 보관하며,
+            당사자의 요청이 있는 경우 이를 교부한다.</p>
+        <p>④ Trana는 전자서명, PASS 본인확인 로그 데이터(최초 가입 시 인증 일시, 인증 수단, CI/DI 등), 계약 체결 시 전자서명 일시 및 접속 로그(IP 주소, 기기 정보),
+            계약 문서 해시값 및 타임스탬프를 전자계약 체결일과 회원 탈퇴일 중 늦은 날로부터 5년간 보관한다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제12조 (개별약정의 우선 적용)</div>
+    <div class="clause-body">
+        <p>본 계약의 각 조항은 당사자 간 개별 협의에 의해 확정된 것으로, 당사자가 본 계약의 특정 조항에 관하여 별도로 합의한 사항이 있는 경우
+            그 합의 사항이 해당 조항에 우선하여 적용된다.</p>
+    </div>
+</div>
+
+<div class="clause">
+    <div class="clause-heading">제13조 (준거법 및 기타)</div>
+    <div class="clause-body">
+        <p>① 본 계약은 대한민국 법률에 따라 해석되고 적용된다.</p>
+        <p>② 본 계약에서 정하지 아니한 사항은 민법, 전자문서 및 전자거래 기본법, 전자서명법 등 관련 법령에 따른다.</p>
+        <p>③ 본 계약의 일부 조항이 관련 법령에 위반되어 무효로 되는 경우에도, 나머지 조항의 효력에는 영향을 미치지 아니한다.</p>
     </div>
 </div>
 
@@ -264,18 +387,15 @@
 
     <div class="party-block">
         <div class="party-heading">[ 판매자 (양도인) ]</div>
-        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short"
-                                                                          th:text="${sellerName}">홍길동</span></div>
-        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short"
-                                                                            th:text="${sellerBirthDate}">1990-01-01</span>
-        </div>
-        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short"
-                                                                           th:text="${sellerPhone}">010-0000-0000</span>
-        </div>
+        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short" th:text="${sellerName}">홍길동</span></div>
+        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short" th:text="${sellerBirthDate}">1990-01-01</span></div>
+        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short" th:text="${sellerPhone}">010-0000-0000</span></div>
+        <div class="party-row"><span class="party-label">PASS 인증 일시 (최초 가입):</span> <span class="field-line short" th:text="${sellerPassVerifiedAt}"> </span></div>
+        <div class="party-row"><span class="party-label">전자서명 일시 (본 계약):</span> <span class="field-line short" th:text="${sellerSignedAt}"> </span></div>
         <div class="party-row signature-row">
-            <span class="party-label">서명:</span>
+            <span class="party-label">전자서명:</span>
             <span class="signature-line" th:classappend="${sellerSignedClass}">
-                <span class="signature-stamp">(인)</span>
+                <span class="signature-stamp">(서명)</span>
                 <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}"
                      class="signature-image" alt="판매자 서명"/>
             </span>
@@ -284,22 +404,40 @@
 
     <div class="party-block">
         <div class="party-heading">[ 구매자 (양수인) ]</div>
-        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short"
-                                                                          th:text="${buyerName}">김철수</span></div>
-        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short"
-                                                                            th:text="${buyerBirthDate}">1995-05-05</span>
-        </div>
-        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short"
-                                                                           th:text="${buyerPhone}">010-0000-0000</span>
-        </div>
+        <div class="party-row"><span class="party-label">성명:</span> <span class="field-line short" th:text="${buyerName}">김철수</span></div>
+        <div class="party-row"><span class="party-label">생년월일:</span> <span class="field-line short" th:text="${buyerBirthDate}">1995-05-05</span></div>
+        <div class="party-row"><span class="party-label">연락처:</span> <span class="field-line short" th:text="${buyerPhone}">010-0000-0000</span></div>
+        <div class="party-row"><span class="party-label">PASS 인증 일시 (최초 가입):</span> <span class="field-line short" th:text="${buyerPassVerifiedAt}"> </span></div>
+        <div class="party-row"><span class="party-label">전자서명 일시 (본 계약):</span> <span class="field-line short" th:text="${buyerSignedAt}"> </span></div>
         <div class="party-row signature-row">
-            <span class="party-label">서명:</span>
+            <span class="party-label">전자서명:</span>
             <span class="signature-line" th:classappend="${buyerSignedClass}">
-          <span class="signature-stamp">(인)</span>
-          <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}"
-               class="signature-image" alt="판매자 서명"/>
-      </span>
+                <span class="signature-stamp">(서명)</span>
+                <img th:if="${buyerSignatureBase64}" th:src="'data:image/png;base64,' + ${buyerSignatureBase64}"
+                     class="signature-image" alt="구매자 서명"/>
+            </span>
         </div>
+    </div>
+</div>
+
+<div th:if="${isMinorContract}">
+    <div class="page-break"></div>
+    <h2 class="annex-title">[별지] 미성년자 거래 상대방 고지 확인서</h2>
+    <p class="annex-note">※ 본 별지는 거래 상대방이 미성년자(만 19세 미만)인 경우에 한하여 적용됩니다.</p>
+    <p class="annex-note">※ 본 별지의 각 항목은 귀하가 개별적으로 확인하고 동의하는 사항입니다. 각 항목을 충분히 읽고 이해한 후 확인하여 주십시오.</p>
+    <p class="annex-note" style="margin-top: 10pt;">본인은 아래 각 사항을 충분히 읽고 이해하였으며, 이를 개별적으로 확인합니다.</p>
+
+    <p class="annex-check">[✓] <strong>[확인 1]</strong> 본 계약의 상대방이 만 19세 미만 미성년자임을 확인하였습니다.</p>
+    <p class="annex-check">[✓] <strong>[확인 2]</strong> 법정대리인의 동의가 없는 경우, 미성년자 본인 또는 법정대리인이 본 계약을 취소할 수 있음을 확인하였습니다(민법 제5조 제2항).</p>
+    <p class="annex-check">[✓] <strong>[확인 3]</strong> 계약이 취소될 경우, 미성년자는 현존이익의 한도에서만 반환 의무를 부담하므로, 본인이 지급한 대금 전부를 돌려받지 못할 수 있음을 확인하였습니다(민법 제141조 단서).</p>
+    <p class="annex-check">[✓] <strong>[확인 4]</strong> 본인이 상대방이 미성년자임을 알면서 전자서명을 완료한 경우, 미성년자의 취소 전까지 본 계약의 청약을 철회할 수 없음을 확인하였습니다(민법 제16조 제1항 단서).</p>
+    <p class="annex-check">[✓] <strong>[확인 5]</strong> 위 제1 내지 제4 사항의 고지 확인 사실과 시각이 기록됨을 확인하였습니다.</p>
+
+    <div class="annex-fields">
+        <div class="party-row"><span class="party-label">고지 표시 일시:</span> <span class="field-line short" th:text="${disclosureDisclosedAt}"> </span></div>
+        <div class="party-row"><span class="party-label">확인 클릭 일시:</span> <span class="field-line short" th:text="${disclosureConfirmedAt}"> </span></div>
+        <div class="party-row"><span class="party-label">IP 주소:</span> <span class="field-line short" th:text="${disclosureIp}"> </span></div>
+        <div class="party-row"><span class="party-label">기기 정보:</span> <span class="field-line" th:text="${disclosureUserAgent}"> </span></div>
     </div>
 </div>
 

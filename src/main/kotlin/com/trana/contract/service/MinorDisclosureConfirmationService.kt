@@ -83,4 +83,12 @@ class MinorDisclosureConfirmationService(
             throw MinorDisclosureException.NotConfirmed(contract.publicCode)
         }
     }
+
+    /**
+     * PDF 별지 렌더용 — 계약의 고지 확인서 조회 (없으면 null → 별지 미렌더).
+     * 미성년 계약은 성인 상대방 1명만 확인하므로 사실상 ≤1건.
+     */
+    @Transactional(readOnly = true)
+    fun findConfirmation(contractId: Long): MinorDisclosureConfirmation? =
+        repository.findAllByContractId(contractId).firstOrNull()
 }

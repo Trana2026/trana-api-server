@@ -2,6 +2,7 @@ package com.trana.contract.service
 
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
+import com.trana.common.util.KstFormatter
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.DeliveryType
 import org.springframework.stereotype.Component
@@ -9,6 +10,7 @@ import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.time.Instant
 import java.util.Locale
 
 /**
@@ -30,29 +32,7 @@ class ContractPdfRenderer(
     private val templateEngine: TemplateEngine,
 ) {
     fun render(input: ContractPdfRenderInput): ByteArray {
-        val contract = input.contract
-        val deliveryType = contract.deliveryType
-        val warrantyDays = input.warrantyDaysOverride ?: contract.warrantyPeriodDays
-        val warrantyProvided = warrantyDays > 0
-        val context =
-            Context(Locale.KOREA).apply {
-                setVariable("tradingPlatform", contract.tradingPlatform ?: PLACEHOLDER)
-                setVariable("title", contract.title ?: PLACEHOLDER)
-                setVariable(
-                    "priceFormatted",
-                    contract.price?.let { String.format(Locale.KOREA, "%,d", it) } ?: PLACEHOLDER,
-                )
-                setVariable("conditionSummary", contract.conditionSummary ?: PLACEHOLDER)
-                setVariable("conditionDetails", contract.conditionDetails ?: PLACEHOLDER)
-                setVariable("shippingMark", if (deliveryType == DeliveryType.SHIPPING) CHECK_MARK else EMPTY_MARK)
-                setVariable("directMark", if (deliveryType == DeliveryType.DIRECT) CHECK_MARK else EMPTY_MARK)
-                setVariable("warrantyProvidedMark", if (warrantyProvided) CHECK_MARK else EMPTY_MARK)
-                setVariable("warrantyNotProvidedMark", if (warrantyProvided) EMPTY_MARK else CHECK_MARK)
-                setVariable("warrantyPeriodDays", warrantyDays)
-                setPartyVariables("seller", input.seller)
-                setPartyVariables("buyer", input.buyer)
-            }
-        val html = templateEngine.process(TEMPLATE_NAME, context)
+        val html = templateEngine.process(TEMPLATE_NAME, buildContext(input))
 
         val output = ByteArrayOutputStream()
         PdfRendererBuilder()
@@ -86,6 +66,42 @@ class ContractPdfRenderer(
             "Pretendard-Bold.ttf 폰트 리소스 누락 — $FONT_BOLD_PATH"
         }
 
+    private fun buildContext(input: ContractPdfRenderInput): Context =
+        Context(Locale.KOREA).apply {
+            setContractVariables(input)
+            setPartyVariables("seller", input.seller)
+            setPartyVariables("buyer", input.buyer)
+            setDisclosureVariables(input.minorDisclosure)
+        }
+
+    private fun Context.setContractVariables(input: ContractPdfRenderInput) {
+        val contract = input.contract
+        val deliveryType = contract.deliveryType
+        val warrantyDays = input.warrantyDaysOverride ?: contract.warrantyPeriodDays
+        val warrantyProvided = warrantyDays > 0
+        setVariable("tradingPlatform", contract.tradingPlatform ?: PLACEHOLDER)
+        setVariable("title", contract.title ?: PLACEHOLDER)
+        setVariable(
+            "priceFormatted",
+            contract.price?.let { String.format(Locale.KOREA, "%,d", it) } ?: PLACEHOLDER,
+        )
+        setVariable("conditionSummary", contract.conditionSummary ?: PLACEHOLDER)
+        setVariable("conditionDetails", contract.conditionDetails ?: PLACEHOLDER)
+        setVariable("shippingMark", if (deliveryType == DeliveryType.SHIPPING) CHECK_MARK else EMPTY_MARK)
+        setVariable("directMark", if (deliveryType == DeliveryType.DIRECT) CHECK_MARK else EMPTY_MARK)
+        setVariable("warrantyProvidedMark", if (warrantyProvided) CHECK_MARK else EMPTY_MARK)
+        setVariable("warrantyNotProvidedMark", if (warrantyProvided) EMPTY_MARK else CHECK_MARK)
+        setVariable("warrantyPeriodDays", warrantyDays)
+    }
+
+    private fun Context.setDisclosureVariables(disclosure: MinorDisclosureSnapshot?) {
+        setVariable("isMinorContract", disclosure != null)
+        setVariable("disclosureDisclosedAt", disclosure?.disclosedAt?.let { KstFormatter.DISPLAY.format(it) } ?: "")
+        setVariable("disclosureConfirmedAt", disclosure?.confirmedAt?.let { KstFormatter.DISPLAY.format(it) } ?: "")
+        setVariable("disclosureIp", disclosure?.ip ?: "")
+        setVariable("disclosureUserAgent", disclosure?.userAgent ?: "")
+    }
+
     private fun Context.setPartyVariables(
         prefix: String,
         party: PartyRenderInfo?,
@@ -93,6 +109,8 @@ class ContractPdfRenderer(
         setVariable("${prefix}Name", party?.name ?: PLACEHOLDER)
         setVariable("${prefix}BirthDate", party?.birthDate ?: PLACEHOLDER)
         setVariable("${prefix}Phone", party?.phone ?: PLACEHOLDER)
+        setVariable("${prefix}PassVerifiedAt", party?.passVerifiedAt?.let { KstFormatter.DISPLAY.format(it) } ?: "")
+        setVariable("${prefix}SignedAt", party?.signedAt?.let { KstFormatter.DISPLAY.format(it) } ?: "")
         setVariable("${prefix}SignatureBase64", party?.signatureBase64)
         setVariable("${prefix}SignedClass", if (party?.signatureBase64 != null) "signed" else "")
     }
@@ -115,6 +133,7 @@ data class ContractPdfRenderInput(
     val seller: PartyRenderInfo? = null,
     val buyer: PartyRenderInfo? = null,
     val warrantyDaysOverride: Int? = null,
+    val minorDisclosure: MinorDisclosureSnapshot? = null,
 )
 
 data class PartyRenderInfo(
@@ -122,4 +141,14 @@ data class PartyRenderInfo(
     val birthDate: String,
     val phone: String,
     val signatureBase64: String? = null,
+    val passVerifiedAt: Instant? = null,
+    val signedAt: Instant? = null,
+)
+
+/** 미성년 계약 별지(고지 확인서) 렌더 데이터 — 존재 시에만 별지 페이지 렌더. */
+data class MinorDisclosureSnapshot(
+    val disclosedAt: Instant,
+    val confirmedAt: Instant?,
+    val ip: String?,
+    val userAgent: String?,
 )

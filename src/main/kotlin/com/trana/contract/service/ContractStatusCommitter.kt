@@ -118,6 +118,7 @@ class ContractStatusCommitter(
             receiverName = receiver.name ?: "(unknown)",
             receiverBirthDate = receiver.birthDate ?: "(unknown)",
             receiverPhone = receiver.phone ?: "(unknown)",
+            receiverPassVerifiedAt = receiver.createdAt,
             expectedTerms = expectedTerms,
         )
     }
@@ -347,14 +348,17 @@ class ContractStatusCommitter(
                     name = creator.name ?: "(unknown)",
                     birthDate = creator.birthDate ?: "(unknown)",
                     phone = creator.phone ?: "(unknown)",
+                    passVerifiedAt = creator.createdAt,
                 ),
             receiver =
                 PartyDisplay(
                     name = receiver.name ?: "(unknown)",
                     birthDate = receiver.birthDate ?: "(unknown)",
                     phone = receiver.phone ?: "(unknown)",
+                    passVerifiedAt = receiver.createdAt,
                 ),
             receiverSignatureBase64 = receiverSignature.signatureData,
+            receiverSignedAt = receiverSignature.signedAt,
             expectedTerms = expectedTerms,
         )
     }
@@ -461,6 +465,7 @@ data class ReceiverSignPreview(
     val receiverName: String,
     val receiverBirthDate: String,
     val receiverPhone: String,
+    val receiverPassVerifiedAt: Instant?,
     val expectedTerms: List<TermsVersion>,
 )
 
@@ -475,6 +480,7 @@ data class CreatorSignPreview(
     val creator: PartyDisplay,
     val receiver: PartyDisplay,
     val receiverSignatureBase64: String,
+    val receiverSignedAt: Instant?,
     val expectedTerms: List<TermsVersion>,
 )
 
@@ -482,6 +488,7 @@ data class PartyDisplay(
     val name: String,
     val birthDate: String,
     val phone: String,
+    val passVerifiedAt: Instant? = null,
 )
 
 data class CreatorSignCommitResult(

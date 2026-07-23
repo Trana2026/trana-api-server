@@ -110,12 +110,15 @@ class ContractSigningService(
                 birthDate = preview.receiverBirthDate,
                 phone = preview.receiverPhone,
                 signatureBase64 = signatureBase64,
+                passVerifiedAt = preview.receiverPassVerifiedAt,
+                signedAt = Instant.now(),
             )
         val renderInput =
             ContractPdfRenderInput(
                 contract = preview.contract,
                 seller = if (preview.partyType == PartyType.SELLER) partyInfo else null,
                 buyer = if (preview.partyType == PartyType.BUYER) partyInfo else null,
+                minorDisclosure = minorDisclosureSnapshot(preview.contract),
             )
         val pdfBytes = pdfRenderer.render(renderInput)
         val pdfSha256 = sha256Hex(pdfBytes)
@@ -163,6 +166,8 @@ class ContractSigningService(
                 birthDate = preview.creator.birthDate,
                 phone = preview.creator.phone,
                 signatureBase64 = signatureBase64,
+                passVerifiedAt = preview.creator.passVerifiedAt,
+                signedAt = Instant.now(),
             )
         val receiverInfo =
             PartyRenderInfo(
@@ -170,12 +175,15 @@ class ContractSigningService(
                 birthDate = preview.receiver.birthDate,
                 phone = preview.receiver.phone,
                 signatureBase64 = preview.receiverSignatureBase64,
+                passVerifiedAt = preview.receiver.passVerifiedAt,
+                signedAt = preview.receiverSignedAt,
             )
         val renderInput =
             ContractPdfRenderInput(
                 contract = preview.contract,
                 seller = if (preview.creatorPartyType == PartyType.SELLER) creatorInfo else receiverInfo,
                 buyer = if (preview.creatorPartyType == PartyType.BUYER) creatorInfo else receiverInfo,
+                minorDisclosure = minorDisclosureSnapshot(preview.contract),
             )
         val pdfBytes = pdfRenderer.render(renderInput)
         val pdfSha256 = sha256Hex(pdfBytes)
@@ -303,6 +311,17 @@ class ContractSigningService(
         val invitation: ContractInvitation,
         val contract: Contract,
     )
+
+    /** 미성년 계약이면 별지(고지 확인서) 렌더 데이터, 아니면 null. */
+    private fun minorDisclosureSnapshot(contract: Contract): MinorDisclosureSnapshot? =
+        minorDisclosureService.findConfirmation(contract.id!!)?.let {
+            MinorDisclosureSnapshot(
+                disclosedAt = it.disclosedAt,
+                confirmedAt = it.confirmedAt,
+                ip = it.ip,
+                userAgent = it.userAgent,
+            )
+        }
 
     private fun sha256Hex(bytes: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
