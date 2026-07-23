@@ -18,4 +18,10 @@ interface ContractConsentRepository : Repository<ContractConsent, Long> {
         contractId: Long,
         userId: Long,
     ): List<ContractConsent>
+
+    /** 마이페이지 — 사용자의 특정 약관(AI 국외이전 등) 최신 동의 1건. idx_contract_consents_user_term 활용. */
+    fun findFirstByUserIdAndTermIdOrderByConsentedAtDesc(
+        userId: Long,
+        termId: Long,
+    ): ContractConsent?
 }

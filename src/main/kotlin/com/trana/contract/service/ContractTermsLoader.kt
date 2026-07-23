@@ -37,8 +37,12 @@ class ContractTermsLoader(
     /** 특정 타입의 현재 활성 약관 1개 (예: AI_CROSS_BORDER). 없으면 예외. */
     @Transactional(readOnly = true)
     fun loadActive(type: TermsType): TermsVersion =
+        findActiveOrNull(type) ?: error("활성 약관 없음 — terms_versions 확인 필요 (type=$type)")
+
+    /** 특정 타입의 현재 활성 약관 1개 (없으면 null — 조회성 용도, 예외 없이). */
+    @Transactional(readOnly = true)
+    fun findActiveOrNull(type: TermsType): TermsVersion? =
         termsVersionRepository
             .findActiveByType(Instant.now())
             .firstOrNull { it.type == type }
-            ?: error("활성 약관 없음 — terms_versions 확인 필요 (type=$type)")
 }
