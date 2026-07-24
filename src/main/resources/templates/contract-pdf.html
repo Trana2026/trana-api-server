@@ -132,11 +132,11 @@
         }
 
         .signature-line {
-            position: relative;
             display: inline-block;
             border: 1pt solid #6F7270;
             width: 120pt;
             height: 32pt;
+            line-height: 32pt;
             vertical-align: middle;
             text-align: center;
         }
@@ -147,14 +147,11 @@
             line-height: 32pt;
         }
 
+        /* openhtmltopdf 는 object-fit/absolute+calc 미지원 → 명시적 pt 크기로 서명란에 맞춤 */
         .signature-image {
-            position: absolute;
-            left: 2pt;
-            top: 2pt;
-            width: calc(100% - 4pt);
-            height: calc(100% - 4pt);
-            object-fit: contain;
-            background: rgba(255, 255, 255, 0.95);
+            width: 112pt;
+            height: 26pt;
+            vertical-align: middle;
         }
 
         .signature-line.signed {
@@ -395,7 +392,7 @@
         <div class="party-row signature-row">
             <span class="party-label">전자서명:</span>
             <span class="signature-line" th:classappend="${sellerSignedClass}">
-                <span class="signature-stamp">(서명)</span>
+                <span class="signature-stamp" th:unless="${sellerSignatureBase64}">(서명)</span>
                 <img th:if="${sellerSignatureBase64}" th:src="'data:image/png;base64,' + ${sellerSignatureBase64}"
                      class="signature-image" alt="판매자 서명"/>
             </span>
@@ -412,7 +409,7 @@
         <div class="party-row signature-row">
             <span class="party-label">전자서명:</span>
             <span class="signature-line" th:classappend="${buyerSignedClass}">
-                <span class="signature-stamp">(서명)</span>
+                <span class="signature-stamp" th:unless="${buyerSignatureBase64}">(서명)</span>
                 <img th:if="${buyerSignatureBase64}" th:src="'data:image/png;base64,' + ${buyerSignatureBase64}"
                      class="signature-image" alt="구매자 서명"/>
             </span>
