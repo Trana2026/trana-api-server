@@ -62,12 +62,27 @@ class ContractAttachmentStorage(
     }
 
     /**
-     * AI Vision API 입력용 GET presigned URL.
+     * AI Vision API 입력용 GET presigned URL (서버/OpenAI 전용).
      *
      * - OpenAI 가 이 URL 로 이미지 다운로드 (서버 base64 인코딩 회피)
      * - TTL 짧게 (5분) — 호출 직후 OpenAI 가 즉시 fetch 하므로 충분
+     * - 사용자 화면 노출에는 절대 사용 금지 → [presignGetForClient] 사용.
      */
-    fun presignGet(s3Key: String): String {
+    fun presignGet(s3Key: String): String = presignGetWithTtl(s3Key, Duration.ofMinutes(props.presignedGetTtlMinutes))
+
+    /**
+     * 사용자 화면 노출용 GET presigned URL (썸네일/상세 사진).
+     *
+     * - TTL 넉넉히 (기본 60분) — 이미지 재요청/재로드 시 만료 방지.
+     * - presigned URL 은 bearer 성격이라 무한정 금지 → 1h~수h 권장(최대 7일).
+     */
+    fun presignGetForClient(s3Key: String): String =
+        presignGetWithTtl(s3Key, Duration.ofMinutes(props.presignedGetClientTtlMinutes))
+
+    private fun presignGetWithTtl(
+        s3Key: String,
+        ttl: Duration,
+    ): String {
         val getRequest =
             GetObjectRequest
                 .builder()
@@ -77,7 +92,7 @@ class ContractAttachmentStorage(
         val presignRequest =
             GetObjectPresignRequest
                 .builder()
-                .signatureDuration(Duration.ofMinutes(props.presignedGetTtlMinutes))
+                .signatureDuration(ttl)
                 .getObjectRequest(getRequest)
                 .build()
         return s3Presigner.presignGetObject(presignRequest).url().toString()

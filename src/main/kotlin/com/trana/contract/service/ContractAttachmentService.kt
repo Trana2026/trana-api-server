@@ -82,7 +82,7 @@ class ContractAttachmentService(
                 sortOrder = nextOrder,
             )
         val saved = attachmentRepository.save(attachment)
-        return AttachmentView(saved, storage.presignGet(saved.s3Key))
+        return AttachmentView(saved, storage.presignGetForClient(saved.s3Key))
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +93,7 @@ class ContractAttachmentService(
         val contract = accessGuard.loadAccessible(publicCode, userId)
         return attachmentRepository
             .findAllByContractIdOrderBySortOrderAsc(contract.id!!)
-            .map { AttachmentView(it, storage.presignGet(it.s3Key)) }
+            .map { AttachmentView(it, storage.presignGetForClient(it.s3Key)) }
     }
 
     fun delete(

@@ -190,7 +190,7 @@ class ContractDraftService(
                 isCreator = contract.creatorUserId == userId,
                 myRole = party?.partyType,
                 attachmentCount = attachments.size,
-                firstAttachmentUrl = first?.let { attachmentStorage.presignGet(it.s3Key) },
+                firstAttachmentUrl = first?.let { attachmentStorage.presignGetForClient(it.s3Key) },
             )
         }
     }
