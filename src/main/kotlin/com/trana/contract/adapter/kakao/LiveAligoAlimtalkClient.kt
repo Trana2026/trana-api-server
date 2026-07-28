@@ -66,7 +66,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.receiverPhone))
                 add("subject_1", "안전 거래 계약 서명 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약서 서명하기", message.invitationUrl))
+                add("button_1", buildButtonJson("계약서 서명하기", message.invitationAppUrl, message.invitationUrl))
             }
 
         send(formData, label = "sendNewContract", to = message.receiverPhone)
@@ -94,7 +94,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "최종 서명 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("최종 서명하기", message.reviewUrl))
+                add("button_1", buildButtonJson("최종 서명하기", message.reviewAppUrl, message.reviewUrl))
             }
 
         send(formData, label = "sendReceiverSigned", to = message.creatorPhone)
@@ -121,7 +121,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.creatorPhone))
                 add("subject_1", "안전 거래 계약 수정 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약 수정하기", message.reviewUrl))
+                add("button_1", buildButtonJson("계약 수정하기", message.reviewAppUrl, message.reviewUrl))
             }
 
         send(formData, label = "sendRevisionRequested", to = message.creatorPhone)
@@ -148,7 +148,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "안전 거래 계약 최종 완료")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약서 확인하기", message.downloadUrl))
+                add("button_1", buildButtonJson("계약서 확인하기", message.downloadAppUrl, message.downloadUrl))
             }
 
         send(formData, label = "sendCompleted", to = message.recipientPhone)
@@ -171,7 +171,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "거래 신고 접수")
                 add("message_1", body)
-                add("button_1", buildButtonJson("상세 보기", message.detailUrl))
+                add("button_1", buildButtonJson("상세 보기", message.detailAppUrl, message.detailUrl))
             }
 
         send(formData, label = "sendDisputeReported", to = message.recipientPhone)
@@ -194,7 +194,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "계약 취소 요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("취소 내용 확인", message.detailUrl))
+                add("button_1", buildButtonJson("취소 내용 확인", message.detailAppUrl, message.detailUrl))
             }
 
         send(formData, label = "sendCancellationRequested", to = message.recipientPhone)
@@ -221,7 +221,7 @@ class LiveAligoAlimtalkClient(
                 add("receiver_1", normalizePhone(message.recipientPhone))
                 add("subject_1", "계약 체결 통보")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약 내용 확인", message.contractDetailUrl))
+                add("button_1", buildButtonJson("계약 내용 확인", message.contractDetailAppUrl, message.contractDetailUrl))
             }
 
         send(formData, label = "sendGuardianContractCompleted", to = message.recipientPhone)
@@ -278,10 +278,17 @@ class LiveAligoAlimtalkClient(
         )
     }
 
-    /** Aligo `button_1` JSON — WL(웹링크) 타입 단일 버튼, 모바일/PC URL 동일. */
+    /**
+     * Aligo `button_1` JSON — AL(앱링크) 단일 버튼.
+     *
+     * - linkAnd/linkIos: 앱 스킴(trana://trana.kr/...) → 카카오톡이 네이티브로 앱 실행(인앱브라우저 우회).
+     * - linkMo/linkPc: 미설치/PC 폴백 웹 URL(기존 랜딩). 카카오 정책상 AL 도 필수.
+     * - 템플릿 버튼도 AL 타입으로 등록·심사되어 있어야 함(deeplink.md 참조).
+     */
     private fun buildButtonJson(
         name: String,
-        url: String,
+        appUrl: String,
+        webUrl: String,
     ): String {
         val json =
             mapOf(
@@ -289,10 +296,12 @@ class LiveAligoAlimtalkClient(
                     listOf(
                         mapOf(
                             "name" to name,
-                            "linkType" to "WL",
-                            "linkTypeName" to "웹링크",
-                            "linkMo" to url,
-                            "linkPc" to url,
+                            "linkType" to "AL",
+                            "linkTypeName" to "앱링크",
+                            "linkAnd" to appUrl,
+                            "linkIos" to appUrl,
+                            "linkMo" to webUrl,
+                            "linkPc" to webUrl,
                         ),
                     ),
             )

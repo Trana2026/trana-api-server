@@ -64,6 +64,7 @@ class DevAlimtalkController(
                         contractTitle = DUMMY_TITLE,
                         price = DUMMY_PRICE,
                         invitationUrl = webUrlBuilder.contractInvitation(DUMMY_TOKEN),
+                        invitationAppUrl = webUrlBuilder.contractInvitationApp(DUMMY_TOKEN),
                     ),
                 )
             }
@@ -77,6 +78,7 @@ class DevAlimtalkController(
                         contractTitle = DUMMY_TITLE,
                         price = DUMMY_PRICE,
                         reviewUrl = webUrlBuilder.contractDetail(DUMMY_PUBLIC_CODE),
+                        reviewAppUrl = webUrlBuilder.contractDetailApp(DUMMY_PUBLIC_CODE),
                     ),
                 )
             }
@@ -91,6 +93,7 @@ class DevAlimtalkController(
                         price = DUMMY_PRICE,
                         revisionReason = "가격: 100만원으로 조정\n상태: 액정 스크래치 있음",
                         reviewUrl = webUrlBuilder.contractDetail(DUMMY_PUBLIC_CODE),
+                        reviewAppUrl = webUrlBuilder.contractDetailApp(DUMMY_PUBLIC_CODE),
                     ),
                 )
             }
@@ -104,6 +107,7 @@ class DevAlimtalkController(
                         price = DUMMY_PRICE,
                         completedAt = Instant.now(),
                         downloadUrl = webUrlBuilder.contractDetail(DUMMY_PUBLIC_CODE),
+                        downloadAppUrl = webUrlBuilder.contractDetailApp(DUMMY_PUBLIC_CODE),
                     ),
                 )
             }

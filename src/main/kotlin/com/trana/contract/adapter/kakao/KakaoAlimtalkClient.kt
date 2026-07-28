@@ -55,6 +55,7 @@ data class NewContractMessage(
     val contractTitle: String,
     val price: Long,
     val invitationUrl: String,
+    val invitationAppUrl: String,
 )
 
 /**
@@ -70,6 +71,7 @@ data class ReceiverSignedMessage(
     val contractTitle: String,
     val price: Long,
     val reviewUrl: String,
+    val reviewAppUrl: String,
 )
 
 /**
@@ -84,6 +86,7 @@ data class ContractCompletedMessage(
     val price: Long,
     val completedAt: Instant,
     val downloadUrl: String,
+    val downloadAppUrl: String,
 )
 
 /**
@@ -101,6 +104,7 @@ data class RevisionRequestedMessage(
     val price: Long,
     val revisionReason: String,
     val reviewUrl: String,
+    val reviewAppUrl: String,
 )
 
 /**
@@ -119,6 +123,7 @@ data class DisputeReportedMessage(
     val contractTitle: String,
     val reportedAt: Instant,
     val detailUrl: String,
+    val detailAppUrl: String,
 )
 
 /**
@@ -137,6 +142,7 @@ data class CancellationRequestedMessage(
     val contractTitle: String,
     val requestedAt: Instant,
     val detailUrl: String,
+    val detailAppUrl: String,
 )
 
 /**
@@ -158,4 +164,5 @@ data class GuardianContractCompletedMessage(
     val contractTitle: String,
     val price: Long,
     val contractDetailUrl: String,
+    val contractDetailAppUrl: String,
 )

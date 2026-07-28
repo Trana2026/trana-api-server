@@ -27,4 +27,13 @@ class WebUrlBuilder(
 
     /** 계약 초대 진입 URL (invitation 토큰). */
     fun contractInvitation(token: String): String = "${contractWebProperties.baseUrl}/contracts/invitations/$token"
+
+    // ── 알림톡 AL 버튼 앱 스킴 URL (linkAnd/linkIos). 웹 경로와 1:1, deeplink.md 참조 ──
+
+    /** 계약 상세 앱 스킴 URL. */
+    fun contractDetailApp(publicCode: String): String = "${contractWebProperties.appLinkBase}/contracts/$publicCode"
+
+    /** 계약 초대 앱 스킴 URL. */
+    fun contractInvitationApp(token: String): String =
+        "${contractWebProperties.appLinkBase}/contracts/invitations/$token"
 }

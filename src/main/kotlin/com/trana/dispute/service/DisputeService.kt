@@ -235,6 +235,7 @@ class DisputeService(
                 contractTitle = contract.title ?: "",
                 reportedAt = record.reportedAt!!,
                 detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
             ),
         )
     }

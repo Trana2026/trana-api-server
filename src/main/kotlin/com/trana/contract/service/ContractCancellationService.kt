@@ -244,6 +244,7 @@ class ContractCancellationService(
                 contractTitle = contract.title ?: "",
                 requestedAt = record.requestedAt!!,
                 detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
             ),
         )
     }

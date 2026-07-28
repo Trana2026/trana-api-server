@@ -57,6 +57,7 @@ class ContractAlimtalkDispatcher(
                 contractTitle = contract.title ?: "(제목 없음)",
                 price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
                 invitationUrl = invitationUrl,
+                invitationAppUrl = webUrlBuilder.contractInvitationApp(invitation.token),
             ),
         )
     }
@@ -80,6 +81,7 @@ class ContractAlimtalkDispatcher(
                 contractTitle = contract.title ?: "(제목 없음)",
                 price = requireNotNull(contract.price) { "price 누락 (RECEIVER_SIGNED 전이 후 invariant 위반)" },
                 reviewUrl = reviewUrl,
+                reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
             ),
         )
     }
@@ -104,6 +106,7 @@ class ContractAlimtalkDispatcher(
                             contract.pdfGeneratedAt,
                         ) { "pdfGeneratedAt 누락 (SIGNED 전이 후 invariant 위반)" },
                     downloadUrl = downloadUrl,
+                    downloadAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
                 ),
             )
         }
@@ -155,6 +158,7 @@ class ContractAlimtalkDispatcher(
                 contractTitle = contract.title ?: "(제목 없음)",
                 price = requireNotNull(contract.price) { "price 누락 (SIGNED 전이 후 invariant)" },
                 contractDetailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                contractDetailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
             ),
         )
     }
@@ -199,6 +203,7 @@ class ContractAlimtalkDispatcher(
                 price = requireNotNull(contract.price) { "price 누락 (REVISION_REQUESTED 전이 후 invariant 위반)" },
                 revisionReason = revisionReason,
                 reviewUrl = reviewUrl,
+                reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
             ),
         )
     }
