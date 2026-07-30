@@ -425,8 +425,17 @@ class ContractStatusCommitter(
                 ),
             )
 
+        // 양측 서명 확정 → 최종 서명본 결합 해시(final_hash) 1회 계산 (계약서 제11조 ③)
+        val allSignatures = contractSignatureRepository.findAllByContractIdOrderBySignedAtAsc(contractId)
+        val finalHash =
+            ContractFinalHasher.compute(
+                publicCode = contract.publicCode,
+                finalPdfSha256 = pdfSha256,
+                signatures = allSignatures,
+            )
+
         val from = contract.status
-        contract.markSigned(pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256)
+        contract.markSigned(pdfS3Key = pdfS3Key, pdfSha256 = pdfSha256, finalHash = finalHash)
         eventPublisher.publishEvent(
             ContractStatusChangedEvent(
                 contractId = contractId,

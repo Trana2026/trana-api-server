@@ -97,6 +97,15 @@ class Contract(
     var contentHash: String? = null
         protected set
 
+    /**
+     * 최종 서명본 결합 해시 (SHA-256 hex 64자) — SIGNED 전이 시점 1회 확정.
+     * 최종 PDF v3 해시 + 양측 서명(각 서명 시점 PDF 해시·서명 이미지 해시·서명 시각) 을 결합.
+     * "이 최종본이 그 계약"임을 단일 값으로 입증 (이용약관/계약서 제11조 ③ 근거). 이후 불변.
+     */
+    @Column(name = "final_hash", length = 64)
+    var finalHash: String? = null
+        protected set
+
     @Column(name = "pdf_generated_at")
     var pdfGeneratedAt: Instant? = null
         protected set
@@ -285,6 +294,7 @@ class Contract(
     fun markSigned(
         pdfS3Key: String,
         pdfSha256: String,
+        finalHash: String,
     ) {
         check(status == ContractStatus.RECEIVER_SIGNED) {
             "RECEIVER_SIGNED 상태에서만 SIGNED 전이 가능 (current=$status)"
@@ -293,6 +303,7 @@ class Contract(
         this.status = ContractStatus.SIGNED
         this.pdfS3Key = pdfS3Key
         this.contentHash = pdfSha256
+        this.finalHash = finalHash
         this.pdfGeneratedAt = Instant.now()
         this.statusUpdatedAt = Instant.now()
     }

@@ -36,7 +36,11 @@ class ContractTest {
 
     private fun signedContract(publicCode: String = "TST-CTR-FIX-SIGNED"): Contract {
         val contract = receiverSignedContract(publicCode)
-        contract.markSigned(pdfS3Key = "contracts/$publicCode/v3.pdf", pdfSha256 = "hash-v3")
+        contract.markSigned(
+            pdfS3Key = "contracts/$publicCode/v3.pdf",
+            pdfSha256 = "hash-v3",
+            finalHash = "final-hash-v3",
+        )
         return contract
     }
 
@@ -284,11 +288,13 @@ class ContractTest {
             contract.markSigned(
                 pdfS3Key = "contracts/TST-CTR-501/v3.pdf",
                 pdfSha256 = "hash-v3",
+                finalHash = "final-hash-v3",
             )
 
             Assertions.assertEquals(ContractStatus.SIGNED, contract.status)
             Assertions.assertEquals("contracts/TST-CTR-501/v3.pdf", contract.pdfS3Key)
             Assertions.assertEquals("hash-v3", contract.contentHash)
+            Assertions.assertEquals("final-hash-v3", contract.finalHash)
             Assertions.assertNotNull(contract.pdfGeneratedAt)
         }
 
@@ -297,7 +303,7 @@ class ContractTest {
             val contract = sharedContract("TST-CTR-502")
 
             Assertions.assertThrows(IllegalStateException::class.java) {
-                contract.markSigned(pdfS3Key = "v3-key", pdfSha256 = "v3-hash")
+                contract.markSigned(pdfS3Key = "v3-key", pdfSha256 = "v3-hash", finalHash = "final-v3")
             }
         }
     }
@@ -307,7 +313,7 @@ class ContractTest {
         @Test
         fun transitionsFromSignedAndStampsCompletedAt() {
             val contract = receiverSignedContract("TST-CTR-601")
-            contract.markSigned(pdfS3Key = "v3-key", pdfSha256 = "v3-hash")
+            contract.markSigned(pdfS3Key = "v3-key", pdfSha256 = "v3-hash", finalHash = "final-v3")
 
             contract.markCompleted()
 

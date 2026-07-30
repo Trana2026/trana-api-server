@@ -48,4 +48,13 @@ interface IdentityVerificationRepository : JpaRepository<IdentityVerification, L
         purpose: VerificationPurpose,
         status: VerificationStatus,
     ): Boolean
+
+    /**
+     * 증거 패키지용 — 사용자의 최신 SUCCESS 본인확인 1건 (본인확인 시각/CI 해시 증거).
+     */
+    fun findFirstByUserIdAndPurposeAndStatusOrderByCreatedAtDesc(
+        userId: Long,
+        purpose: VerificationPurpose,
+        status: VerificationStatus,
+    ): IdentityVerification?
 }
