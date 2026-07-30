@@ -222,7 +222,7 @@
             <li>거래 금액 : 금 <span class="field-line short" th:text="${priceFormatted}">500,000</span> 원정
                 (₩ <span class="field-line tiny" th:text="${priceFormatted}">500,000</span> )
             </li>
-            <li>거래 이행 기한 : 본 계약 서명 완료 후 <span class="field-line tiny">&#160;</span> 시간 이내 (미기재 시 24시간 적용)</li>
+            <li>거래 이행 기한 : 본 계약 서명 완료 후 <span class="field-line tiny" th:text="${fulfillmentHours}">24</span> 시간 이내 (미기재 시 24시간 적용)</li>
         </ol>
     </div>
 </div>

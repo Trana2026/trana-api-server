@@ -92,6 +92,9 @@ class ContractPdfRenderer(
         setVariable("warrantyProvidedMark", if (warrantyProvided) CHECK_MARK else EMPTY_MARK)
         setVariable("warrantyNotProvidedMark", if (warrantyProvided) EMPTY_MARK else CHECK_MARK)
         setVariable("warrantyPeriodDays", warrantyDays)
+        // 거래 이행 기한(제2조 제5호). 현재는 입력 UI 가 없어 기본값 24 사용.
+        // 추후 사용자 기재 기능 도입 시 contract 의 값으로 대체 (템플릿은 이미 변수 바인딩이라 이 줄만 수정).
+        setVariable("fulfillmentHours", DEFAULT_FULFILLMENT_HOURS)
     }
 
     private fun Context.setDisclosureVariables(disclosure: MinorDisclosureSnapshot?) {
@@ -125,6 +128,9 @@ class ContractPdfRenderer(
         private val PLACEHOLDER = " ".repeat(20)
         private const val CHECK_MARK = "[✓]"
         private const val EMPTY_MARK = "[ ]"
+
+        /** 거래 이행 기한 기본값(시간). 입력 기능 도입 전 임시 기본값 — 계약서 문구 "미기재 시 24시간"과 일치. */
+        private const val DEFAULT_FULFILLMENT_HOURS = 24
     }
 }
 
