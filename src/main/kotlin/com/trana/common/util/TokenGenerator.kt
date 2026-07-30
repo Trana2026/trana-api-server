@@ -22,6 +22,12 @@ class TokenGenerator {
 
     fun generateContractInvitation(): String = generate(CONTRACT_INVITATION_LENGTH)
 
+    /**
+     * 유저 고유코드(share_code) — 대문자+숫자 5자, 혼동문자(0/O/1/I) 제외.
+     * 사람이 채팅으로 불러주고 타이핑하는 용도 → base62 publicCode 와 별개.
+     */
+    fun generateShareCode(): String = NanoIdUtils.randomNanoId(RANDOM, SHARE_CODE_ALPHABET, SHARE_CODE_LENGTH)
+
     private fun generate(length: Int): String = NanoIdUtils.randomNanoId(RANDOM, ALPHABET, length)
 
     companion object {
@@ -35,5 +41,10 @@ class TokenGenerator {
         private const val PUBLIC_CODE_LENGTH = 12
         private const val GUARDIAN_LINK_LENGTH = 21
         private const val CONTRACT_INVITATION_LENGTH = 21
+
+        /** 혼동문자(0/O/1/I) 제외한 대문자+숫자 32자. */
+        private val SHARE_CODE_ALPHABET: CharArray =
+            ("23456789" + "ABCDEFGHJKLMNPQRSTUVWXYZ").toCharArray()
+        private const val SHARE_CODE_LENGTH = 5
     }
 }

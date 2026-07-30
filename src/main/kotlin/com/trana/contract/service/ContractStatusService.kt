@@ -92,20 +92,23 @@ class ContractStatusService(
     fun share(
         publicCode: String,
         userId: Long,
-        receiverName: String,
-        receiverPhone: String,
+        receiverName: String?,
+        receiverPhone: String?,
+        receiverCode: String?,
     ): Contract {
         val contract = accessGuard.loadOwned(publicCode, userId)
         if (contract.status != ContractStatus.READY) {
             throw ContractException.NotInReadyState(publicCode, contract.status.name)
         }
 
+        val target = resolveShareTarget(userId, receiverName, receiverPhone, receiverCode)
+
         val invitation =
             ContractInvitation.create(
                 contractId = contract.id!!,
                 token = tokenGenerator.generateContractInvitation(),
-                receiverName = receiverName,
-                receiverPhone = receiverPhone,
+                receiverName = target.name,
+                receiverPhone = target.phone,
             )
         invitationRepository.save(invitation)
 
@@ -115,6 +118,39 @@ class ContractStatusService(
 
         contractAlimtalkDispatcher.sendNewContract(contract, userId, invitation)
         return contract
+    }
+
+    /**
+     * 수신자 지정 방식 해석 — 고유코드(우선) 또는 번호 직접 입력(병행).
+     * - 코드: 대문자 정규화 → User 조회. 미존재/본인/전화번호 없음 검증.
+     * - 번호: name+phone 직접 사용(기존 방식).
+     */
+    @Suppress("ThrowsCount")
+    private fun resolveShareTarget(
+        requesterUserId: Long,
+        receiverName: String?,
+        receiverPhone: String?,
+        receiverCode: String?,
+    ): ShareTarget {
+        val code = receiverCode?.trim()?.takeIf { it.isNotEmpty() }?.uppercase()
+        if (code != null) {
+            val receiver =
+                userRepository.findByShareCode(code)
+                    ?: throw ContractException.ShareCodeNotFound(code)
+            if (receiver.id == requesterUserId) {
+                throw ContractException.ShareToSelf(code)
+            }
+            val phone =
+                receiver.phone?.takeIf { it.isNotBlank() }
+                    ?: throw ContractException.ShareTargetInvalid("상대방 알림톡 발송 번호가 없습니다 (shareCode=$code)")
+            return ShareTarget(name = receiver.name ?: "", phone = phone)
+        }
+        val name = receiverName?.trim()?.takeIf { it.isNotEmpty() }
+        val phone = receiverPhone?.trim()?.takeIf { it.isNotEmpty() }
+        if (name == null || phone == null) {
+            throw ContractException.ShareTargetInvalid("고유코드 또는 (이름+전화번호)가 필요합니다")
+        }
+        return ShareTarget(name = name, phone = phone)
     }
 
     /**
@@ -326,3 +362,9 @@ class ContractStatusService(
 
     private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
 }
+
+/** 공유 수신자 해석 결과 — invitation/알림톡 발송에 사용할 이름·번호. */
+private data class ShareTarget(
+    val name: String,
+    val phone: String,
+)

@@ -39,6 +39,7 @@ class UserController(
 private fun User.toMeResponse(): MeResponse =
     MeResponse(
         publicCode = publicCode,
+        shareCode = shareCode,
         email = email,
         status = status,
         ageGroup = ageGroup,

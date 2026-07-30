@@ -111,6 +111,7 @@ class ContractDraftController(
                 userId = userId,
                 receiverName = request.receiverName,
                 receiverPhone = request.receiverPhone,
+                receiverCode = request.receiverCode,
             ).toResponse()
 
     override fun requestRevision(

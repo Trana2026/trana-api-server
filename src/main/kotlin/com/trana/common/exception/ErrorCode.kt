@@ -176,6 +176,21 @@ enum class ErrorCode(
         "CONTRACT_409_MINOR_DISCLOSURE_NA",
         "상대방이 미성년자가 아닌 계약에서는 위험 고지 확인이 불필요합니다",
     ),
+    CONTRACT_SHARE_TARGET_INVALID(
+        HttpStatus.BAD_REQUEST,
+        "CONTRACT_400_SHARE_TARGET",
+        "수신자 고유코드 또는 전화번호 중 하나를 올바르게 입력해야 합니다",
+    ),
+    CONTRACT_SHARE_CODE_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CONTRACT_404_SHARE_CODE",
+        "해당 고유코드의 사용자를 찾을 수 없습니다",
+    ),
+    CONTRACT_SHARE_TO_SELF(
+        HttpStatus.BAD_REQUEST,
+        "CONTRACT_400_SHARE_SELF",
+        "본인에게는 계약을 요청할 수 없습니다",
+    ),
 
     // === 분쟁 (DISPUTE_*) ===
     DISPUTE_NOT_REPORTABLE(

@@ -55,6 +55,7 @@ class UserService(
                 ageGroup = ageGroup,
                 ciHash = ciHash,
             )
+        newUser.assignShareCode(generateUniqueShareCode())
         userRepository.save(newUser)
         val userId = checkNotNull(newUser.id) { "User id should be assigned after save" }
 
@@ -70,6 +71,29 @@ class UserService(
                 ),
         )
         return newUser
+    }
+
+    /**
+     * 중복 없는 고유코드 생성 — existsByShareCode 사전 확인 후 반환.
+     * UNIQUE 제약이 최종 방어선(희박한 동시성 race). 소진 방지 위해 시도 횟수 제한.
+     */
+    fun generateUniqueShareCode(): String {
+        repeat(SHARE_CODE_MAX_ATTEMPTS) {
+            val code = tokenGenerator.generateShareCode()
+            if (!userRepository.existsByShareCode(code)) return code
+        }
+        throw IllegalStateException("고유코드 생성 실패 — $SHARE_CODE_MAX_ATTEMPTS 회 시도 내 미충돌 코드 없음")
+    }
+
+    /**
+     * 기존 유저 고유코드 백필 (ShareCodeBackfillRunner 부팅 시 1회).
+     * share_code IS NULL 대상만 → 멱등(재실행 안전).
+     * @return 새로 발급한 건수
+     */
+    fun backfillShareCodes(): Int {
+        val targets = userRepository.findAllByShareCodeIsNull()
+        targets.forEach { it.assignShareCode(generateUniqueShareCode()) }
+        return targets.size
     }
 
     @Transactional(readOnly = true)
@@ -153,3 +177,4 @@ class UserService(
 }
 
 private const val ENTITY_USER = "USER"
+private const val SHARE_CODE_MAX_ATTEMPTS = 10

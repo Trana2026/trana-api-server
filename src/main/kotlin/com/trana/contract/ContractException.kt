@@ -238,4 +238,25 @@ sealed class ContractException(
             ErrorCode.CONTRACT_NOT_IN_SIGNED_STATE,
             "현재 SIGNED 상태가 아닙니다 (publicCode=$publicCode, status=$currentStatus)",
         )
+
+    class ShareTargetInvalid(
+        reason: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_SHARE_TARGET_INVALID,
+            "수신자 지정이 올바르지 않습니다 ($reason)",
+        )
+
+    class ShareCodeNotFound(
+        shareCode: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_SHARE_CODE_NOT_FOUND,
+            "해당 고유코드의 사용자를 찾을 수 없습니다 (shareCode=$shareCode)",
+        )
+
+    class ShareToSelf(
+        shareCode: String,
+    ) : ContractException(
+            ErrorCode.CONTRACT_SHARE_TO_SELF,
+            "본인에게는 계약을 요청할 수 없습니다 (shareCode=$shareCode)",
+        )
 }

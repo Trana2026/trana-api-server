@@ -93,6 +93,17 @@ class User(
     var guardianVerifiedAt: Instant? = null
         protected set
 
+    /** 계약 요청용 고유코드. 활성 유저는 불변, 탈퇴 시 null 방출(재사용). */
+    @Column(name = "share_code", length = 8, unique = true)
+    var shareCode: String? = null
+        protected set
+
+    /** 고유코드 발급 — 가입(PASS 완료) 시 1회, 기존 유저 백필 시. 이미 있으면 no-op(불변 보장). */
+    fun assignShareCode(code: String) {
+        if (shareCode != null) return
+        this.shareCode = code
+    }
+
     fun withdraw() {
         check(status == UserStatus.ACTIVE) { "이미 탈퇴한 사용자입니다" }
         this.status = UserStatus.WITHDRAWN
@@ -100,6 +111,8 @@ class User(
         // PII 마스킹 — 재가입 시 email unique 충돌 회피 + 개인정보 최소화
         // name/phone(성인 KYC)은 audit 가치라 W7+ 운영 정교화 시 결정
         this.email = null
+        // 고유코드 방출 — 탈퇴 시 풀로 반환(재사용 정책)
+        this.shareCode = null
     }
 
     /**

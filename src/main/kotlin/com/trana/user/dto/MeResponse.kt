@@ -10,6 +10,8 @@ import java.time.Instant
 data class MeResponse(
     @Schema(description = "외부 노출용 식별자 (nanoid 12자)", example = "Vh7sK2x9Pq3R")
     val publicCode: String,
+    @Schema(description = "계약 요청용 고유코드 (대문자+숫자 5자). 백필 전 기존 유저는 null 가능", example = "H2EZY", nullable = true)
+    val shareCode: String?,
     @Schema(description = "이메일", nullable = true)
     val email: String?,
     @Schema(description = "사용자 상태", example = "ACTIVE")

@@ -203,22 +203,29 @@ data class ContractPdfDownloadResponse(
 
 @Schema(description = "계약 공유 요청 — markReady(READY) → SHARED 전이 + 카카오톡 알림톡 발송")
 data class ShareContractRequest(
-    @field:NotBlank
     @field:Size(max = RECEIVER_NAME_MAX_LENGTH)
     @field:Schema(
         description = "수신자 이름 (audit 기록)",
         example = "홍길동",
         maxLength = RECEIVER_NAME_MAX_LENGTH,
+        nullable = true,
     )
-    val receiverName: String,
-    @field:NotBlank
+    val receiverName: String? = null,
     @field:Pattern(regexp = RECEIVER_PHONE_PATTERN)
     @field:Schema(
         description = "수신자 전화번호 — 한국 핸드폰 또는 E.164 (알림톡 발송 대상)",
         example = "010-1234-5678",
         pattern = RECEIVER_PHONE_PATTERN,
+        nullable = true,
     )
-    val receiverPhone: String,
+    val receiverPhone: String? = null,
+    @field:Pattern(regexp = SHARE_CODE_PATTERN)
+    @field:Schema(
+        description = "수신자 고유코드 (대문자+숫자 5자). 지정 시 상대 번호로 알림톡 발송. 번호 방식과 택일",
+        example = "H2EZY",
+        nullable = true,
+    )
+    val receiverCode: String? = null,
 )
 
 @Schema(description = "수신자 수정 요청 — 6 필드별 reason (최소 1개 필수, 화면 입력 순서)")
@@ -399,6 +406,9 @@ data class UpdateReceiverWarrantyRequest(
 private const val TITLE_MAX_LENGTH = 200
 private const val RECEIVER_NAME_MAX_LENGTH = 50
 private const val RECEIVER_PHONE_PATTERN = "^[0-9+\\-]{10,20}$"
+
+// 고유코드 5자(대소문자+숫자 허용 — 서비스에서 대문자 정규화 후 조회)
+private const val SHARE_CODE_PATTERN = "^[A-Za-z0-9]{5}$"
 private const val REVISION_REASON_MAX_LENGTH = 500
 private const val SIGNATURE_BASE64_MAX_LENGTH = 262144
 private const val REQUIRED_TERM_COUNT = 1

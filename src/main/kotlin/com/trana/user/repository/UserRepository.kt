@@ -42,4 +42,13 @@ interface UserRepository : JpaRepository<User, Long> {
      * WITHDRAWN user 는 email null 처리되므로 conflict 대상 아님 (naked existsByEmail 로 충분).
      */
     fun existsByEmail(email: String): Boolean
+
+    /** 계약 요청 — 상대 고유코드 조회 (정규화된 대문자 코드). */
+    fun findByShareCode(shareCode: String): User?
+
+    /** 고유코드 발급 시 중복 사전 확인. */
+    fun existsByShareCode(shareCode: String): Boolean
+
+    /** 백필 대상 — 코드 미발급 유저. */
+    fun findAllByShareCodeIsNull(): List<User>
 }
