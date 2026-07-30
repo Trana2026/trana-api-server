@@ -36,4 +36,10 @@ class WebUrlBuilder(
     /** 계약 초대 앱 스킴 URL. */
     fun contractInvitationApp(token: String): String =
         "${contractWebProperties.appLinkBase}/contracts/invitations/$token"
+
+    /** 앱 홈 스킴 URL (특정 계약 접근 불가 시 홈으로 — 예: 취소 확정 후). */
+    fun homeApp(): String = "${contractWebProperties.appLinkBase}/home"
+
+    /** 홈(웹) 폴백 URL — AL 버튼 linkMo/linkPc 용. */
+    fun home(): String = contractWebProperties.baseUrl
 }

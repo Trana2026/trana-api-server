@@ -200,6 +200,30 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendCancellationRequested", to = message.recipientPhone)
     }
 
+    override fun sendCancellationConfirmed(message: CancellationConfirmedMessage) {
+        val body =
+            """
+            [Trana] 거래 계약이 취소되었습니다.
+
+            상품명: ${message.contractTitle}
+            취소 일시: ${KstFormatter.DISPLAY.format(message.cancelledAt)}
+
+            상대방이 취소를 확정하여 계약이 최종 취소되었습니다.
+            아래 버튼을 눌러 앱에서 확인해 주세요.
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.cancellationConfirmed)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "계약 취소 완료")
+                add("message_1", body)
+                add("button_1", buildButtonJson("앱에서 확인", message.homeAppUrl, message.homeUrl))
+            }
+
+        send(formData, label = "sendCancellationConfirmed", to = message.recipientPhone)
+    }
+
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
         val body =
             """

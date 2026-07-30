@@ -37,6 +37,9 @@ interface KakaoAlimtalkClient {
     /** 취소 요청 접수 시 상대 측에게 — `[Trana] 계약 취소 요청` 템플릿 (UI_????) */
     fun sendCancellationRequested(message: CancellationRequestedMessage)
 
+    /** 취소 확정(CANCELLED) 시 요청자에게 — `[Trana] 계약 취소 완료` 템플릿 (신규, UI_????) */
+    fun sendCancellationConfirmed(message: CancellationConfirmedMessage)
+
     /** SIGNED 전이 시 미성년자 가입 보호자에게 — `[Trana] 계약 체결 통보` 템플릿 (심사 대기 UI_????) */
     fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage)
 }
@@ -143,6 +146,21 @@ data class CancellationRequestedMessage(
     val requestedAt: Instant,
     val detailUrl: String,
     val detailAppUrl: String,
+)
+
+/**
+ * 취소 확정(CANCELLED) 시 요청자에게 — 계약 취소 완료 통보.
+ *
+ * 취소 확정된 계약은 상세 접근이 불가(앱에서 제외)하므로 버튼은 **홈**으로 연결.
+ * @param homeUrl 웹 홈 폴백(linkMo/linkPc) / @param homeAppUrl 앱 홈 스킴(linkAnd/linkIos)
+ */
+data class CancellationConfirmedMessage(
+    val recipientPhone: String,
+    val recipientName: String,
+    val contractTitle: String,
+    val cancelledAt: Instant,
+    val homeUrl: String,
+    val homeAppUrl: String,
 )
 
 /**

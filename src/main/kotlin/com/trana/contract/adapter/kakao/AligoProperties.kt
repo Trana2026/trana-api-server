@@ -41,6 +41,8 @@ data class AligoProperties(
         val disputeReported: String,
         /** UI_???? — 취소 요청 접수 시 피요청자에게 (A'-8 등록 신청 후 templateId 반영). */
         val cancellationRequested: String,
+        /** UI_???? — 취소 확정(CANCELLED) 시 요청자에게. 신규 등록 대기 → placeholder default. */
+        val cancellationConfirmed: String = "UI_PENDING_CANCELLATION_CONFIRMED",
         /** UI_4032 강조 타이틀 (강조 표기형 템플릿 필수). */
         val emtitleNewContract: String,
         /** UI_4033 강조 타이틀. */

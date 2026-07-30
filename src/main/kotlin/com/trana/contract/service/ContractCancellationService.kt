@@ -2,6 +2,7 @@ package com.trana.contract.service
 
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractCancellationException
+import com.trana.contract.adapter.kakao.CancellationConfirmedMessage
 import com.trana.contract.adapter.kakao.CancellationRequestedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.entity.CancellationStatus
@@ -119,6 +120,37 @@ class ContractCancellationService(
                 toStatus = ContractStatus.CANCELLED,
                 actorUserId = userId,
                 reason = "양측 취소 확정",
+            ),
+        )
+
+        sendCancellationConfirmedAlimtalk(contract, request.requesterUserId)
+    }
+
+    /**
+     * 취소 확정(CANCELLED) 시 요청자에게 취소 완료 알림톡.
+     * 취소된 계약은 상세 접근 불가 → 버튼은 홈으로 연결.
+     */
+    private fun sendCancellationConfirmedAlimtalk(
+        contract: Contract,
+        requesterUserId: Long,
+    ) {
+        val requester = userRepository.findById(requesterUserId).orElse(null)
+        if (requester?.name == null || requester.phone == null) {
+            log.warn(
+                "[CANCEL] 요청자 정보 불완전 — 취소완료 알림톡 skip (publicCode={}, requesterUserId={})",
+                contract.publicCode,
+                requesterUserId,
+            )
+            return
+        }
+        kakaoAlimtalkClient.sendCancellationConfirmed(
+            CancellationConfirmedMessage(
+                recipientName = requester.name!!,
+                recipientPhone = requester.phone!!,
+                contractTitle = contract.title ?: "",
+                cancelledAt = contract.statusUpdatedAt,
+                homeUrl = webUrlBuilder.home(),
+                homeAppUrl = webUrlBuilder.homeApp(),
             ),
         )
     }

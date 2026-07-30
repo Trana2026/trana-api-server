@@ -90,6 +90,17 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
         )
     }
 
+    override fun sendCancellationConfirmed(message: CancellationConfirmedMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendCancellationConfirmed → to={}({}), contract={}, cancelledAt={}, homeAppUrl={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.cancelledAt,
+            message.homeAppUrl,
+        )
+    }
+
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
         log.info(
             "[MockKakaoAlimtalk] sendGuardianContractCompleted (skip Live send) — " +
