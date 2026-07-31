@@ -72,17 +72,17 @@ trana:
       tpl-code:
         new-contract: UJ_8650
         receiver-signed: UJ_8653
-        revision-requested: UJ_2905
+        revision-requested: UJ_8672
         completed: UJ_8671
         dispute-reported: UJ_9113
         dispute-filed-receipt: UJ_9112
         cancellation-requested: UJ_9111
-        guardian-contract-completed: UI_PENDING_GUARDIAN_COMPLETED
+        guardian-contract-completed: UJ_8821
         emtitle-new-contract: "계약 서명 요청"
         emtitle-receiver-signed: "최종 서명 요청"
-        emtitle-revision-requested: "안전 거래 계약 수정 요청"
+        emtitle-revision-requested: "계약 수정 요청"
         emtitle-completed: "계약 최종 완료"
-        emtitle-guardian-contract-completed: "미성년 자녀 계약 체결 통보"
+        emtitle-guardian-contract-completed: "계약 체결 안내"
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}

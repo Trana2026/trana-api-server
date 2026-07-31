@@ -197,10 +197,9 @@ data class CancellationConfirmedMessage(
  */
 data class GuardianContractCompletedMessage(
     val recipientPhone: String,
+    val guardianName: String,
     val minorName: String,
-    val counterpartyName: String,
     val contractTitle: String,
     val price: Long,
-    val contractDetailUrl: String,
-    val contractDetailAppUrl: String,
+    val completedAt: Instant,
 )

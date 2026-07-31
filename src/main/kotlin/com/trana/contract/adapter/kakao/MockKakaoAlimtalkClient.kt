@@ -114,10 +114,10 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
         log.info(
             "[MockKakaoAlimtalk] sendGuardianContractCompleted (skip Live send) — " +
-                "recipient={}, minor={}, counterparty={}, title={}, price={}",
-            message.recipientPhone,
+                "recipient={}, guardian={}, minor={}, title={}, price={}",
+            maskPhone(message.recipientPhone),
+            message.guardianName,
             message.minorName,
-            message.counterpartyName,
             message.contractTitle,
             message.price,
         )

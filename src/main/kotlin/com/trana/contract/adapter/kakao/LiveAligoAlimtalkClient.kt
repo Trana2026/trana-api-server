@@ -114,14 +114,26 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendRevisionRequested(message: RevisionRequestedMessage) {
-        val body = TODO_BODY
+        // UJ_8672 (수정 요청). 치환변수: #{요청자명}(=생성자)·#{수신자명}·#{상품명}·#{거래금액}·#{수정사유}
+        val body =
+            """
+            안녕하세요. ${message.creatorName}님,
+            ${message.requesterName}님이 수정 요청을 보냈습니다.
+
+            아래 수정 사유를 확인하신 후,
+            계약 내용을 수정하여 다시 요청해 주세요.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            수정 요청 사유: ${message.revisionReason}
+            """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.revisionRequested)
                 add("emtitle_1", aligoProperties.tplCode.emtitleRevisionRequested)
                 add("receiver_1", normalizePhone(message.creatorPhone))
-                add("subject_1", "안전 거래 계약 수정 요청")
+                add("subject_1", "수정 요청")
                 add("message_1", body)
                 add("button_1", buildButtonJson("계약 수정하기", message.reviewAppUrl, message.reviewUrl))
             }
@@ -254,16 +266,28 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
-        val body = TODO_BODY
+        // UJ_8821 (미성년 계약 생성 완료 알림-보호자). 치환변수: #{보호자명}·#{미성년자명}·#{상품명}·#{거래금액}·#{완료일시}
+        // 버튼 없음. 회색 부가정보("※ 취소를 원하시면 이 채팅방에 문의 주세요")는 템플릿 고정문구.
+        val body =
+            """
+            안녕하세요. ${message.guardianName}님,
+            ${message.minorName}님이
+            안전 거래 계약을 체결했습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            계약 체결 일시: ${KstFormatter.DISPLAY.format(message.completedAt)}
+
+            보호자님은 이 계약을 취소할 수 있습니다.
+            """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.guardianContractCompleted)
                 add("emtitle_1", aligoProperties.tplCode.emtitleGuardianContractCompleted)
                 add("receiver_1", normalizePhone(message.recipientPhone))
-                add("subject_1", "계약 체결 통보")
+                add("subject_1", "미성년 계약 생성 완료 알림(보호자)")
                 add("message_1", body)
-                add("button_1", buildButtonJson("계약 내용 확인", message.contractDetailAppUrl, message.contractDetailUrl))
             }
 
         send(formData, label = "sendGuardianContractCompleted", to = message.recipientPhone)

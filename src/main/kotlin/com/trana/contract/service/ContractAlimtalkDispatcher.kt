@@ -138,14 +138,14 @@ class ContractAlimtalkDispatcher(
             }
         if (minorAndCounterparty == null) return
 
-        val (minor, counterparty) = minorAndCounterparty
-        val guardianPhone =
-            identityVerificationRepository
-                .findFirstBySubjectUserIdAndPurposeAndStatus(
-                    subjectUserId = minor.id!!,
-                    purpose = VerificationPurpose.GUARDIAN,
-                    status = VerificationStatus.SUCCESS,
-                )?.phone
+        val minor = minorAndCounterparty.first
+        val guardianVerification =
+            identityVerificationRepository.findFirstBySubjectUserIdAndPurposeAndStatus(
+                subjectUserId = minor.id!!,
+                purpose = VerificationPurpose.GUARDIAN,
+                status = VerificationStatus.SUCCESS,
+            )
+        val guardianPhone = guardianVerification?.phone
 
         if (guardianPhone == null) {
             log.warn(
@@ -160,12 +160,11 @@ class ContractAlimtalkDispatcher(
             kakaoAlimtalkClient.sendGuardianContractCompleted(
                 GuardianContractCompletedMessage(
                     recipientPhone = guardianPhone,
+                    guardianName = guardianVerification.name ?: "보호자",
                     minorName = minor.name ?: "미성년 자녀",
-                    counterpartyName = counterparty.name ?: "거래 상대방",
                     contractTitle = contract.title ?: "(제목 없음)",
-                    price = requireNotNull(contract.price) { "price 누락 (SIGNED 전이 후 invariant)" },
-                    contractDetailUrl = webUrlBuilder.contractDetail(contract.publicCode),
-                    contractDetailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                    price = contract.price ?: 0L,
+                    completedAt = contract.pdfGeneratedAt ?: java.time.Instant.now(),
                 ),
             )
         }
