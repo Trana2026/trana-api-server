@@ -57,16 +57,7 @@ class DevAlimtalkController(
         if (providedKey != devProperties.tokenKey) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "X-Dev-Token-Key 헤더 검증 실패")
         }
-        val resolved =
-            shareCode?.trim()?.takeIf { it.isNotEmpty() }?.let { code ->
-                userRepository.findByShareCode(code.uppercase())
-                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "shareCode 사용자 없음: $code")
-            }
-        val to =
-            resolved?.phone?.takeIf { it.isNotBlank() }
-                ?: phone
-                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "phone 또는 shareCode 필요")
-        val receiverName = resolved?.name ?: "임현진"
+        val (receiverName, to) = resolveRecipient(shareCode, phone)
         when (type) {
             AlimtalkType.NEW_CONTRACT -> {
                 kakaoAlimtalkClient.sendNewContract(
@@ -125,6 +116,24 @@ class DevAlimtalkController(
                 )
             }
         }
+    }
+
+    /** shareCode(우선) 또는 phone 으로 수신자 이름·번호 결정. @return (name, phone) */
+    @Suppress("ThrowsCount")
+    private fun resolveRecipient(
+        shareCode: String?,
+        phone: String?,
+    ): Pair<String, String> {
+        val resolved =
+            shareCode?.trim()?.takeIf { it.isNotEmpty() }?.let { code ->
+                userRepository.findByShareCode(code.uppercase())
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "shareCode 사용자 없음: $code")
+            }
+        val to =
+            resolved?.phone?.takeIf { it.isNotBlank() }
+                ?: phone
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "phone 또는 shareCode 필요")
+        return (resolved?.name ?: "임현진") to to
     }
 
     companion object {
