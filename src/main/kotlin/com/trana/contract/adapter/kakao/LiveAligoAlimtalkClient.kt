@@ -1,7 +1,6 @@
 package com.trana.contract.adapter.kakao
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.trana.common.util.KstFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.http.MediaType
@@ -27,8 +26,15 @@ import java.time.Duration
  * - Content-Type: `application/x-www-form-urlencoded`
  * - 응답 `code != 0` → [AligoSendException]
  *
- * 템플릿 4종 (UI_4032 / UI_4033 / UI_4034 / UI_4037) 사전 등록 + 카카오 심사 완료 전제.
- * 본문 / 치환자 / 버튼이름은 등록 템플릿과 1글자도 어긋나면 발송 거절됨.
+ * 발송 파라미터 구조(공통):
+ * - tpl_code   : 등록·심사 통과한 템플릿 ID (yml AligoProperties)
+ * - emtitle_1  : 강조표기형 강조 타이틀 (등록본과 일치, yml)
+ * - subject_1  : 발송 내역 관리용 라벨 (카톡 미노출)
+ * - message_1  : 본문 (치환변수 채운 완성본 — 등록 템플릿과 1글자도 어긋나면 거절)
+ * - button_1   : AL(앱링크) 버튼 JSON
+ * - 부가정보(회색 텍스트)는 템플릿에 등록된 고정 문구라 여기서 보내지 않음.
+ *
+ * NOTE: 본문 문구는 템플릿 재정비 중 — 각 send 의 body 는 재작성 예정(placeholder).
  */
 @Component
 @Profile("alimtalk-live")
@@ -47,13 +53,16 @@ class LiveAligoAlimtalkClient(
             .build()
 
     override fun sendNewContract(message: NewContractMessage) {
+        // UJ_8650 (1차 서명 요청). 치환변수: #{수신자명}·#{요청자명}·#{상품명}·#{거래금액}
+        // 회색 부가정보("※ 내용을 꼼꼼히 확인하신 후 서명해주세요")는 템플릿 등록 고정문구 → 본문 미포함.
         val body =
             """
             안녕하세요. ${message.receiverName}님,
             ${message.sellerName}님으로부터
             안전 거래 계약 서명 요청이 도착했습니다.
 
-            아래 계약 내용을 확인하신 후 서명을 진행해 주세요.
+            아래 계약 내용을 확인하신 후
+            서명을 진행해 주세요.
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
@@ -64,7 +73,7 @@ class LiveAligoAlimtalkClient(
                 add("tpl_code", aligoProperties.tplCode.newContract)
                 add("emtitle_1", aligoProperties.tplCode.emtitleNewContract)
                 add("receiver_1", normalizePhone(message.receiverPhone))
-                add("subject_1", "안전 거래 계약 서명 요청")
+                add("subject_1", "1차 서명 요청")
                 add("message_1", body)
                 add("button_1", buildButtonJson("계약서 서명하기", message.invitationAppUrl, message.invitationUrl))
             }
@@ -72,6 +81,7 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendNewContract", to = message.receiverPhone)
     }
 
+    // 비교용 — 기존 본문 방식 1건 보존 (나머지는 TODO_BODY placeholder). 재정비 시 참고.
     override fun sendReceiverSigned(message: ReceiverSignedMessage) {
         val body =
             """
@@ -101,18 +111,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendRevisionRequested(message: RevisionRequestedMessage) {
-        val body =
-            """
-            안녕하세요. ${message.creatorName}님,${" "}
-            ${message.requesterName}님이 수정 요청을 보냈습니다.
-
-            아래 수정 사유를 확인하신 후,${" "}
-            계약 내용을 수정하여 다시 요청해 주세요.
-
-            상품명: ${message.contractTitle}
-            거래 금액: ${formatPrice(message.price)}원
-            수정 요청 사유: ${message.revisionReason}
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -128,18 +127,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendCompleted(message: ContractCompletedMessage) {
-        val body =
-            """
-            안녕하세요, ${message.recipientName}님.
-            진행 중이던 안전 거래 계약의 모든 서명이 완료되었습니다.
-
-            체결된 계약서 양식은 아래 링크를 통해${" "}
-            언제든지 다시 확인하실 수 있습니다.
-
-            상품명: ${message.contractTitle}
-            거래 금액: ${formatPrice(message.price)}원
-            계약 체결 일시: ${KstFormatter.DISPLAY.format(message.completedAt)}
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -155,15 +143,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendDisputeReported(message: DisputeReportedMessage) {
-        val body =
-            """
-            [Trana] 거래에 대한 신고가 접수되었습니다.
-
-            상품명: ${message.contractTitle}
-            접수 일시: ${KstFormatter.DISPLAY.format(message.reportedAt)}
-
-            아래 버튼을 눌러 상세 내용을 확인해 주세요.
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -178,15 +158,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendCancellationRequested(message: CancellationRequestedMessage) {
-        val body =
-            """
-            [Trana] 거래 계약 취소 요청이 도착했습니다.
-
-            상품명: ${message.contractTitle}
-            요청 일시: ${KstFormatter.DISPLAY.format(message.requestedAt)}
-
-            아래 버튼을 눌러 취소 내용을 확인해 주세요.
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -201,16 +173,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendCancellationConfirmed(message: CancellationConfirmedMessage) {
-        val body =
-            """
-            [Trana] 거래 계약이 취소되었습니다.
-
-            상품명: ${message.contractTitle}
-            취소 일시: ${KstFormatter.DISPLAY.format(message.cancelledAt)}
-
-            상대방이 취소를 확정하여 계약이 최종 취소되었습니다.
-            아래 버튼을 눌러 앱에서 확인해 주세요.
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -225,18 +188,7 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
-        val body =
-            """
-            [Trana] 안전 거래 계약이 체결되었습니다.
-
-            자녀 (${message.minorName}) 님이 ${message.counterpartyName} 님과 계약을 체결했습니다.
-
-            상품명: ${message.contractTitle}
-            거래 금액: ${formatPrice(message.price)}원
-
-            민법상 미성년자가 당사자인 계약은 취소할 수 있습니다.
-            취소를 원하실 경우 아래 버튼으로 접수 방법을 확인해 주세요.
-            """.trimIndent()
+        val body = TODO_BODY
 
         val formData =
             newFormData().apply {
@@ -277,7 +229,7 @@ class LiveAligoAlimtalkClient(
                 .getFirst("message_1")
                 ?.replace("\r", "\\r")
                 ?.replace("\n", "\\n")
-                ?.replace("\u200B", "[ZWS]"),
+                ?.replace("​", "[ZWS]"),
             formData.getFirst("button_1"),
         )
         val response =
@@ -360,6 +312,9 @@ class LiveAligoAlimtalkClient(
         private const val MIN_PHONE_LENGTH = 10
         private const val MASK_START = 4
         private const val MASK_END = 7
+
+        /** 템플릿 재정비 중 placeholder — 각 send 본문 재작성 시 교체. */
+        private const val TODO_BODY = ""
     }
 }
 

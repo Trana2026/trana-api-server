@@ -70,14 +70,14 @@ trana:
   alimtalk:
     aligo:
       tpl-code:
-        new-contract: UJ_2893
+        new-contract: UJ_8650
         receiver-signed: UJ_2897
         revision-requested: UJ_2905
         completed: UJ_2901
         dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
         cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
         guardian-contract-completed: UI_PENDING_GUARDIAN_COMPLETED
-        emtitle-new-contract: "안전 거래 계약 서명 요청"
+        emtitle-new-contract: "계약 서명 요청"
         emtitle-receiver-signed: "최종 서명 요청"
         emtitle-revision-requested: "안전 거래 계약 수정 요청"
         emtitle-completed: "안전 거래 계약 최종 완료"
