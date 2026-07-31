@@ -7,6 +7,7 @@ import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
 import com.trana.contract.adapter.kakao.ReceiverSignedMessage
 import com.trana.contract.adapter.kakao.RevisionRequestedMessage
+import com.trana.user.repository.UserRepository
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
@@ -37,6 +38,7 @@ class DevAlimtalkController(
     private val devProperties: DevProperties,
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
+    private val userRepository: UserRepository,
 ) {
     @Operation(
         summary = "알림톡 발송 트리거 (개발용)",
@@ -49,17 +51,28 @@ class DevAlimtalkController(
     fun send(
         @RequestHeader(value = "X-Dev-Token-Key", required = false) providedKey: String?,
         @RequestParam type: AlimtalkType,
-        @RequestParam phone: String,
+        @RequestParam(required = false) phone: String?,
+        @RequestParam(required = false) shareCode: String?,
     ) {
         if (providedKey != devProperties.tokenKey) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "X-Dev-Token-Key 헤더 검증 실패")
         }
+        val resolved =
+            shareCode?.trim()?.takeIf { it.isNotEmpty() }?.let { code ->
+                userRepository.findByShareCode(code.uppercase())
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "shareCode 사용자 없음: $code")
+            }
+        val to =
+            resolved?.phone?.takeIf { it.isNotBlank() }
+                ?: phone
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "phone 또는 shareCode 필요")
+        val receiverName = resolved?.name ?: "임현진"
         when (type) {
             AlimtalkType.NEW_CONTRACT -> {
                 kakaoAlimtalkClient.sendNewContract(
                     NewContractMessage(
-                        receiverPhone = phone,
-                        receiverName = "임현진",
+                        receiverPhone = to,
+                        receiverName = receiverName,
                         sellerName = "김테스트A",
                         contractTitle = DUMMY_TITLE,
                         price = DUMMY_PRICE,
@@ -72,7 +85,7 @@ class DevAlimtalkController(
             AlimtalkType.RECEIVER_SIGNED -> {
                 kakaoAlimtalkClient.sendReceiverSigned(
                     ReceiverSignedMessage(
-                        creatorPhone = phone,
+                        creatorPhone = to,
                         creatorName = "김테스트A",
                         receiverName = "임현진",
                         contractTitle = DUMMY_TITLE,
@@ -86,7 +99,7 @@ class DevAlimtalkController(
             AlimtalkType.REVISION_REQUESTED -> {
                 kakaoAlimtalkClient.sendRevisionRequested(
                     RevisionRequestedMessage(
-                        creatorPhone = phone,
+                        creatorPhone = to,
                         creatorName = "김테스트A",
                         contractTitle = DUMMY_TITLE,
                         requesterName = "임현진",
@@ -101,7 +114,7 @@ class DevAlimtalkController(
             AlimtalkType.COMPLETED -> {
                 kakaoAlimtalkClient.sendCompleted(
                     ContractCompletedMessage(
-                        recipientPhone = phone,
+                        recipientPhone = to,
                         recipientName = "김테스트A",
                         contractTitle = DUMMY_TITLE,
                         price = DUMMY_PRICE,
