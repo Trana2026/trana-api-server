@@ -1,6 +1,7 @@
 package com.trana.contract.adapter.kakao
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.trana.common.util.KstFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.http.MediaType
@@ -81,15 +82,17 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendNewContract", to = message.receiverPhone)
     }
 
-    // 비교용 — 기존 본문 방식 1건 보존 (나머지는 TODO_BODY placeholder). 재정비 시 참고.
     override fun sendReceiverSigned(message: ReceiverSignedMessage) {
+        // UJ_8653 (최종 서명 요청). 치환변수: #{요청자명}(=생성자)·#{수신자명}·#{상품명}·#{거래금액}
+        // 회색 부가정보("※ 내용을 꼼꼼히 확인하신 후 서명해주세요")는 템플릿 고정문구 → 본문 미포함.
         val body =
             """
             안녕하세요. ${message.creatorName}님,
             ${message.receiverName}님이
             안전 거래 계약서에 서명을 완료했습니다.
 
-            ${message.creatorName}님의 최종 서명이 완료되면 계약이 효력을 발휘합니다.${" "}
+            ${message.creatorName}님의 최종 서명이 완료되면
+            계약이 효력을 발휘합니다.
 
             아래 링크를 통해 서명을 진행해 주세요.
 
@@ -127,14 +130,28 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendCompleted(message: ContractCompletedMessage) {
-        val body = TODO_BODY
+        // UJ_8671 (최종 서명 완료 알림). 치환변수: #{고객명}·#{상품명}·#{거래금액}·#{완료일시}
+        // 회색 부가정보("※ 안전한 거래를 위해 계약 내용을 준수해 주세요")는 템플릿 고정문구 → 본문 미포함.
+        val body =
+            """
+            안녕하세요, ${message.recipientName}님.
+            진행 중이던 안전 거래 계약의
+            모든 서명이 완료되었습니다.
+
+            체결된 계약서 양식은 아래 링크를 통해
+            언제든지 다시 확인하실 수 있습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            계약 체결 일시: ${KstFormatter.DISPLAY.format(message.completedAt)}
+            """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.completed)
                 add("emtitle_1", aligoProperties.tplCode.emtitleCompleted)
                 add("receiver_1", normalizePhone(message.recipientPhone))
-                add("subject_1", "안전 거래 계약 최종 완료")
+                add("subject_1", "최종 서명 완료 알림")
                 add("message_1", body)
                 add("button_1", buildButtonJson("계약서 확인하기", message.downloadAppUrl, message.downloadUrl))
             }
