@@ -48,7 +48,6 @@ class ContractAlimtalkDispatcher(
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$sellerUserId)")
             }
         val sellerName = seller.name ?: "Trana 사용자"
-        val invitationUrl = webUrlBuilder.contractInvitation(invitation.token)
         sendAlimtalkBestEffort("newContract") {
             kakaoAlimtalkClient.sendNewContract(
                 NewContractMessage(
@@ -57,8 +56,9 @@ class ContractAlimtalkDispatcher(
                     sellerName = sellerName,
                     contractTitle = contract.title ?: "(제목 없음)",
                     price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
-                    invitationUrl = invitationUrl,
-                    invitationAppUrl = webUrlBuilder.contractInvitationApp(invitation.token),
+                    // 초대토큰 대신 계약 상세 딥링크 — 재진입/만료 없음 (수신자는 공유 시 party 직등록됨)
+                    invitationUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    invitationAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
                 ),
             )
         }

@@ -1,14 +1,16 @@
 package com.trana.contract.service
-
 import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
+import com.trana.contract.entity.ContractParty
 import com.trana.contract.entity.ContractRevisionRequest
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.ContractStatusLog
+import com.trana.contract.entity.PartyType
 import com.trana.contract.repository.ContractInvitationRepository
+import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.contract.repository.ContractRevisionRequestRepository
 import com.trana.contract.repository.ContractStatusLogRepository
@@ -47,6 +49,7 @@ class ContractStatusService(
     private val revisionRequestRepository: ContractRevisionRequestRepository,
     private val contractAlimtalkDispatcher: ContractAlimtalkDispatcher,
     private val userRepository: UserRepository,
+    private val contractPartyRepository: ContractPartyRepository,
     private val pdfRenderer: ContractPdfRenderer,
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val eventPublisher: ApplicationEventPublisher,
@@ -112,6 +115,9 @@ class ContractStatusService(
             )
         invitationRepository.save(invitation)
 
+        // 코드 공유: 수신자를 party 로 직등록 (초대토큰은 audit 로만 잔존, 링크는 계약 상세 사용)
+        target.recipientUserId?.let { addRecipientPartyIfAbsent(contract, it) }
+
         val from = contract.status
         contract.markShared()
         publishStatusChanged(contract, from, userId, null)
@@ -140,17 +146,50 @@ class ContractStatusService(
             if (receiver.id == requesterUserId) {
                 throw ContractException.ShareToSelf(code)
             }
+            if (receiver.status != UserStatus.ACTIVE) {
+                throw ContractException.ShareTargetInvalid("상대방이 활성 상태가 아닙니다 (shareCode=$code)")
+            }
             val phone =
                 receiver.phone?.takeIf { it.isNotBlank() }
                     ?: throw ContractException.ShareTargetInvalid("상대방 알림톡 발송 번호가 없습니다 (shareCode=$code)")
-            return ShareTarget(name = receiver.name ?: "", phone = phone)
+            return ShareTarget(name = receiver.name ?: "", phone = phone, recipientUserId = receiver.id)
         }
         val name = receiverName?.trim()?.takeIf { it.isNotEmpty() }
         val phone = receiverPhone?.trim()?.takeIf { it.isNotEmpty() }
         if (name == null || phone == null) {
             throw ContractException.ShareTargetInvalid("고유코드 또는 (이름+전화번호)가 필요합니다")
         }
-        return ShareTarget(name = name, phone = phone)
+        return ShareTarget(name = name, phone = phone, recipientUserId = null)
+    }
+
+    /**
+     * 코드 공유 시 수신자를 계약 party 로 직등록 (초대 수락 없이 바로 서명 가능).
+     * 멱등 — 이미 party 면 skip. creator 역할의 반대편으로 등록.
+     */
+    private fun addRecipientPartyIfAbsent(
+        contract: Contract,
+        recipientUserId: Long,
+    ) {
+        val contractId = contract.id!!
+        if (contractPartyRepository.findFirstByContractIdAndUserId(contractId, recipientUserId) != null) {
+            return
+        }
+        val creatorParty =
+            contractPartyRepository.findFirstByContractIdAndUserId(contractId, contract.creatorUserId)
+                ?: error("creator party 없음 — 데이터 무결성 위반 (contractId=$contractId)")
+        val receiverPartyType =
+            when (creatorParty.partyType) {
+                PartyType.SELLER -> PartyType.BUYER
+                PartyType.BUYER -> PartyType.SELLER
+            }
+        val party =
+            ContractParty.create(
+                contractId = contractId,
+                userId = recipientUserId,
+                partyType = receiverPartyType,
+            )
+        party.markValidated()
+        contractPartyRepository.save(party)
     }
 
     /**
@@ -363,8 +402,9 @@ class ContractStatusService(
     private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
 }
 
-/** 공유 수신자 해석 결과 — invitation/알림톡 발송에 사용할 이름·번호. */
+/** 공유 수신자 해석 결과 — 이름·번호 + (코드 공유 시) 수신자 userId. */
 private data class ShareTarget(
     val name: String,
     val phone: String,
+    val recipientUserId: Long?,
 )
