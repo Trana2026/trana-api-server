@@ -58,6 +58,14 @@ class DevAlimtalkController(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "X-Dev-Token-Key 헤더 검증 실패")
         }
         val (receiverName, to) = resolveRecipient(shareCode, phone)
+        dispatch(type, receiverName, to)
+    }
+
+    private fun dispatch(
+        type: AlimtalkType,
+        receiverName: String,
+        to: String,
+    ) {
         when (type) {
             AlimtalkType.NEW_CONTRACT -> {
                 kakaoAlimtalkClient.sendNewContract(
