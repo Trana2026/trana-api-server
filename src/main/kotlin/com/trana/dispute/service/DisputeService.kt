@@ -1,8 +1,8 @@
 package com.trana.dispute.service
-
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.adapter.kakao.DisputeReportedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
+import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.entity.DisputeState
@@ -228,15 +228,17 @@ class DisputeService(
             )
             return
         }
-        kakaoAlimtalkClient.sendDisputeReported(
-            DisputeReportedMessage(
-                recipientName = recipient.name!!,
-                recipientPhone = recipient.phone!!,
-                contractTitle = contract.title ?: "",
-                reportedAt = record.reportedAt!!,
-                detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
-                detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-            ),
-        )
+        sendAlimtalkBestEffort("disputeReported") {
+            kakaoAlimtalkClient.sendDisputeReported(
+                DisputeReportedMessage(
+                    recipientName = recipient.name!!,
+                    recipientPhone = recipient.phone!!,
+                    contractTitle = contract.title ?: "",
+                    reportedAt = record.reportedAt!!,
+                    detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 }

@@ -1,5 +1,4 @@
 package com.trana.contract.service
-
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.adapter.kakao.ContractCompletedMessage
 import com.trana.contract.adapter.kakao.GuardianContractCompletedMessage
@@ -7,6 +6,7 @@ import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
 import com.trana.contract.adapter.kakao.ReceiverSignedMessage
 import com.trana.contract.adapter.kakao.RevisionRequestedMessage
+import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
 import com.trana.contract.repository.ContractPartyRepository
@@ -49,17 +49,19 @@ class ContractAlimtalkDispatcher(
             }
         val sellerName = seller.name ?: "Trana 사용자"
         val invitationUrl = webUrlBuilder.contractInvitation(invitation.token)
-        kakaoAlimtalkClient.sendNewContract(
-            NewContractMessage(
-                receiverPhone = invitation.receiverPhone,
-                receiverName = invitation.receiverName,
-                sellerName = sellerName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
-                invitationUrl = invitationUrl,
-                invitationAppUrl = webUrlBuilder.contractInvitationApp(invitation.token),
-            ),
-        )
+        sendAlimtalkBestEffort("newContract") {
+            kakaoAlimtalkClient.sendNewContract(
+                NewContractMessage(
+                    receiverPhone = invitation.receiverPhone,
+                    receiverName = invitation.receiverName,
+                    sellerName = sellerName,
+                    contractTitle = contract.title ?: "(제목 없음)",
+                    price = requireNotNull(contract.price) { "price 누락 (SHARED 전이 후 invariant 위반)" },
+                    invitationUrl = invitationUrl,
+                    invitationAppUrl = webUrlBuilder.contractInvitationApp(invitation.token),
+                ),
+            )
+        }
     }
 
     fun sendReceiverSigned(
@@ -73,17 +75,19 @@ class ContractAlimtalkDispatcher(
         val creatorName = creator.name ?: "Trana 사용자"
         val creatorPhone = creator.phone ?: "(unknown)"
         val reviewUrl = webUrlBuilder.contractDetail(contract.publicCode)
-        kakaoAlimtalkClient.sendReceiverSigned(
-            ReceiverSignedMessage(
-                creatorPhone = creatorPhone,
-                creatorName = creatorName,
-                receiverName = receiverName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                price = requireNotNull(contract.price) { "price 누락 (RECEIVER_SIGNED 전이 후 invariant 위반)" },
-                reviewUrl = reviewUrl,
-                reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-            ),
-        )
+        sendAlimtalkBestEffort("receiverSigned") {
+            kakaoAlimtalkClient.sendReceiverSigned(
+                ReceiverSignedMessage(
+                    creatorPhone = creatorPhone,
+                    creatorName = creatorName,
+                    receiverName = receiverName,
+                    contractTitle = contract.title ?: "(제목 없음)",
+                    price = requireNotNull(contract.price) { "price 누락 (RECEIVER_SIGNED 전이 후 invariant 위반)" },
+                    reviewUrl = reviewUrl,
+                    reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 
     fun sendCompleted(
@@ -95,20 +99,22 @@ class ContractAlimtalkDispatcher(
         listOf(creator, receiver).forEach { recipient ->
             val recipientName = recipient.name ?: "Trana 사용자"
             val recipientPhone = recipient.phone ?: "(unknown)"
-            kakaoAlimtalkClient.sendCompleted(
-                ContractCompletedMessage(
-                    recipientPhone = recipientPhone,
-                    recipientName = recipientName,
-                    contractTitle = contract.title ?: "(제목 없음)",
-                    price = requireNotNull(contract.price) { "price 누락 (COMPLETED 전이 후 invariant 위반)" },
-                    completedAt =
-                        requireNotNull(
-                            contract.pdfGeneratedAt,
-                        ) { "pdfGeneratedAt 누락 (SIGNED 전이 후 invariant 위반)" },
-                    downloadUrl = downloadUrl,
-                    downloadAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-                ),
-            )
+            sendAlimtalkBestEffort("completed") {
+                kakaoAlimtalkClient.sendCompleted(
+                    ContractCompletedMessage(
+                        recipientPhone = recipientPhone,
+                        recipientName = recipientName,
+                        contractTitle = contract.title ?: "(제목 없음)",
+                        price = requireNotNull(contract.price) { "price 누락 (COMPLETED 전이 후 invariant 위반)" },
+                        completedAt =
+                            requireNotNull(
+                                contract.pdfGeneratedAt,
+                            ) { "pdfGeneratedAt 누락 (SIGNED 전이 후 invariant 위반)" },
+                        downloadUrl = downloadUrl,
+                        downloadAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                    ),
+                )
+            }
         }
     }
 
@@ -150,17 +156,19 @@ class ContractAlimtalkDispatcher(
             return
         }
 
-        kakaoAlimtalkClient.sendGuardianContractCompleted(
-            GuardianContractCompletedMessage(
-                recipientPhone = guardianPhone,
-                minorName = minor.name ?: "미성년 자녀",
-                counterpartyName = counterparty.name ?: "거래 상대방",
-                contractTitle = contract.title ?: "(제목 없음)",
-                price = requireNotNull(contract.price) { "price 누락 (SIGNED 전이 후 invariant)" },
-                contractDetailUrl = webUrlBuilder.contractDetail(contract.publicCode),
-                contractDetailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-            ),
-        )
+        sendAlimtalkBestEffort("guardianContractCompleted") {
+            kakaoAlimtalkClient.sendGuardianContractCompleted(
+                GuardianContractCompletedMessage(
+                    recipientPhone = guardianPhone,
+                    minorName = minor.name ?: "미성년 자녀",
+                    counterpartyName = counterparty.name ?: "거래 상대방",
+                    contractTitle = contract.title ?: "(제목 없음)",
+                    price = requireNotNull(contract.price) { "price 누락 (SIGNED 전이 후 invariant)" },
+                    contractDetailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    contractDetailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 
     fun sendRevisionRequested(
@@ -194,18 +202,20 @@ class ContractAlimtalkDispatcher(
                 conditionSummaryReason,
                 conditionDetailsReason,
             )
-        kakaoAlimtalkClient.sendRevisionRequested(
-            RevisionRequestedMessage(
-                creatorPhone = creatorPhone,
-                creatorName = creatorName,
-                contractTitle = contract.title ?: "(제목 없음)",
-                requesterName = requesterName,
-                price = requireNotNull(contract.price) { "price 누락 (REVISION_REQUESTED 전이 후 invariant 위반)" },
-                revisionReason = revisionReason,
-                reviewUrl = reviewUrl,
-                reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-            ),
-        )
+        sendAlimtalkBestEffort("revisionRequested") {
+            kakaoAlimtalkClient.sendRevisionRequested(
+                RevisionRequestedMessage(
+                    creatorPhone = creatorPhone,
+                    creatorName = creatorName,
+                    contractTitle = contract.title ?: "(제목 없음)",
+                    requesterName = requesterName,
+                    price = requireNotNull(contract.price) { "price 누락 (REVISION_REQUESTED 전이 후 invariant 위반)" },
+                    revisionReason = revisionReason,
+                    reviewUrl = reviewUrl,
+                    reviewAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 
     private fun buildRevisionReason(

@@ -1,10 +1,10 @@
 package com.trana.contract.service
-
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractCancellationException
 import com.trana.contract.adapter.kakao.CancellationConfirmedMessage
 import com.trana.contract.adapter.kakao.CancellationRequestedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
+import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
 import com.trana.contract.entity.CancellationStatus
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractCancellationRequest
@@ -143,16 +143,18 @@ class ContractCancellationService(
             )
             return
         }
-        kakaoAlimtalkClient.sendCancellationConfirmed(
-            CancellationConfirmedMessage(
-                recipientName = requester.name!!,
-                recipientPhone = requester.phone!!,
-                contractTitle = contract.title ?: "",
-                cancelledAt = contract.statusUpdatedAt,
-                homeUrl = webUrlBuilder.home(),
-                homeAppUrl = webUrlBuilder.homeApp(),
-            ),
-        )
+        sendAlimtalkBestEffort("cancellationConfirmed") {
+            kakaoAlimtalkClient.sendCancellationConfirmed(
+                CancellationConfirmedMessage(
+                    recipientName = requester.name!!,
+                    recipientPhone = requester.phone!!,
+                    contractTitle = contract.title ?: "",
+                    cancelledAt = contract.statusUpdatedAt,
+                    homeUrl = webUrlBuilder.home(),
+                    homeAppUrl = webUrlBuilder.homeApp(),
+                ),
+            )
+        }
     }
 
     /**
@@ -269,15 +271,17 @@ class ContractCancellationService(
             )
             return
         }
-        kakaoAlimtalkClient.sendCancellationRequested(
-            CancellationRequestedMessage(
-                recipientName = recipient.name!!,
-                recipientPhone = recipient.phone!!,
-                contractTitle = contract.title ?: "",
-                requestedAt = record.requestedAt!!,
-                detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
-                detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
-            ),
-        )
+        sendAlimtalkBestEffort("cancellationRequested") {
+            kakaoAlimtalkClient.sendCancellationRequested(
+                CancellationRequestedMessage(
+                    recipientName = recipient.name!!,
+                    recipientPhone = recipient.phone!!,
+                    contractTitle = contract.title ?: "",
+                    requestedAt = record.requestedAt!!,
+                    detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 }
