@@ -31,8 +31,11 @@ interface KakaoAlimtalkClient {
     /** SIGNED 전이 시 양측 각각에게 — `[Trana] 계약 체결 완료` 템플릿 */
     fun sendCompleted(message: ContractCompletedMessage)
 
-    /** 신고 접수 시 피신고자에게 — `[Trana] 거래에 대한 신고가 접수되었습니다` 템플릿 */
+    /** 신고 접수 시 피신고자(수신자)에게 — 신고 접수 안내 템플릿 (UJ_9113) */
     fun sendDisputeReported(message: DisputeReportedMessage)
+
+    /** 신고 접수 시 신고자(접수자)에게 — 신고 접수 완료 템플릿 (UJ_9112) */
+    fun sendDisputeFiledReceipt(message: DisputeFiledReceiptMessage)
 
     /** 취소 요청 접수 시 상대 측에게 — `[Trana] 계약 취소 요청` 템플릿 (UI_????) */
     fun sendCancellationRequested(message: CancellationRequestedMessage)
@@ -124,7 +127,21 @@ data class DisputeReportedMessage(
     val recipientPhone: String,
     val recipientName: String,
     val contractTitle: String,
+    val price: Long,
     val reportedAt: Instant,
+    val detailUrl: String,
+    val detailAppUrl: String,
+)
+
+/**
+ * 신고 접수 시 신고자(접수자)에게 — 접수 완료 통보 (UJ_9112).
+ * 치환변수: #{접수자명}·#{상품명}·#{거래금액}
+ */
+data class DisputeFiledReceiptMessage(
+    val reporterPhone: String,
+    val reporterName: String,
+    val contractTitle: String,
+    val price: Long,
     val detailUrl: String,
     val detailAppUrl: String,
 )
@@ -142,7 +159,10 @@ data class DisputeReportedMessage(
 data class CancellationRequestedMessage(
     val recipientPhone: String,
     val recipientName: String,
+    val requesterName: String,
+    val reason: String,
     val contractTitle: String,
+    val price: Long,
     val requestedAt: Instant,
     val detailUrl: String,
     val detailAppUrl: String,

@@ -74,8 +74,9 @@ trana:
         receiver-signed: UJ_8653
         revision-requested: UJ_2905
         completed: UJ_8671
-        dispute-reported: UI_PENDING_DISPUTE_REGISTRATION
-        cancellation-requested: UI_PENDING_CANCELLATION_REGISTRATION
+        dispute-reported: UJ_9113
+        dispute-filed-receipt: UJ_9112
+        cancellation-requested: UJ_9111
         guardian-contract-completed: UI_PENDING_GUARDIAN_COMPLETED
         emtitle-new-contract: "계약 서명 요청"
         emtitle-receiver-signed: "최종 서명 요청"

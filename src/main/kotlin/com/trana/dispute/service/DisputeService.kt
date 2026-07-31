@@ -1,5 +1,6 @@
 package com.trana.dispute.service
 import com.trana.common.web.WebUrlBuilder
+import com.trana.contract.adapter.kakao.DisputeFiledReceiptMessage
 import com.trana.contract.adapter.kakao.DisputeReportedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
@@ -210,22 +211,48 @@ class DisputeService(
         reporterUserId: Long,
         record: DisputeRecord,
     ) {
+        sendDisputeReceiptToReporter(contract, reporterUserId)
+        sendDisputeNoticeToRecipient(contract, reporterUserId, record)
+    }
+
+    /** 신고자(접수자)에게 접수 완료 통보 (UJ_9112). */
+    private fun sendDisputeReceiptToReporter(
+        contract: Contract,
+        reporterUserId: Long,
+    ) {
+        val reporter = userRepository.findById(reporterUserId).orElse(null)
+        if (reporter?.name == null || reporter.phone == null) {
+            log.warn("[DISPUTE] 접수자 정보 불완전 — 접수완료 알림톡 skip (publicCode={})", contract.publicCode)
+            return
+        }
+        sendAlimtalkBestEffort("disputeFiledReceipt") {
+            kakaoAlimtalkClient.sendDisputeFiledReceipt(
+                DisputeFiledReceiptMessage(
+                    reporterName = reporter.name!!,
+                    reporterPhone = reporter.phone!!,
+                    contractTitle = contract.title ?: "",
+                    price = contract.price ?: 0L,
+                    detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
+    }
+
+    /** 피신고자(수신자)에게 신고 접수 안내 (UJ_9113). */
+    private fun sendDisputeNoticeToRecipient(
+        contract: Contract,
+        reporterUserId: Long,
+        record: DisputeRecord,
+    ) {
         val recipientId = counterpartyResolver.resolveCounterpartUserId(contract, reporterUserId)
         if (recipientId == null) {
-            log.warn(
-                "[DISPUTE] 피신고자 미상 — 알림톡 skip (publicCode={}, reporterUserId={})",
-                contract.publicCode,
-                reporterUserId,
-            )
+            log.warn("[DISPUTE] 피신고자 미상 — 알림톡 skip (publicCode={})", contract.publicCode)
             return
         }
         val recipient = userRepository.findById(recipientId).orElse(null)
         if (recipient?.name == null || recipient.phone == null) {
-            log.warn(
-                "[DISPUTE] 피신고자 정보 불완전 — 알림톡 skip (publicCode={}, recipientId={})",
-                contract.publicCode,
-                recipientId,
-            )
+            log.warn("[DISPUTE] 피신고자 정보 불완전 — 알림톡 skip (publicCode={})", contract.publicCode)
             return
         }
         sendAlimtalkBestEffort("disputeReported") {
@@ -234,6 +261,7 @@ class DisputeService(
                     recipientName = recipient.name!!,
                     recipientPhone = recipient.phone!!,
                     contractTitle = contract.title ?: "",
+                    price = contract.price ?: 0L,
                     reportedAt = record.reportedAt!!,
                     detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
                     detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),

@@ -160,30 +160,79 @@ class LiveAligoAlimtalkClient(
     }
 
     override fun sendDisputeReported(message: DisputeReportedMessage) {
-        val body = TODO_BODY
+        // UJ_9113 (신고 접수 수신자용). 치환변수: #{수신자명}·#{상품명}·#{거래금액}
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+            아래 거래 건에 대하여
+            신고가 접수되었음을 안내드립니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.disputeReported)
+                add("emtitle_1", aligoProperties.tplCode.emtitleDisputeReported)
                 add("receiver_1", normalizePhone(message.recipientPhone))
-                add("subject_1", "거래 신고 접수")
+                add("subject_1", "신고 접수(수신자용)")
                 add("message_1", body)
-                add("button_1", buildButtonJson("상세 보기", message.detailAppUrl, message.detailUrl))
+                add("button_1", buildButtonJson("신고 내역 확인하기", message.detailAppUrl, message.detailUrl))
             }
 
         send(formData, label = "sendDisputeReported", to = message.recipientPhone)
     }
 
+    override fun sendDisputeFiledReceipt(message: DisputeFiledReceiptMessage) {
+        // UJ_9112 (신고 접수 접수자용). 치환변수: #{접수자명}·#{상품명}·#{거래금액}
+        val body =
+            """
+            안녕하세요. ${message.reporterName}님,
+            신고가 정상적으로 접수되었습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.disputeFiledReceipt)
+                add("emtitle_1", aligoProperties.tplCode.emtitleDisputeFiledReceipt)
+                add("receiver_1", normalizePhone(message.reporterPhone))
+                add("subject_1", "신고 접수(접수자용)")
+                add("message_1", body)
+                add("button_1", buildButtonJson("신고 내역 확인하기", message.detailAppUrl, message.detailUrl))
+            }
+
+        send(formData, label = "sendDisputeFiledReceipt", to = message.reporterPhone)
+    }
+
     override fun sendCancellationRequested(message: CancellationRequestedMessage) {
-        val body = TODO_BODY
+        // UJ_9111 (취소요청). 치환변수: #{수신자명}·#{요청자명}·#{취소사유}·#{상품명}·#{거래금액}
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+            ${message.requesterName}님으로부터
+            계약 취소 요청이 도착했습니다.
+
+            ${message.reason} 내용으로,
+            취소 요청이 접수되었습니다.
+
+            아래 계약 내용을 확인해 주세요.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
 
         val formData =
             newFormData().apply {
                 add("tpl_code", aligoProperties.tplCode.cancellationRequested)
+                add("emtitle_1", aligoProperties.tplCode.emtitleCancellationRequested)
                 add("receiver_1", normalizePhone(message.recipientPhone))
-                add("subject_1", "계약 취소 요청")
+                add("subject_1", "취소요청")
                 add("message_1", body)
-                add("button_1", buildButtonJson("취소 내용 확인", message.detailAppUrl, message.detailUrl))
+                add("button_1", buildButtonJson("취소 확인하기", message.detailAppUrl, message.detailUrl))
             }
 
         send(formData, label = "sendCancellationRequested", to = message.recipientPhone)

@@ -37,9 +37,11 @@ data class AligoProperties(
         val revisionRequested: String,
         /** UI_4037 — SIGNED 전이 시 양측에게 (최종 서명 완료) */
         val completed: String,
-        /** UI_???? — 신고 접수 시 피신고자에게 (A-8 등록 신청 후 templateId 반영). */
+        /** UJ_9113 — 신고 접수 시 피신고자(수신자)에게. */
         val disputeReported: String,
-        /** UI_???? — 취소 요청 접수 시 피요청자에게 (A'-8 등록 신청 후 templateId 반영). */
+        /** UJ_9112 — 신고 접수 시 신고자(접수자)에게. */
+        val disputeFiledReceipt: String = "UI_PENDING_DISPUTE_FILED_RECEIPT",
+        /** UJ_9111 — 취소 요청 접수 시 피요청자에게. */
         val cancellationRequested: String,
         /** UI_???? — 취소 확정(CANCELLED) 시 요청자에게. 신규 등록 대기 → placeholder default. */
         val cancellationConfirmed: String = "UI_PENDING_CANCELLATION_CONFIRMED",
@@ -55,5 +57,11 @@ data class AligoProperties(
         val guardianContractCompleted: String,
         /** 강조 타이틀 (심사 시 강조 표기형 결정, 우선 필드만 추가). */
         val emtitleGuardianContractCompleted: String,
+        /** UJ_9113 강조 타이틀. */
+        val emtitleDisputeReported: String = "신고 접수 안내",
+        /** UJ_9112 강조 타이틀. */
+        val emtitleDisputeFiledReceipt: String = "신고 접수 완료",
+        /** UJ_9111 강조 타이틀. */
+        val emtitleCancellationRequested: String = "계약 취소 요청",
     )
 }

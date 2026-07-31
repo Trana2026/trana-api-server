@@ -271,12 +271,16 @@ class ContractCancellationService(
             )
             return
         }
+        val requesterName = userRepository.findById(requesterUserId).orElse(null)?.name ?: ""
         sendAlimtalkBestEffort("cancellationRequested") {
             kakaoAlimtalkClient.sendCancellationRequested(
                 CancellationRequestedMessage(
                     recipientName = recipient.name!!,
                     recipientPhone = recipient.phone!!,
+                    requesterName = requesterName,
+                    reason = record.reason,
                     contractTitle = contract.title ?: "",
+                    price = contract.price ?: 0L,
                     requestedAt = record.requestedAt!!,
                     detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
                     detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
