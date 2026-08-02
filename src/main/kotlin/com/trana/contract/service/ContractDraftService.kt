@@ -164,7 +164,9 @@ class ContractDraftService(
         val contracts = contractRepository.findAllByPartyUserId(userId, status, normalizedQuery)
         val visible =
             if (status == null) {
-                contracts.filter { it.status != ContractStatus.CANCELLED }
+                contracts.filter {
+                    it.status != ContractStatus.CANCELLED && it.status != ContractStatus.EXPIRED
+                }
             } else {
                 contracts
             }
