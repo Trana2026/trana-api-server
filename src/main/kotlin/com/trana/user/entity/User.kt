@@ -111,8 +111,7 @@ class User(
         // PII 마스킹 — 재가입 시 email unique 충돌 회피 + 개인정보 최소화
         // name/phone(성인 KYC)은 audit 가치라 W7+ 운영 정교화 시 결정
         this.email = null
-        // 고유코드 방출 — 탈퇴 시 풀로 반환(재사용 정책)
-        this.shareCode = null
+        // 고유코드는 NOT NULL 이라 탈퇴 후에도 유지(방출/재사용 안 함)
     }
 
     /**
