@@ -293,6 +293,84 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendGuardianContractCompleted", to = message.recipientPhone)
     }
 
+    override fun sendExpiryWarning(message: ExpiryWarningMessage) {
+        // UJ_9524 (만료 안내). 치환변수: #{수신자명}·#{상품명}·#{거래금액}. 버튼(계약서 확인하기)은 홈으로.
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+            아직 서명하지 않은 계약서가 있습니다.
+
+            30분 이내에 서명하지 않으면
+            계약서가 자동으로 만료되어 삭제됩니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.expiryWarning)
+                add("emtitle_1", aligoProperties.tplCode.emtitleExpiryWarning)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "만료 안내")
+                add("message_1", body)
+                add("button_1", buildButtonJson("계약서 확인하기", message.homeAppUrl, message.homeUrl))
+            }
+
+        send(formData, label = "sendExpiryWarning", to = message.recipientPhone)
+    }
+
+    override fun sendExpiryDeletedToRequester(message: ContractExpiredMessage) {
+        // UJ_9527 (삭제 알림 요청자용). 치환변수: #{요청자명}·#{상품명}·#{거래금액}. 버튼 없음.
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+
+            요청하신 아래 계약서가
+            상대방 미서명으로 자동 만료되어
+            삭제되었습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.expiryDeletedRequester)
+                add("emtitle_1", aligoProperties.tplCode.emtitleExpiryDeleted)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "삭제 알림(요청자용)")
+                add("message_1", body)
+            }
+
+        send(formData, label = "sendExpiryDeletedToRequester", to = message.recipientPhone)
+    }
+
+    override fun sendExpiryDeletedToUnsigned(message: ContractExpiredMessage) {
+        // UJ_9529 (삭제 알림 미서명자용). 치환변수: #{수신자명}·#{상품명}·#{거래금액}. 버튼 없음.
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+
+            아래 계약서의 서명이 완료되지 않아
+            자동 만료되어 삭제되었습니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.expiryDeletedUnsigned)
+                add("emtitle_1", aligoProperties.tplCode.emtitleExpiryDeleted)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "삭제 알림(미서명자용)")
+                add("message_1", body)
+            }
+
+        send(formData, label = "sendExpiryDeletedToUnsigned", to = message.recipientPhone)
+    }
+
     /** 공통 필드 6개 (apikey/userid/senderkey/sender/testmode/failover) 미리 채운 form data 생성. */
     private fun newFormData(): LinkedMultiValueMap<String, String> =
         LinkedMultiValueMap<String, String>().apply {

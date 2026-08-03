@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @Profile("!alimtalk-live")
+@Suppress("TooManyFunctions")
 class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -118,6 +119,37 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
             maskPhone(message.recipientPhone),
             message.guardianName,
             message.minorName,
+            message.contractTitle,
+            message.price,
+        )
+    }
+
+    override fun sendExpiryWarning(message: ExpiryWarningMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendExpiryWarning → to={}({}), contract={}, price={}, homeAppUrl={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.price,
+            message.homeAppUrl,
+        )
+    }
+
+    override fun sendExpiryDeletedToRequester(message: ContractExpiredMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendExpiryDeletedToRequester → to={}({}), contract={}, price={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.price,
+        )
+    }
+
+    override fun sendExpiryDeletedToUnsigned(message: ContractExpiredMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendExpiryDeletedToUnsigned → to={}({}), contract={}, price={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
             message.contractTitle,
             message.price,
         )

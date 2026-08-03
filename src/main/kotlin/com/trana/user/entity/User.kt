@@ -93,7 +93,7 @@ class User(
     var guardianVerifiedAt: Instant? = null
         protected set
 
-    /** 계약 요청용 고유코드. 활성 유저는 불변, 탈퇴 시 null 방출(재사용). */
+    /** 계약 요청용 고유코드. 발급 후 불변(NOT NULL) — 탈퇴 후에도 유지. */
     @Column(name = "share_code", length = 8, unique = true)
     var shareCode: String? = null
         protected set

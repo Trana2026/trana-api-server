@@ -78,11 +78,16 @@ trana:
         dispute-filed-receipt: UJ_9112
         cancellation-requested: UJ_9111
         guardian-contract-completed: UJ_8821
+        expiry-warning: UJ_9524
+        expiry-deleted-requester: UJ_9527
+        expiry-deleted-unsigned: UJ_9529
         emtitle-new-contract: "계약 서명 요청"
         emtitle-receiver-signed: "최종 서명 요청"
         emtitle-revision-requested: "계약 수정 요청"
         emtitle-completed: "계약 최종 완료"
         emtitle-guardian-contract-completed: "계약 체결 안내"
+        emtitle-expiry-warning: "계약 만료 안내"
+        emtitle-expiry-deleted: "계약 삭제 안내"
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}

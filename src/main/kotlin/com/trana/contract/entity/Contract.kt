@@ -114,6 +114,19 @@ class Contract(
     var completedAt: Instant? = null
         protected set
 
+    /** 만료 30분 전 경고 알림톡 발송 시각 (중복 발송 방지). null=미발송. */
+    @Column(name = "expiry_warned_at")
+    var expiryWarnedAt: Instant? = null
+        protected set
+
+    /** 만료 경고 알림톡 발송 마킹 (SHARED/RECEIVER_SIGNED 에서만, 1회). */
+    fun markExpiryWarned() {
+        check(status == ContractStatus.SHARED || status == ContractStatus.RECEIVER_SIGNED) {
+            "만료 경고 가능 상태 (SHARED / RECEIVER_SIGNED) 아님 (current=$status)"
+        }
+        this.expiryWarnedAt = Instant.now()
+    }
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant? = null

@@ -10,44 +10,64 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * SHARED / RECEIVER_SIGNED 상태 72h 초과 자동 만료.
+ * SHARED / RECEIVER_SIGNED 상태 계약의 만료 처리 + 만료 30분 전 경고.
  *
- * 배경:
- * - 성인이 위험 고지 확인 후 서명했는데 미성년 상대가 최종 서명 미룰 시 성인은 철회권 없음 → 자동 만료로 exit
- * - 일반 계약도 오랜 방치 시 관계자에게 stuck 상태 해제 기회 제공
+ * 매 1분 실행:
+ * 1) 만료(72h 초과) → EXPIRED 전이 + 삭제 알림톡(요청자 UJ_9527 / 미서명자 UJ_9529)
+ * 2) 만료 30분 전(71.5h 초과, 경고 미발송) → 경고 알림톡(UJ_9524) + expiryWarnedAt 마킹
  *
- * - 매 시간 정각 (KST) 실행
- * - ShedLock 미도입 (N≥2 배포 시 도입 필요, cross-cutting #183)
+ * 순서상 만료를 먼저 처리 → 72h 초과분은 EXPIRED 로 빠져 경고 대상(status IN)에서 자동 제외.
+ * 알림톡은 best-effort(발송 실패해도 상태 전이 유지).
+ * ShedLock 미도입 (N≥2 배포 시 도입 필요, cross-cutting #183).
  */
 @Component
 @Transactional
 class ContractExpiryTask(
     private val contractRepository: ContractRepository,
+    private val alimtalkDispatcher: ContractAlimtalkDispatcher,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     fun run() {
-        val threshold = Instant.now().minus(EXPIRY_DURATION)
+        val now = Instant.now()
+        expireOverdue(now)
+        warnNearExpiry(now)
+    }
+
+    private fun expireOverdue(now: Instant) {
         val targets =
             contractRepository.findAllByStatusInAndStatusUpdatedAtBefore(
                 statuses = EXPIRY_STATUSES,
-                threshold = threshold,
+                threshold = now.minus(EXPIRY_DURATION),
             )
-        if (targets.isEmpty()) {
-            log.info("[CONTRACT_EXPIRY] no targets — threshold={}", threshold)
-            return
+        if (targets.isEmpty()) return
+        targets.forEach { contract ->
+            alimtalkDispatcher.sendExpiryDeleted(contract)
+            contract.markExpired()
         }
-        targets.forEach { it.markExpired() }
-        log.info(
-            "[CONTRACT_EXPIRY] expired {} contracts (threshold={})",
-            targets.size,
-            threshold,
-        )
+        log.info("[CONTRACT_EXPIRY] expired {} contracts", targets.size)
+    }
+
+    private fun warnNearExpiry(now: Instant) {
+        val targets =
+            contractRepository.findAllByStatusInAndStatusUpdatedAtBeforeAndExpiryWarnedAtIsNull(
+                statuses = EXPIRY_STATUSES,
+                threshold = now.minus(WARNING_THRESHOLD),
+            )
+        if (targets.isEmpty()) return
+        targets.forEach { contract ->
+            alimtalkDispatcher.sendExpiryWarning(contract)
+            contract.markExpiryWarned()
+        }
+        log.info("[CONTRACT_EXPIRY] warned {} contracts (30m before expiry)", targets.size)
     }
 
     companion object {
         private val EXPIRY_DURATION: Duration = Duration.ofHours(72)
+
+        /** 만료 30분 전 = 71.5h 경과 시점 (statusUpdatedAt 기준). */
+        private val WARNING_THRESHOLD: Duration = Duration.ofMinutes(72 * 60 - 30)
         private val EXPIRY_STATUSES: List<ContractStatus> =
             listOf(ContractStatus.SHARED, ContractStatus.RECEIVER_SIGNED)
     }

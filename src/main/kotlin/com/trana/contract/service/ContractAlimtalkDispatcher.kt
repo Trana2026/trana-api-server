@@ -1,6 +1,8 @@
 package com.trana.contract.service
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.adapter.kakao.ContractCompletedMessage
+import com.trana.contract.adapter.kakao.ContractExpiredMessage
+import com.trana.contract.adapter.kakao.ExpiryWarningMessage
 import com.trana.contract.adapter.kakao.GuardianContractCompletedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.NewContractMessage
@@ -9,6 +11,8 @@ import com.trana.contract.adapter.kakao.RevisionRequestedMessage
 import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
 import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractInvitation
+import com.trana.contract.entity.ContractStatus
+import com.trana.contract.repository.ContractInvitationRepository
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.identity.entity.VerificationPurpose
 import com.trana.identity.entity.VerificationStatus
@@ -35,6 +39,7 @@ class ContractAlimtalkDispatcher(
     private val webUrlBuilder: WebUrlBuilder,
     private val contractPartyRepository: ContractPartyRepository,
     private val identityVerificationRepository: IdentityVerificationRepository,
+    private val invitationRepository: ContractInvitationRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -216,6 +221,71 @@ class ContractAlimtalkDispatcher(
             )
         }
     }
+
+    /** 만료 30분 전 서명 대기 측에게 경고 (UJ_9524). SHARED→수신자, RECEIVER_SIGNED→생성자. */
+    fun sendExpiryWarning(contract: Contract) {
+        val target =
+            expiryWaitingSigner(contract) ?: run {
+                log.warn("[EXPIRY] 경고 대상 연락처 미상 — publicCode={} skip", contract.publicCode)
+                return
+            }
+        sendAlimtalkBestEffort("expiryWarning") {
+            kakaoAlimtalkClient.sendExpiryWarning(
+                ExpiryWarningMessage(
+                    recipientPhone = target.second,
+                    recipientName = target.first,
+                    contractTitle = contract.title ?: "(제목 없음)",
+                    price = contract.price ?: 0L,
+                    homeUrl = webUrlBuilder.home(),
+                    homeAppUrl = webUrlBuilder.homeApp(),
+                ),
+            )
+        }
+    }
+
+    /** 만료(삭제) 시 요청자(생성자)·미서명자(수신자)에게 각각 통보 (UJ_9527/UJ_9529). */
+    fun sendExpiryDeleted(contract: Contract) {
+        val creator = userRepository.findById(contract.creatorUserId).orElse(null)
+        if (creator?.name != null && creator.phone != null) {
+            sendAlimtalkBestEffort("expiryDeletedRequester") {
+                kakaoAlimtalkClient.sendExpiryDeletedToRequester(
+                    ContractExpiredMessage(
+                        recipientPhone = creator.phone!!,
+                        recipientName = creator.name!!,
+                        contractTitle = contract.title ?: "(제목 없음)",
+                        price = contract.price ?: 0L,
+                    ),
+                )
+            }
+        }
+        val invitation = invitationRepository.findFirstByContractIdOrderByIdDesc(contract.id!!)
+        if (invitation != null) {
+            sendAlimtalkBestEffort("expiryDeletedUnsigned") {
+                kakaoAlimtalkClient.sendExpiryDeletedToUnsigned(
+                    ContractExpiredMessage(
+                        recipientPhone = invitation.receiverPhone,
+                        recipientName = invitation.receiverName,
+                        contractTitle = contract.title ?: "(제목 없음)",
+                        price = contract.price ?: 0L,
+                    ),
+                )
+            }
+        }
+    }
+
+    /** 만료 경고 대상(미서명 측) 이름·번호. SHARED→수신자(invitation), RECEIVER_SIGNED→생성자. */
+    private fun expiryWaitingSigner(contract: Contract): Pair<String, String>? =
+        when (contract.status) {
+            ContractStatus.SHARED ->
+                invitationRepository
+                    .findFirstByContractIdOrderByIdDesc(contract.id!!)
+                    ?.let { it.receiverName to it.receiverPhone }
+            ContractStatus.RECEIVER_SIGNED -> {
+                val creator = userRepository.findById(contract.creatorUserId).orElse(null)
+                if (creator?.name != null && creator.phone != null) creator.name!! to creator.phone!! else null
+            }
+            else -> null
+        }
 
     private fun buildRevisionReason(
         deliveryTypeReason: String?,

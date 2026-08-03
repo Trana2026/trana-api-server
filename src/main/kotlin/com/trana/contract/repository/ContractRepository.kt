@@ -74,4 +74,13 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         statuses: Collection<ContractStatus>,
         threshold: Instant,
     ): List<Contract>
+
+    /**
+     * 만료 30분 전 경고 대상 — SHARED/RECEIVER_SIGNED + statusUpdatedAt 이 threshold(만료 30분전) 이전 + 경고 미발송.
+     * 만료(72h) 대상은 같은 tick 에서 먼저 EXPIRED 로 전이되므로 status 조건으로 자동 제외.
+     */
+    fun findAllByStatusInAndStatusUpdatedAtBeforeAndExpiryWarnedAtIsNull(
+        statuses: Collection<ContractStatus>,
+        threshold: Instant,
+    ): List<Contract>
 }

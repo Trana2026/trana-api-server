@@ -55,6 +55,12 @@ data class AligoProperties(
         val emtitleCompleted: String,
         /** UI_???? — SIGNED 시 미성년자 party 의 가입 보호자에게 (계약 체결 통보, Task #208 등록 후 templateId 반영). */
         val guardianContractCompleted: String,
+        /** UJ_9524 — 만료 30분 전 서명 대기 측에게. */
+        val expiryWarning: String = "UI_PENDING_EXPIRY_WARNING",
+        /** UJ_9527 — 만료(삭제) 시 요청자에게. */
+        val expiryDeletedRequester: String = "UI_PENDING_EXPIRY_DELETED_REQUESTER",
+        /** UJ_9529 — 만료(삭제) 시 미서명자에게. */
+        val expiryDeletedUnsigned: String = "UI_PENDING_EXPIRY_DELETED_UNSIGNED",
         /** 강조 타이틀 (심사 시 강조 표기형 결정, 우선 필드만 추가). */
         val emtitleGuardianContractCompleted: String,
         /** UJ_9113 강조 타이틀. */
@@ -63,5 +69,9 @@ data class AligoProperties(
         val emtitleDisputeFiledReceipt: String = "신고 접수 완료",
         /** UJ_9111 강조 타이틀. */
         val emtitleCancellationRequested: String = "계약 취소 요청",
+        /** UJ_9524 강조 타이틀. */
+        val emtitleExpiryWarning: String = "계약 만료 안내",
+        /** UJ_9527/UJ_9529 강조 타이틀(공용). */
+        val emtitleExpiryDeleted: String = "계약 삭제 안내",
     )
 }

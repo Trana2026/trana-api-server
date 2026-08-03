@@ -18,6 +18,7 @@ import java.time.Instant
  * - [CancellationRequestedMessage] : 취소 요청 접수 시 → 피요청자
  * - [GuardianContractCompletedMessage] : SIGNED 시 미성년 party 의 가입 보호자에게
  */
+@Suppress("TooManyFunctions")
 interface KakaoAlimtalkClient {
     /** SHARED 전이 시 수신자에게 — `[Trana] 새 계약서 도착` 템플릿 */
     fun sendNewContract(message: NewContractMessage)
@@ -45,6 +46,15 @@ interface KakaoAlimtalkClient {
 
     /** SIGNED 전이 시 미성년자 가입 보호자에게 — `[Trana] 계약 체결 통보` 템플릿 (심사 대기 UI_????) */
     fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage)
+
+    /** 만료 30분 전 서명 대기 측에게 — 계약 만료 안내 (UJ_9524) */
+    fun sendExpiryWarning(message: ExpiryWarningMessage)
+
+    /** 만료(삭제) 시 요청자에게 — 계약 삭제 안내(요청자용) (UJ_9527) */
+    fun sendExpiryDeletedToRequester(message: ContractExpiredMessage)
+
+    /** 만료(삭제) 시 미서명자에게 — 계약 삭제 안내(미서명자용) (UJ_9529) */
+    fun sendExpiryDeletedToUnsigned(message: ContractExpiredMessage)
 }
 
 /**
@@ -202,4 +212,28 @@ data class GuardianContractCompletedMessage(
     val contractTitle: String,
     val price: Long,
     val completedAt: Instant,
+)
+
+/**
+ * 만료 30분 전 서명 대기 측에게 — 계약 만료 안내 (UJ_9524).
+ * 치환변수: #{수신자명}·#{상품명}·#{거래금액}. 버튼(계약서 확인하기)은 홈으로 연결.
+ */
+data class ExpiryWarningMessage(
+    val recipientPhone: String,
+    val recipientName: String,
+    val contractTitle: String,
+    val price: Long,
+    val homeUrl: String,
+    val homeAppUrl: String,
+)
+
+/**
+ * 만료(삭제) 통보 — 요청자용(UJ_9527)·미서명자용(UJ_9529) 공용.
+ * 치환변수: #{요청자명}/#{수신자명}(=recipientName)·#{상품명}·#{거래금액}. 버튼 없음.
+ */
+data class ContractExpiredMessage(
+    val recipientPhone: String,
+    val recipientName: String,
+    val contractTitle: String,
+    val price: Long,
 )
