@@ -1,5 +1,7 @@
 package com.trana.user.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.util.TokenGenerator
 import com.trana.user.UserException
 import com.trana.user.adapter.slack.SlackInquiryPayload
@@ -23,6 +25,7 @@ class UserInquiryService(
     private val userInquiryRepository: UserInquiryRepository,
     private val slackWebhookClient: SlackWebhookClient,
     private val tokenGenerator: TokenGenerator,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     private val log = LoggerFactory.getLogger(UserInquiryService::class.java)
 
@@ -55,6 +58,14 @@ class UserInquiryService(
         }.onFailure { ex ->
             log.warn("Slack 알림 실패 — publicCode=${inquiry.publicCode}: ${ex.message}", ex)
         }
+        // EVT-061 support_inquiry_submitted — 문의 접수 성공(서버). 이메일/제목/본문 원문 금지.
+        // inquiry_category 는 현재 엔티티에 카테고리 필드가 없어 미포함(필드 추가 시 반영).
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.SUPPORT_INQUIRY_SUBMITTED,
+                userId = userId,
+            ),
+        )
         return inquiry
     }
 
