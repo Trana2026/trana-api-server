@@ -1,5 +1,7 @@
 package com.trana.identity.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.guardian.service.GuardianLinkService
 import com.trana.identity.adapter.pass.PassKeyInfoLoader
 import com.trana.identity.adapter.pass.PassProperties
@@ -31,6 +33,7 @@ class PassGuardianSignupService(
     private val keyInfoLoader: PassKeyInfoLoader,
     private val verificationRepository: IdentityVerificationRepository,
     private val properties: PassProperties,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     fun issueReqClientInfo(guardianLinkToken: String): MOKReqClientInfoResponse {
         val link = guardianLinkService.findActive(guardianLinkToken)
@@ -44,6 +47,15 @@ class PassGuardianSignupService(
                 subjectUserId = link.userId,
                 guardianLinkToken = guardianLinkToken,
                 clientTxId = clientTxId,
+            ),
+        )
+
+        // EVT-042 guardian_verification_started — 보호자 PASS 플로우 실행(req-client-info 발급). 보호자 PII 금지.
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.GUARDIAN_VERIFICATION_STARTED,
+                userId = link.userId,
+                properties = mapOf("guardian_flow_id" to guardianLinkToken, "verification_method" to "pass"),
             ),
         )
 

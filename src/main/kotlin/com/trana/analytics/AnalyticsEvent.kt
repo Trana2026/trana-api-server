@@ -38,6 +38,8 @@ object AnalyticsEvents {
     const val CONTRACT_SHARE_COMPLETED = "contract_share_completed" // EVT-033 (GA4 share)
     const val CONTRACT_SHARE_FAILED = "contract_share_failed" // EVT-034
     const val CONTRACT_SIGN_FAILED = "contract_sign_failed" // EVT-048
+    const val GUARDIAN_VERIFICATION_REQUIRED = "guardian_verification_required" // EVT-040
+    const val GUARDIAN_VERIFICATION_STARTED = "guardian_verification_started" // EVT-042
     const val GUARDIAN_VERIFICATION_COMPLETED = "guardian_verification_completed" // EVT-043
     const val CONTRACT_CHANGE_REQUESTED = "contract_change_requested" // EVT-045
     const val CONTRACT_SIGNED = "contract_signed" // EVT-047

@@ -170,6 +170,16 @@ class PassReturnService(
         )
 
         val requiresGuardian = (ageGroup == AgeGroup.MINOR && user.guardianVerifiedAt == null)
+        // EVT-040 guardian_verification_required — 가입 응답 requiresGuardian(서버 정책 판단) 시점
+        if (requiresGuardian) {
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.GUARDIAN_VERIFICATION_REQUIRED,
+                    userId = userId,
+                    properties = mapOf("guardian_required" to true),
+                ),
+            )
+        }
         return PassReturnResponse.Signup(
             accessToken = accessToken,
             refreshToken = refreshToken,
