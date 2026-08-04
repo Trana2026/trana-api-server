@@ -19,7 +19,10 @@ data class AnalyticsProperties(
     )
 
     data class Ga4(
+        /** 웹 스트림용 측정 ID(G-XXXX). 앱 스트림이면 대신 [firebaseAppId] 사용. */
         val measurementId: String = "",
+        /** 앱(Android/iOS·Firebase) 스트림용 Firebase App ID(1:...:android:...). 설정 시 measurementId 대신 사용. */
+        val firebaseAppId: String = "",
         val apiSecret: String = "",
         val endpoint: String = "https://www.google-analytics.com/mp/collect",
     )

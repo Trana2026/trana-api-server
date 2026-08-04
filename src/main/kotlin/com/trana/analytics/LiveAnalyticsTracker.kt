@@ -48,21 +48,28 @@ class LiveAnalyticsTracker(
     }
 
     private fun sendGa4(event: AnalyticsEvent) {
-        val mid = properties.ga4.measurementId
         val secret = properties.ga4.apiSecret
-        if (mid.isBlank() || secret.isBlank()) return
-        val clientId = event.userId?.let { "server.$it" } ?: "server.anonymous"
+        val firebaseAppId = properties.ga4.firebaseAppId
+        val measurementId = properties.ga4.measurementId
+        if (secret.isBlank() || (firebaseAppId.isBlank() && measurementId.isBlank())) return
+        // 앱 스트림: firebase_app_id + app_instance_id / 웹 스트림: measurement_id + client_id
+        val idParam =
+            if (firebaseAppId.isNotBlank()) "firebase_app_id=$firebaseAppId" else "measurement_id=$measurementId"
         val params =
             event.properties.filterValues { it != null }.toMutableMap().apply {
                 put("event_id", event.eventId) // 클라이언트와 dedup 위한 공통 id
             }
         val payload =
             buildMap {
-                put("client_id", clientId)
+                if (firebaseAppId.isNotBlank()) {
+                    put("app_instance_id", event.userId?.let { "server.$it" } ?: "server.anonymous")
+                } else {
+                    put("client_id", event.userId?.let { "server.$it" } ?: "server.anonymous")
+                }
                 event.userId?.let { put("user_id", it.toString()) }
                 put("events", listOf(mapOf("name" to (event.gaEventName ?: event.name), "params" to params)))
             }
-        val url = "${properties.ga4.endpoint}?measurement_id=$mid&api_secret=$secret"
+        val url = "${properties.ga4.endpoint}?$idParam&api_secret=$secret"
         post(url, payload, "ga4", event.name)
     }
 

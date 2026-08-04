@@ -96,4 +96,5 @@ trana:
       api-key: ${TRANA_ANALYTICS_AMPLITUDE_API_KEY:}
     ga4:
       measurement-id: ${TRANA_ANALYTICS_GA4_MEASUREMENT_ID:}
+      firebase-app-id: ${TRANA_ANALYTICS_GA4_FIREBASE_APP_ID:}
       api-secret: ${TRANA_ANALYTICS_GA4_API_SECRET:}
