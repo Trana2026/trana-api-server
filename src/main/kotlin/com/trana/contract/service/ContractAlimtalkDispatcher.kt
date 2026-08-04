@@ -296,11 +296,11 @@ class ContractAlimtalkDispatcher(
         conditionDetailsReason: String?,
     ): String =
         buildList {
-            deliveryTypeReason?.let { add("거래 방식: $it") }
-            tradingPlatformReason?.let { add("플랫폼: $it") }
-            titleReason?.let { add("물품명: $it") }
-            priceReason?.let { add("가격: $it") }
-            conditionSummaryReason?.let { add("상태: $it") }
-            conditionDetailsReason?.let { add("상세설명: $it") }
+            deliveryTypeReason?.takeIf { it.isNotBlank() }?.let { add("거래 방식: $it") }
+            tradingPlatformReason?.takeIf { it.isNotBlank() }?.let { add("플랫폼: $it") }
+            titleReason?.takeIf { it.isNotBlank() }?.let { add("물품명: $it") }
+            priceReason?.takeIf { it.isNotBlank() }?.let { add("가격: $it") }
+            conditionSummaryReason?.takeIf { it.isNotBlank() }?.let { add("상태: $it") }
+            conditionDetailsReason?.takeIf { it.isNotBlank() }?.let { add("상세설명: $it") }
         }.joinToString("\n").ifBlank { "(사유 없음)" }
 }
