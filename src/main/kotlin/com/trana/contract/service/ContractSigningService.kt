@@ -1,5 +1,7 @@
 package com.trana.contract.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
 import com.trana.contract.entity.Contract
@@ -50,6 +52,7 @@ class ContractSigningService(
     private val contractAlimtalkDispatcher: ContractAlimtalkDispatcher,
     private val minorDisclosureService: MinorDisclosureConfirmationService,
     private val eventPublisher: ApplicationEventPublisher,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     @Suppress("ThrowsCount")
     fun acceptInvitation(
@@ -249,6 +252,21 @@ class ContractSigningService(
         val from = contract.status
         contract.markCompleted()
         publishStatusChanged(contract, from, userId, "구매자 거래 완료 확정")
+
+        // EVT-056 transaction_completed — COMPLETED 전이 성공(서버 기준)
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.TRANSACTION_COMPLETED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "transaction_type" to contract.deliveryType?.name?.lowercase(),
+                        "actor_role" to if (userId == contract.creatorUserId) "creator" else "counterparty",
+                        "warranty_days" to contract.warrantyPeriodDays,
+                    ),
+            ),
+        )
 
         return ConfirmCompletionView(
             publicCode = contract.publicCode,

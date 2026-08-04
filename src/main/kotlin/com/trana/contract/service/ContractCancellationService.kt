@@ -1,4 +1,7 @@
 package com.trana.contract.service
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractCancellationException
 import com.trana.contract.adapter.kakao.CancellationConfirmedMessage
@@ -35,6 +38,7 @@ class ContractCancellationService(
     private val kakaoAlimtalkClient: KakaoAlimtalkClient,
     private val webUrlBuilder: WebUrlBuilder,
     private val eventPublisher: ApplicationEventPublisher,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     /**
      * 취소 요청 접수.
@@ -83,6 +87,20 @@ class ContractCancellationService(
             ),
         )
 
+        // EVT-057 contract_cancel_requested — 취소 요청 저장+상태변경 성공
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_CANCEL_REQUESTED,
+                userId = requesterUserId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to if (requesterUserId == contract.creatorUserId) "creator" else "counterparty",
+                        "contract_status_before" to fromStatus.name,
+                    ),
+            ),
+        )
+
         sendCancellationRequestedAlimtalk(contract, requesterUserId, request)
         return request
     }
@@ -120,6 +138,21 @@ class ContractCancellationService(
                 toStatus = ContractStatus.CANCELLED,
                 actorUserId = userId,
                 reason = "양측 취소 확정",
+            ),
+        )
+
+        // EVT-058 contract_cancel_responded — 상대 확정(수락) + 상태변경 성공
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_CANCEL_RESPONDED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "decision" to "accepted",
+                        "actor_role" to if (userId == contract.creatorUserId) "creator" else "counterparty",
+                        "contract_status_before" to fromStatus.name,
+                    ),
             ),
         )
 

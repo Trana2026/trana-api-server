@@ -1,4 +1,7 @@
 package com.trana.contract.service
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractPdfArchiveStorage
@@ -54,6 +57,7 @@ class ContractStatusService(
     private val pdfArchiveStorage: ContractPdfArchiveStorage,
     private val eventPublisher: ApplicationEventPublisher,
     private val committer: ContractStatusCommitter,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun transitionToReady(
@@ -70,7 +74,22 @@ class ContractStatusService(
         pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
 
         // 3. commit — committer 의 rw tx
-        return committer.commitTransitionToReady(publicCode, userId, pdfS3Key, pdfSha256)
+        val contract = committer.commitTransitionToReady(publicCode, userId, pdfS3Key, pdfSha256)
+
+        // EVT-026 contract_draft_generated — 초안(PDF) 생성·저장 성공(서버 기준). PII 금지.
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_DRAFT_GENERATED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "transaction_type" to contract.deliveryType?.name?.lowercase(),
+                        "warranty_days" to contract.warrantyPeriodDays,
+                    ),
+            ),
+        )
+        return contract
     }
 
     fun revertToDraft(
@@ -123,6 +142,21 @@ class ContractStatusService(
         publishStatusChanged(contract, from, userId, null)
 
         contractAlimtalkDispatcher.sendNewContract(contract, userId, invitation)
+
+        // EVT-033 contract_share_completed (GA4 share) — 계약 요청 생성+발송 성공
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_SHARE_COMPLETED,
+                gaEventName = "share",
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "share_method" to if (target.recipientUserId != null) "code" else "phone",
+                        "actor_role" to "creator",
+                    ),
+            ),
+        )
         return contract
     }
 
@@ -246,6 +280,20 @@ class ContractStatusService(
         contract.markRevisionRequested()
         publishStatusChanged(contract, from, requesterUserId, "수신자 수정 요청")
 
+        // EVT-045 contract_change_requested — 수정 요청 저장+상태변경 성공
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_CHANGE_REQUESTED,
+                userId = requesterUserId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to "counterparty",
+                        "contract_status_before" to from.name,
+                    ),
+            ),
+        )
+
         contractAlimtalkDispatcher.sendRevisionRequested(
             contract,
             requesterUserId,
@@ -280,6 +328,17 @@ class ContractStatusService(
         pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
         val result = committer.commitReshare(publicCode, userId, pdfS3Key, pdfSha256)
         contractAlimtalkDispatcher.sendNewContract(result.contract, userId, result.invitation)
+
+        // EVT-050 contract_revision_submitted + EVT-051 contract_revision_shared — 수정본 새 버전 생성·재전송 성공
+        val revisionProps =
+            mapOf(
+                "contract_id" to result.contract.publicCode,
+                "revision_number" to result.contract.version,
+                "share_method" to "code",
+                "actor_role" to "creator",
+            )
+        analyticsTracker.track(AnalyticsEvent(AnalyticsEvents.CONTRACT_REVISION_SUBMITTED, userId, revisionProps))
+        analyticsTracker.track(AnalyticsEvent(AnalyticsEvents.CONTRACT_REVISION_SHARED, userId, revisionProps))
         return result.contract
     }
 

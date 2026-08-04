@@ -1,5 +1,7 @@
 package com.trana.contract.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.entity.Contract
@@ -41,6 +43,7 @@ class ContractStatusCommitter(
     private val termsLoader: ContractTermsLoader,
     private val invitationRepository: ContractInvitationRepository,
     private val tokenGenerator: TokenGenerator,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     /** transitionToReady 의 외부 I/O 진입 전 preview — pre-check + PDF 렌더 input 생성. */
     @Transactional(readOnly = true)
@@ -123,7 +126,7 @@ class ContractStatusCommitter(
         )
     }
 
-    @Suppress("LongParameterList", "ThrowsCount")
+    @Suppress("LongParameterList", "ThrowsCount", "LongMethod")
     @Transactional
     fun commitReceiverSign(
         publicCode: String,
@@ -183,6 +186,33 @@ class ContractStatusCommitter(
                 toStatus = contract.status,
                 actorUserId = userId,
                 reason = null,
+            ),
+        )
+
+        // EVT-047 contract_signed(1차, 수신자) + EVT-052 final_signature_requested (RECEIVER_SIGNED 전이)
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_SIGNED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to "counterparty",
+                        "signature_stage" to "receiver",
+                        "contract_party_role" to myParty.partyType.name.lowercase(),
+                    ),
+            ),
+        )
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.FINAL_SIGNATURE_REQUESTED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to "counterparty",
+                        "revision_number" to contract.version,
+                    ),
             ),
         )
 
@@ -443,6 +473,21 @@ class ContractStatusCommitter(
                 toStatus = contract.status,
                 actorUserId = userId,
                 reason = null,
+            ),
+        )
+
+        // EVT-047 contract_signed(최종, 생성자) — SIGNED 전이 성공
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_SIGNED,
+                userId = userId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to "creator",
+                        "signature_stage" to "creator",
+                        "contract_party_role" to creatorParty.partyType.name.lowercase(),
+                    ),
             ),
         )
 

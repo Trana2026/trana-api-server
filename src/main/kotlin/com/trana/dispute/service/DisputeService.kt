@@ -1,4 +1,7 @@
 package com.trana.dispute.service
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.adapter.kakao.DisputeFiledReceiptMessage
 import com.trana.contract.adapter.kakao.DisputeReportedMessage
@@ -39,6 +42,7 @@ class DisputeService(
     private val webUrlBuilder: WebUrlBuilder,
     private val contractRepository: ContractRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     /**
      * 신고 접수.
@@ -75,6 +79,20 @@ class DisputeService(
         if (contract.disputeState == DisputeState.NONE) {
             contract.markReported()
         }
+
+        // EVT-060 issue_report_submitted — 신고 접수 성공(접수번호 생성). 신고 본문/사유 원문 금지.
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.ISSUE_REPORT_SUBMITTED,
+                userId = reporterUserId,
+                properties =
+                    mapOf(
+                        "contract_id" to contract.publicCode,
+                        "actor_role" to if (reporterUserId == contract.creatorUserId) "creator" else "counterparty",
+                        "contract_status_before" to contract.status.name,
+                    ),
+            ),
+        )
 
         sendDisputeReportedAlimtalk(contract, reporterUserId, dispute)
         return dispute

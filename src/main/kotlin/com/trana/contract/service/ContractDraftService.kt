@@ -1,5 +1,7 @@
 package com.trana.contract.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.common.util.TokenGenerator
 import com.trana.contract.ContractException
 import com.trana.contract.adapter.storage.ContractAttachmentStorage
@@ -16,6 +18,8 @@ import com.trana.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
+import java.time.Instant
 
 /**
  * 계약 DRAFT 단계 서비스 — 생성/조회/수정/삭제/목록/미리보기 (CRUD).
@@ -45,6 +49,7 @@ class ContractDraftService(
     private val accessGuard: ContractAccessGuard,
     private val contractAttachmentRepository: ContractAttachmentRepository,
     private val attachmentStorage: ContractAttachmentStorage,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     fun createDraft(creatorUserId: Long): Contract {
         val user =
@@ -151,7 +156,17 @@ class ContractDraftService(
     ) {
         val contract = accessGuard.loadOwned(publicCode, userId)
         accessGuard.ensureEditable(contract)
+        val draftAgeMinutes = contract.createdAt?.let { Duration.between(it, Instant.now()).toMinutes() }
         contract.softDelete()
+
+        // EVT-030 contract_draft_deleted — 초안 삭제 성공(서버 기준)
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_DRAFT_DELETED,
+                userId = userId,
+                properties = mapOf("contract_id" to contract.publicCode, "draft_age_minutes" to draftAgeMinutes),
+            ),
+        )
     }
 
     @Transactional(readOnly = true)

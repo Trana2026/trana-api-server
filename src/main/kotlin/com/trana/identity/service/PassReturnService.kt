@@ -1,5 +1,7 @@
 package com.trana.identity.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.security.JwtProvider
@@ -63,6 +65,7 @@ class PassReturnService(
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,
     private val objectMapper: ObjectMapper,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -88,6 +91,7 @@ class PassReturnService(
         }
     }
 
+    @Suppress("LongMethod")
     private fun handleSelfSuccess(
         verification: IdentityVerification,
         payload: PassResultPayload,
@@ -100,8 +104,9 @@ class PassReturnService(
         val gender = payload.toGender()
         val ageGroup = determineAgeGroup(birthDate)
 
+        val existing = userRepository.findFirstByCiHashAndStatus(ciHash, UserStatus.ACTIVE)
         val user =
-            userRepository.findFirstByCiHashAndStatus(ciHash, UserStatus.ACTIVE)
+            existing
                 ?: userService.createFromPass(
                     ciHash = ciHash,
                     name = payload.userName,
@@ -132,6 +137,26 @@ class PassReturnService(
             boundUserId = userId,
         )
         verification.signupSessionId?.let { consentService.backfillUserId(it, userId) }
+
+        // EVT-004 verification_completed — 서버 PASS 검증·저장 성공(항상)
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.VERIFICATION_COMPLETED,
+                userId = userId,
+                properties = mapOf("verification_method" to "pass", "result" to "success"),
+            ),
+        )
+        // EVT-008 login_completed — 기존 계정 재로그인(신규 가입은 account_created 로 별도)
+        if (existing != null) {
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.LOGIN_COMPLETED,
+                    gaEventName = "login",
+                    userId = userId,
+                    properties = mapOf("login_method" to "pass"),
+                ),
+            )
+        }
 
         val accessToken = jwtProvider.createAccessToken(userId)
         val refreshToken = jwtProvider.createRefreshToken(userId)
