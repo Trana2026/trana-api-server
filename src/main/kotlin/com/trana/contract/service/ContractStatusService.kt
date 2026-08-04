@@ -111,6 +111,7 @@ class ContractStatusService(
         return contract
     }
 
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun share(
         publicCode: String,
         userId: Long,
@@ -118,46 +119,63 @@ class ContractStatusService(
         receiverPhone: String?,
         receiverCode: String?,
     ): Contract {
-        val contract = accessGuard.loadOwned(publicCode, userId)
-        if (contract.status != ContractStatus.READY) {
-            throw ContractException.NotInReadyState(publicCode, contract.status.name)
-        }
+        try {
+            val contract = accessGuard.loadOwned(publicCode, userId)
+            if (contract.status != ContractStatus.READY) {
+                throw ContractException.NotInReadyState(publicCode, contract.status.name)
+            }
 
-        val target = resolveShareTarget(userId, receiverName, receiverPhone, receiverCode)
+            val target = resolveShareTarget(userId, receiverName, receiverPhone, receiverCode)
 
-        val invitation =
-            ContractInvitation.create(
-                contractId = contract.id!!,
-                token = tokenGenerator.generateContractInvitation(),
-                receiverName = target.name,
-                receiverPhone = target.phone,
+            val invitation =
+                ContractInvitation.create(
+                    contractId = contract.id!!,
+                    token = tokenGenerator.generateContractInvitation(),
+                    receiverName = target.name,
+                    receiverPhone = target.phone,
+                )
+            invitationRepository.save(invitation)
+
+            // 코드 공유: 수신자를 party 로 직등록 (초대토큰은 audit 로만 잔존, 링크는 계약 상세 사용)
+            target.recipientUserId?.let { addRecipientPartyIfAbsent(contract, it) }
+
+            val from = contract.status
+            contract.markShared()
+            publishStatusChanged(contract, from, userId, null)
+
+            contractAlimtalkDispatcher.sendNewContract(contract, userId, invitation)
+
+            // EVT-033 contract_share_completed (GA4 share) — 계약 요청 생성+발송 성공
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.CONTRACT_SHARE_COMPLETED,
+                    gaEventName = "share",
+                    userId = userId,
+                    properties =
+                        mapOf(
+                            "contract_id" to contract.publicCode,
+                            "share_method" to if (target.recipientUserId != null) "code" else "phone",
+                            "actor_role" to "creator",
+                        ),
+                ),
             )
-        invitationRepository.save(invitation)
-
-        // 코드 공유: 수신자를 party 로 직등록 (초대토큰은 audit 로만 잔존, 링크는 계약 상세 사용)
-        target.recipientUserId?.let { addRecipientPartyIfAbsent(contract, it) }
-
-        val from = contract.status
-        contract.markShared()
-        publishStatusChanged(contract, from, userId, null)
-
-        contractAlimtalkDispatcher.sendNewContract(contract, userId, invitation)
-
-        // EVT-033 contract_share_completed (GA4 share) — 계약 요청 생성+발송 성공
-        analyticsTracker.track(
-            AnalyticsEvent(
-                name = AnalyticsEvents.CONTRACT_SHARE_COMPLETED,
-                gaEventName = "share",
-                userId = userId,
-                properties =
-                    mapOf(
-                        "contract_id" to contract.publicCode,
-                        "share_method" to if (target.recipientUserId != null) "code" else "phone",
-                        "actor_role" to "creator",
-                    ),
-            ),
-        )
-        return contract
+            return contract
+        } catch (e: RuntimeException) {
+            // EVT-034 contract_share_failed — 요청 생성/발송 실패
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.CONTRACT_SHARE_FAILED,
+                    userId = userId,
+                    properties =
+                        mapOf(
+                            "contract_id" to publicCode,
+                            "error_code" to (e::class.simpleName ?: "unknown"),
+                            "result" to "failed",
+                        ),
+                ),
+            )
+            throw e
+        }
     }
 
     /**

@@ -95,7 +95,7 @@ class ContractSigningService(
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "TooGenericExceptionCaught", "LongMethod")
     fun receiverSign(
         publicCode: String,
         userId: Long,
@@ -104,54 +104,59 @@ class ContractSigningService(
         signerIp: String?,
         signerUserAgent: String?,
     ): ReceiverSignView {
-        val preview = committer.loadReceiverSignPreview(publicCode, userId, agreedTermIds)
-        minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
+        try {
+            val preview = committer.loadReceiverSignPreview(publicCode, userId, agreedTermIds)
+            minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
 
-        val partyInfo =
-            PartyRenderInfo(
-                name = preview.receiverName,
-                birthDate = preview.receiverBirthDate,
-                phone = preview.receiverPhone,
-                signatureBase64 = signatureBase64,
-                passVerifiedAt = preview.receiverPassVerifiedAt,
-                signedAt = Instant.now(),
+            val partyInfo =
+                PartyRenderInfo(
+                    name = preview.receiverName,
+                    birthDate = preview.receiverBirthDate,
+                    phone = preview.receiverPhone,
+                    signatureBase64 = signatureBase64,
+                    passVerifiedAt = preview.receiverPassVerifiedAt,
+                    signedAt = Instant.now(),
+                )
+            val renderInput =
+                ContractPdfRenderInput(
+                    contract = preview.contract,
+                    seller = if (preview.partyType == PartyType.SELLER) partyInfo else null,
+                    buyer = if (preview.partyType == PartyType.BUYER) partyInfo else null,
+                    minorDisclosure = minorDisclosureSnapshot(preview.contract),
+                )
+            val pdfBytes = pdfRenderer.render(renderInput)
+            val pdfSha256 = sha256Hex(pdfBytes)
+            val pdfS3Key = buildPdfS3Key(publicCode)
+            pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+
+            val result =
+                committer.commitReceiverSign(
+                    publicCode = publicCode,
+                    userId = userId,
+                    signatureBase64 = signatureBase64,
+                    expectedTerms = preview.expectedTerms,
+                    signerIp = signerIp,
+                    signerUserAgent = signerUserAgent,
+                    pdfS3Key = pdfS3Key,
+                    pdfSha256 = pdfSha256,
+                )
+
+            contractAlimtalkDispatcher.sendReceiverSigned(result.contract, preview.receiverName)
+
+            return ReceiverSignView(
+                publicCode = result.contract.publicCode,
+                status = result.contract.status,
+                pdfVersion = result.contract.version,
+                receiverSignedAt = result.receiverSignedAt,
             )
-        val renderInput =
-            ContractPdfRenderInput(
-                contract = preview.contract,
-                seller = if (preview.partyType == PartyType.SELLER) partyInfo else null,
-                buyer = if (preview.partyType == PartyType.BUYER) partyInfo else null,
-                minorDisclosure = minorDisclosureSnapshot(preview.contract),
-            )
-        val pdfBytes = pdfRenderer.render(renderInput)
-        val pdfSha256 = sha256Hex(pdfBytes)
-        val pdfS3Key = buildPdfS3Key(publicCode)
-        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
-
-        val result =
-            committer.commitReceiverSign(
-                publicCode = publicCode,
-                userId = userId,
-                signatureBase64 = signatureBase64,
-                expectedTerms = preview.expectedTerms,
-                signerIp = signerIp,
-                signerUserAgent = signerUserAgent,
-                pdfS3Key = pdfS3Key,
-                pdfSha256 = pdfSha256,
-            )
-
-        contractAlimtalkDispatcher.sendReceiverSigned(result.contract, preview.receiverName)
-
-        return ReceiverSignView(
-            publicCode = result.contract.publicCode,
-            status = result.contract.status,
-            pdfVersion = result.contract.version,
-            receiverSignedAt = result.receiverSignedAt,
-        )
+        } catch (e: RuntimeException) {
+            trackSignFailed(publicCode, "receiver", e)
+            throw e
+        }
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "TooGenericExceptionCaught", "LongMethod")
     fun creatorSign(
         publicCode: String,
         userId: Long,
@@ -160,59 +165,85 @@ class ContractSigningService(
         signerIp: String?,
         signerUserAgent: String?,
     ): CreatorSignView {
-        val preview = committer.loadCreatorSignPreview(publicCode, userId, agreedTermIds)
-        minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
+        try {
+            val preview = committer.loadCreatorSignPreview(publicCode, userId, agreedTermIds)
+            minorDisclosureService.requireConfirmedIfMinorCounterparty(preview.contract, viewerUserId = userId)
 
-        val creatorInfo =
-            PartyRenderInfo(
-                name = preview.creator.name,
-                birthDate = preview.creator.birthDate,
-                phone = preview.creator.phone,
-                signatureBase64 = signatureBase64,
-                passVerifiedAt = preview.creator.passVerifiedAt,
-                signedAt = Instant.now(),
-            )
-        val receiverInfo =
-            PartyRenderInfo(
-                name = preview.receiver.name,
-                birthDate = preview.receiver.birthDate,
-                phone = preview.receiver.phone,
-                signatureBase64 = preview.receiverSignatureBase64,
-                passVerifiedAt = preview.receiver.passVerifiedAt,
-                signedAt = preview.receiverSignedAt,
-            )
-        val renderInput =
-            ContractPdfRenderInput(
-                contract = preview.contract,
-                seller = if (preview.creatorPartyType == PartyType.SELLER) creatorInfo else receiverInfo,
-                buyer = if (preview.creatorPartyType == PartyType.BUYER) creatorInfo else receiverInfo,
-                minorDisclosure = minorDisclosureSnapshot(preview.contract),
-            )
-        val pdfBytes = pdfRenderer.render(renderInput)
-        val pdfSha256 = sha256Hex(pdfBytes)
-        val pdfS3Key = buildPdfS3Key(publicCode)
-        pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
+            val creatorInfo =
+                PartyRenderInfo(
+                    name = preview.creator.name,
+                    birthDate = preview.creator.birthDate,
+                    phone = preview.creator.phone,
+                    signatureBase64 = signatureBase64,
+                    passVerifiedAt = preview.creator.passVerifiedAt,
+                    signedAt = Instant.now(),
+                )
+            val receiverInfo =
+                PartyRenderInfo(
+                    name = preview.receiver.name,
+                    birthDate = preview.receiver.birthDate,
+                    phone = preview.receiver.phone,
+                    signatureBase64 = preview.receiverSignatureBase64,
+                    passVerifiedAt = preview.receiver.passVerifiedAt,
+                    signedAt = preview.receiverSignedAt,
+                )
+            val renderInput =
+                ContractPdfRenderInput(
+                    contract = preview.contract,
+                    seller = if (preview.creatorPartyType == PartyType.SELLER) creatorInfo else receiverInfo,
+                    buyer = if (preview.creatorPartyType == PartyType.BUYER) creatorInfo else receiverInfo,
+                    minorDisclosure = minorDisclosureSnapshot(preview.contract),
+                )
+            val pdfBytes = pdfRenderer.render(renderInput)
+            val pdfSha256 = sha256Hex(pdfBytes)
+            val pdfS3Key = buildPdfS3Key(publicCode)
+            pdfArchiveStorage.uploadPdf(pdfS3Key, pdfBytes)
 
-        val result =
-            committer.commitCreatorSign(
-                publicCode = publicCode,
-                userId = userId,
-                signatureBase64 = signatureBase64,
-                expectedTerms = preview.expectedTerms,
-                signerIp = signerIp,
-                signerUserAgent = signerUserAgent,
-                pdfS3Key = pdfS3Key,
-                pdfSha256 = pdfSha256,
+            val result =
+                committer.commitCreatorSign(
+                    publicCode = publicCode,
+                    userId = userId,
+                    signatureBase64 = signatureBase64,
+                    expectedTerms = preview.expectedTerms,
+                    signerIp = signerIp,
+                    signerUserAgent = signerUserAgent,
+                    pdfS3Key = pdfS3Key,
+                    pdfSha256 = pdfSha256,
+                )
+
+            contractAlimtalkDispatcher.sendCompleted(result.contract, result.creator, result.receiver)
+            contractAlimtalkDispatcher.sendGuardianContractCompleted(result.contract)
+
+            return CreatorSignView(
+                publicCode = result.contract.publicCode,
+                status = result.contract.status,
+                pdfVersion = result.contract.version,
+                creatorSignedAt = result.creatorSignedAt,
             )
+        } catch (e: RuntimeException) {
+            trackSignFailed(publicCode, "creator", e)
+            throw e
+        }
+    }
 
-        contractAlimtalkDispatcher.sendCompleted(result.contract, result.creator, result.receiver)
-        contractAlimtalkDispatcher.sendGuardianContractCompleted(result.contract)
-
-        return CreatorSignView(
-            publicCode = result.contract.publicCode,
-            status = result.contract.status,
-            pdfVersion = result.contract.version,
-            creatorSignedAt = result.creatorSignedAt,
+    /** EVT-048 contract_sign_failed — 서명 저장/상태변경 실패. error_code 는 예외 유형(원문 금지). */
+    private fun trackSignFailed(
+        publicCode: String,
+        signatureStage: String,
+        e: RuntimeException,
+    ) {
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.CONTRACT_SIGN_FAILED,
+                userId = null,
+                properties =
+                    mapOf(
+                        "contract_id" to publicCode,
+                        "error_code" to (e::class.simpleName ?: "unknown"),
+                        "result" to "failed",
+                        "signature_stage" to signatureStage,
+                    ),
+            ),
         )
     }
 
