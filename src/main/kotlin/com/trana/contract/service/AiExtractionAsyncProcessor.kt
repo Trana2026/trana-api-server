@@ -1,5 +1,7 @@
 package com.trana.contract.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.contract.adapter.openai.OpenAiVisionAdapter
 import com.trana.contract.repository.ContractAiExtractionRepository
 import com.trana.contract.repository.ContractRepository
@@ -31,11 +33,12 @@ class AiExtractionAsyncProcessor(
     private val aiExtractionRepository: ContractAiExtractionRepository,
     private val contractRepository: ContractRepository,
     private val visionAdapter: OpenAiVisionAdapter,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun handle(event: AiExtractionRequestedEvent) {
         val extraction =
             aiExtractionRepository.findById(event.extractionId).orElse(null)
@@ -71,6 +74,28 @@ class AiExtractionAsyncProcessor(
                     event.contractId,
                 )
             }
+            // EVT-021 ai_analysis_completed — AI 응답·반영 성공(서버). 원문/상품설명 금지.
+            val autofilledCount =
+                listOfNotNull(
+                    result.prefill.productName,
+                    result.prefill.price,
+                    result.prefill.conditionSummary,
+                    result.prefill.conditionDetails,
+                    result.prefill.tradingPlatform,
+                ).size
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.AI_ANALYSIS_COMPLETED,
+                    userId = contract?.creatorUserId,
+                    properties =
+                        mapOf(
+                            "duration_ms" to result.latencyMs,
+                            "autofilled_field_count" to autofilledCount,
+                            "image_count" to event.s3Keys.size,
+                            "result" to "success",
+                        ),
+                ),
+            )
         } catch (e: Exception) {
             log.error(
                 "AI extraction failed (extractionId={})",
@@ -81,6 +106,19 @@ class AiExtractionAsyncProcessor(
                 e.message?.take(MAX_ERROR_LENGTH)
                     ?: e::class.simpleName
                     ?: "AI 추출 실패",
+            )
+            // EVT-022 ai_analysis_failed — 서버 캐치 실패. error_code 는 표준화 코드(원문 금지).
+            analyticsTracker.track(
+                AnalyticsEvent(
+                    name = AnalyticsEvents.AI_ANALYSIS_FAILED,
+                    userId = contractRepository.findById(event.contractId).orElse(null)?.creatorUserId,
+                    properties =
+                        mapOf(
+                            "error_code" to "ai_extraction_error",
+                            "image_count" to event.s3Keys.size,
+                            "result" to "failed",
+                        ),
+                ),
             )
         }
     }

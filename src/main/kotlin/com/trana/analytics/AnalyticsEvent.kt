@@ -30,6 +30,9 @@ object AnalyticsEvents {
     const val ACCOUNT_CREATED = "account_created" // EVT-007 (GA4 sign_up)
     const val LOGIN_COMPLETED = "login_completed" // EVT-008 (GA4 login)
     const val AI_ANALYSIS_COMPLETED = "ai_analysis_completed" // EVT-021
+    const val AI_ANALYSIS_FAILED = "ai_analysis_failed" // EVT-022
+    const val GUARDIAN_VERIFICATION_FAILED = "guardian_verification_failed" // EVT-044
+    const val ACCOUNT_LOGOUT = "account_logout" // EVT-063
     const val CONTRACT_DRAFT_GENERATED = "contract_draft_generated" // EVT-026
     const val CONTRACT_DRAFT_DELETED = "contract_draft_deleted" // EVT-030
     const val CONTRACT_SHARE_COMPLETED = "contract_share_completed" // EVT-033 (GA4 share)

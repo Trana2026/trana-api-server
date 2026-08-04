@@ -236,6 +236,15 @@ class PassReturnService(
             metadata = mapOf("guardianId" to guardianId, "source" to "PASS"),
         )
 
+        // EVT-043 guardian_verification_completed — 보호자 인증·동의 저장 성공(서버)
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.GUARDIAN_VERIFICATION_COMPLETED,
+                userId = subjectUserId,
+                properties = mapOf("guardian_flow_id" to guardianLinkToken, "result" to "success"),
+            ),
+        )
+
         return PassReturnResponse.Guardian(
             status = "success",
             minorPublicCode = minor.publicCode,

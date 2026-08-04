@@ -1,5 +1,7 @@
 package com.trana.auth
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.security.JwtProvider
@@ -19,6 +21,7 @@ class AuthService(
     private val jwtProvider: JwtProvider,
     private val auditLogger: AuditLogger,
     private val deviceTokenService: DeviceTokenService,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     fun refresh(request: RefreshRequest): SignInResponse {
         val userId =
@@ -50,5 +53,13 @@ class AuthService(
         if (deviceToken != null) {
             deviceTokenService.unregister(userId, deviceToken)
         }
+        // EVT-063 account_logout — 로그아웃 API 성공(서버). session_duration_ms 는 클라이언트 담당.
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.ACCOUNT_LOGOUT,
+                userId = userId,
+                properties = mapOf("logout_source" to "app"),
+            ),
+        )
     }
 }
