@@ -1,5 +1,7 @@
 package com.trana.user.service
-
+import com.trana.analytics.AnalyticsEvent
+import com.trana.analytics.AnalyticsEvents
+import com.trana.analytics.AnalyticsTracker
 import com.trana.audit.AuditEvent
 import com.trana.audit.AuditLogger
 import com.trana.common.util.TokenGenerator
@@ -28,6 +30,7 @@ class UserService(
     private val tokenGenerator: TokenGenerator,
     private val auditLogger: AuditLogger,
     private val fraudUserHashService: FraudUserHashService,
+    private val analyticsTracker: AnalyticsTracker,
 ) {
     /**
      * PASS 본인확인 결과로 신규 user 생성.
@@ -69,6 +72,15 @@ class UserService(
                     "source" to "PASS",
                     "ageGroup" to ageGroup.name,
                 ),
+        )
+        // EVT-007 account_created (GA4 sign_up) — 서버 신규 계정 생성 성공 시점. PII 금지.
+        analyticsTracker.track(
+            AnalyticsEvent(
+                name = AnalyticsEvents.ACCOUNT_CREATED,
+                gaEventName = "sign_up",
+                userId = userId,
+                properties = mapOf("signup_method" to "pass", "verification_method" to "pass"),
+            ),
         )
         return newUser
     }

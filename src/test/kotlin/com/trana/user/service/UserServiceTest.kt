@@ -1,5 +1,5 @@
 package com.trana.user.service
-
+import com.trana.analytics.AnalyticsTracker
 import com.trana.audit.AuditLogger
 import com.trana.common.util.TokenGenerator
 import com.trana.trustscore.service.FraudUserHashService
@@ -19,6 +19,7 @@ class UserServiceTest {
     private val tokenGenerator: TokenGenerator = mockk()
     private val auditLogger: AuditLogger = mockk(relaxed = true)
     private val fraudUserHashService: FraudUserHashService = mockk(relaxed = true)
+    private val analyticsTracker: AnalyticsTracker = mockk(relaxed = true)
 
     private val service =
         UserService(
@@ -26,6 +27,7 @@ class UserServiceTest {
             tokenGenerator = tokenGenerator,
             auditLogger = auditLogger,
             fraudUserHashService = fraudUserHashService,
+            analyticsTracker = analyticsTracker,
         )
 
     // ───── withdraw ─────

@@ -91,3 +91,9 @@ trana:
       test-mode: true
   slack:
     webhook-url: ${TRANA_SLACK_WEBHOOK_URL:}
+  analytics:
+    amplitude:
+      api-key: ${TRANA_ANALYTICS_AMPLITUDE_API_KEY:}
+    ga4:
+      measurement-id: ${TRANA_ANALYTICS_GA4_MEASUREMENT_ID:}
+      api-secret: ${TRANA_ANALYTICS_GA4_API_SECRET:}
