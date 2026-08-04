@@ -115,6 +115,8 @@ class LiveAligoAlimtalkClient(
 
     override fun sendRevisionRequested(message: RevisionRequestedMessage) {
         // UJ_8672 (수정 요청). 치환변수: #{요청자명}(=생성자)·#{수신자명}·#{상품명}·#{거래금액}·#{수정사유}
+        // 여러 줄 변수(revisionReason)를 직접 넣으면 trimIndent 최소들여쓰기가 0이 되어 고정문구 들여쓰기가 안 지워짐
+        // → 단일토큰 placeholder 로 trimIndent 한 뒤 치환.
         val body =
             """
             안녕하세요. ${message.creatorName}님,
@@ -125,8 +127,8 @@ class LiveAligoAlimtalkClient(
 
             상품명: ${message.contractTitle}
             거래 금액: ${formatPrice(message.price)}원
-            수정 요청 사유: ${message.revisionReason}
-            """.trimIndent()
+            수정 요청 사유: __REVISION_REASON__
+            """.trimIndent().replace("__REVISION_REASON__", message.revisionReason)
 
         val formData =
             newFormData().apply {
