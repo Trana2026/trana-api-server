@@ -45,6 +45,8 @@ data class AligoProperties(
         val cancellationRequested: String,
         /** UI_???? — 취소 확정(CANCELLED) 시 요청자에게. 신규 등록 대기 → placeholder default. */
         val cancellationConfirmed: String = "UI_PENDING_CANCELLATION_CONFIRMED",
+        /** UK_0598 — 취소 요청 철회 시 상대에게. */
+        val cancellationRevoked: String = "UI_PENDING_CANCELLATION_REVOKED",
         /** UI_4032 강조 타이틀 (강조 표기형 템플릿 필수). */
         val emtitleNewContract: String,
         /** UI_4033 강조 타이틀. */
@@ -69,6 +71,8 @@ data class AligoProperties(
         val emtitleDisputeFiledReceipt: String = "신고 접수 완료",
         /** UJ_9111 강조 타이틀. */
         val emtitleCancellationRequested: String = "계약 취소 요청",
+        /** UK_0598 강조 타이틀. */
+        val emtitleCancellationRevoked: String = "계약 취소 철회 안내",
         /** UJ_9524 강조 타이틀. */
         val emtitleExpiryWarning: String = "계약 만료 안내",
         /** UJ_9527/UJ_9529 강조 타이틀(공용). */

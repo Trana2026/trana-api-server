@@ -267,6 +267,33 @@ class LiveAligoAlimtalkClient(
         send(formData, label = "sendCancellationConfirmed", to = message.recipientPhone)
     }
 
+    override fun sendCancellationRevoked(message: CancellationRevokedMessage) {
+        // UK_0598 (취소 요청 철회 알림). 치환변수: #{수신자명}·#{상품명}·#{거래금액}
+        val body =
+            """
+            안녕하세요. ${message.recipientName}님,
+
+            아래 취소되었던 계약이
+            상대방의 취소 철회로
+            다시 진행됨을 안내드립니다.
+
+            상품명: ${message.contractTitle}
+            거래 금액: ${formatPrice(message.price)}원
+            """.trimIndent()
+
+        val formData =
+            newFormData().apply {
+                add("tpl_code", aligoProperties.tplCode.cancellationRevoked)
+                add("emtitle_1", aligoProperties.tplCode.emtitleCancellationRevoked)
+                add("receiver_1", normalizePhone(message.recipientPhone))
+                add("subject_1", "취소 요청 철회 알림")
+                add("message_1", body)
+                add("button_1", buildButtonJson("계약서 확인하기", message.detailAppUrl, message.detailUrl))
+            }
+
+        send(formData, label = "sendCancellationRevoked", to = message.recipientPhone)
+    }
+
     override fun sendGuardianContractCompleted(message: GuardianContractCompletedMessage) {
         // UJ_8821 (미성년 계약 생성 완료 알림-보호자). 치환변수: #{보호자명}·#{미성년자명}·#{상품명}·#{거래금액}·#{완료일시}
         // 버튼 없음. 회색 부가정보("※ 취소를 원하시면 이 채팅방에 문의 주세요")는 템플릿 고정문구.

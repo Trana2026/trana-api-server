@@ -80,6 +80,17 @@ class MockKakaoAlimtalkClient : KakaoAlimtalkClient {
         )
     }
 
+    override fun sendCancellationRevoked(message: CancellationRevokedMessage) {
+        log.info(
+            "[MOCK ALIMTALK] sendCancellationRevoked → to={}({}), contract={}, price={}, detailAppUrl={}",
+            message.recipientName,
+            maskPhone(message.recipientPhone),
+            message.contractTitle,
+            message.price,
+            message.detailAppUrl,
+        )
+    }
+
     override fun sendDisputeFiledReceipt(message: DisputeFiledReceiptMessage) {
         log.info(
             "[MOCK ALIMTALK] sendDisputeFiledReceipt → to={}({}), contract={}, detailUrl={}",

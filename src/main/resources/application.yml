@@ -77,6 +77,7 @@ trana:
         dispute-reported: UJ_9113
         dispute-filed-receipt: UJ_9112
         cancellation-requested: UJ_9111
+        cancellation-revoked: UK_0598
         guardian-contract-completed: UJ_8821
         expiry-warning: UJ_9524
         expiry-deleted-requester: UJ_9527

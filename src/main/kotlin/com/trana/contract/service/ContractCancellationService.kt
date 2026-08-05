@@ -6,6 +6,7 @@ import com.trana.common.web.WebUrlBuilder
 import com.trana.contract.ContractCancellationException
 import com.trana.contract.adapter.kakao.CancellationConfirmedMessage
 import com.trana.contract.adapter.kakao.CancellationRequestedMessage
+import com.trana.contract.adapter.kakao.CancellationRevokedMessage
 import com.trana.contract.adapter.kakao.KakaoAlimtalkClient
 import com.trana.contract.adapter.kakao.sendAlimtalkBestEffort
 import com.trana.contract.entity.CancellationStatus
@@ -228,6 +229,39 @@ class ContractCancellationService(
                 reason = "요청자 revoke",
             ),
         )
+
+        sendCancellationRevokedAlimtalk(contract, userId)
+    }
+
+    /**
+     * 취소 요청 철회 시 상대(피요청자)에게 계약 재개 안내 (UK_0598).
+     */
+    private fun sendCancellationRevokedAlimtalk(
+        contract: Contract,
+        requesterUserId: Long,
+    ) {
+        val recipientId = counterpartyResolver.resolveCounterpartUserId(contract, requesterUserId)
+        if (recipientId == null) {
+            log.warn("[CANCEL] 철회 통보 상대 미상 — skip (publicCode={})", contract.publicCode)
+            return
+        }
+        val recipient = userRepository.findById(recipientId).orElse(null)
+        if (recipient?.name == null || recipient.phone == null) {
+            log.warn("[CANCEL] 철회 통보 상대 정보 불완전 — skip (publicCode={})", contract.publicCode)
+            return
+        }
+        sendAlimtalkBestEffort("cancellationRevoked") {
+            kakaoAlimtalkClient.sendCancellationRevoked(
+                CancellationRevokedMessage(
+                    recipientName = recipient.name!!,
+                    recipientPhone = recipient.phone!!,
+                    contractTitle = contract.title ?: "",
+                    price = contract.price ?: 0L,
+                    detailUrl = webUrlBuilder.contractDetail(contract.publicCode),
+                    detailAppUrl = webUrlBuilder.contractDetailApp(contract.publicCode),
+                ),
+            )
+        }
     }
 
     /**
