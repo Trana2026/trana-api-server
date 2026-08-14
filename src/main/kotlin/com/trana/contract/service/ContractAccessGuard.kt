@@ -5,6 +5,7 @@ import com.trana.contract.entity.Contract
 import com.trana.contract.entity.ContractStatus
 import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
+import com.trana.user.service.UserBlockService
 import org.springframework.stereotype.Component
 
 /**
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component
 class ContractAccessGuard(
     private val contractRepository: ContractRepository,
     private val contractPartyRepository: ContractPartyRepository,
+    private val userBlockService: UserBlockService,
 ) {
     /** publicCode 로 조회 + 본인(creator) 검증. 삭제된 계약은 NotFound */
     fun loadOwned(
@@ -33,7 +35,13 @@ class ContractAccessGuard(
         return contract
     }
 
-    /** publicCode 로 조회 + 접근 권한 검증 (creator OR contract_parties 멤버). 삭제된 계약은 NotFound */
+    /**
+     * publicCode 로 조회 + 접근 권한 검증 (creator OR contract_parties 멤버). 삭제된 계약은 NotFound.
+     *
+     * 차단 필터: 요청자가 차단한 상대(creator)가 만든 계약은 숨김(NotFound) 처리.
+     * 단 양측 서명 완료(SIGNED/COMPLETED) 계약은 예외로 항상 노출. 본인(creator)엔 미적용.
+     */
+    @Suppress("ThrowsCount")
     fun loadAccessible(
         publicCode: String,
         userId: Long,
@@ -46,9 +54,24 @@ class ContractAccessGuard(
         }
         val party = contractPartyRepository.findFirstByContractIdAndUserId(contract.id!!, userId)
         if (party != null) {
+            if (isHiddenByBlock(contract, userId)) {
+                throw ContractException.NotFound(publicCode)
+            }
             return contract
         }
         throw ContractException.NotAccessible(publicCode, userId)
+    }
+
+    /**
+     * 차단으로 숨겨야 하는 계약인지 판정.
+     * creator 가 요청자의 차단 대상이고, 아직 양측 서명 완료 전(SIGNED/COMPLETED 아님)이면 숨김.
+     */
+    fun isHiddenByBlock(
+        contract: Contract,
+        userId: Long,
+    ): Boolean {
+        if (contract.status in ALWAYS_VISIBLE_WHEN_BLOCKED) return false
+        return contract.creatorUserId in userBlockService.blockedCreatorIds(userId)
     }
 
     /** DRAFT 상태 검증 (markReady / previewPdf 진입 시 — 4 필드 완성 상태 확인) */
@@ -113,5 +136,10 @@ class ContractAccessGuard(
         if (missing.isNotEmpty()) {
             throw ContractException.NotReadyEligible(contract.publicCode, missing.joinToString(", "))
         }
+    }
+
+    companion object {
+        /** 차단 상태여도 항상 노출하는 계약 상태 — 양측 서명 완료(체결 이력 보존). */
+        val ALWAYS_VISIBLE_WHEN_BLOCKED = setOf(ContractStatus.SIGNED, ContractStatus.COMPLETED)
     }
 }

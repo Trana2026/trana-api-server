@@ -35,4 +35,17 @@ sealed class UserException(
             errorCode = ErrorCode.INQUIRY_NOT_FOUND,
             message = "문의를 찾을 수 없습니다 (publicCode=$publicCode)",
         )
+
+    class CannotBlockSelf :
+        UserException(
+            errorCode = ErrorCode.USER_CANNOT_BLOCK_SELF,
+            message = "자기 자신은 차단할 수 없습니다",
+        )
+
+    class BlockNoCounterparty(
+        publicCode: String,
+    ) : UserException(
+            errorCode = ErrorCode.USER_BLOCK_NO_COUNTERPARTY,
+            message = "상대방이 아직 확정되지 않은 계약은 차단할 수 없습니다 (publicCode=$publicCode)",
+        )
 }

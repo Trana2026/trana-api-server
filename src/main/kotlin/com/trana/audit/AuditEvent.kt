@@ -11,6 +11,8 @@ enum class AuditEvent {
     // User 도메인
     USER_CREATED,
     USER_WITHDRAWN,
+    USER_BLOCKED,
+    USER_UNBLOCKED,
 
     // Identity 도메인 — 본인 KYC
     IDENTITY_OCR_PASSED,

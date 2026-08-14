@@ -34,6 +34,12 @@ enum class ErrorCode(
     USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_EMAIL_ALREADY_EXISTS", "이미 사용 중인 이메일입니다"),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY_404", "문의를 찾을 수 없습니다"),
     DEVICE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_TOKEN_404", "기기를 찾을 수 없습니다"),
+    USER_CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "USER_400_BLOCK_SELF", "자기 자신은 차단할 수 없습니다"),
+    USER_BLOCK_NO_COUNTERPARTY(
+        HttpStatus.BAD_REQUEST,
+        "USER_400_BLOCK_NO_COUNTERPARTY",
+        "상대방이 아직 확정되지 않은 계약은 차단할 수 없습니다",
+    ),
 
     // === 약관 (TERMS_*) ===
     TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "TERMS_404", "약관을 찾을 수 없습니다"),

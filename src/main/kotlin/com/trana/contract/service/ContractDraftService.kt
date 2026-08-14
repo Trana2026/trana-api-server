@@ -15,6 +15,7 @@ import com.trana.contract.repository.ContractPartyRepository
 import com.trana.contract.repository.ContractRepository
 import com.trana.user.entity.AgeGroup
 import com.trana.user.repository.UserRepository
+import com.trana.user.service.UserBlockService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -50,6 +51,7 @@ class ContractDraftService(
     private val contractAttachmentRepository: ContractAttachmentRepository,
     private val attachmentStorage: ContractAttachmentStorage,
     private val analyticsTracker: AnalyticsTracker,
+    private val userBlockService: UserBlockService,
 ) {
     fun createDraft(creatorUserId: Long): Contract {
         val user =
@@ -177,13 +179,17 @@ class ContractDraftService(
     ): List<ContractListView> {
         val normalizedQuery = query?.takeIf { it.isNotBlank() }?.trim()
         val contracts = contractRepository.findAllByPartyUserId(userId, status, normalizedQuery)
+        // 차단 필터 — 차단한 상대(creator)가 만든 계약 숨김. 양측 서명 완료(SIGNED/COMPLETED)는 예외로 노출.
+        val blockedIds = userBlockService.blockedCreatorIds(userId)
         val visible =
-            if (status == null) {
-                contracts.filter {
-                    it.status != ContractStatus.CANCELLED && it.status != ContractStatus.EXPIRED
-                }
-            } else {
-                contracts
+            contracts.filter { contract ->
+                val notBlocked =
+                    contract.creatorUserId !in blockedIds ||
+                        contract.status in ContractAccessGuard.ALWAYS_VISIBLE_WHEN_BLOCKED
+                val notTerminal =
+                    status != null ||
+                        (contract.status != ContractStatus.CANCELLED && contract.status != ContractStatus.EXPIRED)
+                notBlocked && notTerminal
             }
         if (visible.isEmpty()) return emptyList()
 
