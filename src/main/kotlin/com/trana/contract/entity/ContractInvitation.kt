@@ -31,9 +31,8 @@ class ContractInvitation(
     val token: String,
     @Column(name = "receiver_name", nullable = false, length = 50)
     val receiverName: String,
-    // 코드(shareCode) 공유 시 수신자 번호가 없을 수 있음(번호 미보유 계정) → nullable. 번호 직접입력 방식은 항상 채움.
-    @Column(name = "receiver_phone", length = 20)
-    val receiverPhone: String?,
+    @Column(name = "receiver_phone", nullable = false, length = 20)
+    val receiverPhone: String,
     @Column(name = "expires_at", nullable = false)
     val expiresAt: Instant,
 ) {
@@ -71,7 +70,7 @@ class ContractInvitation(
             contractId: Long,
             token: String,
             receiverName: String,
-            receiverPhone: String?,
+            receiverPhone: String,
             ttl: Duration = DEFAULT_TTL,
         ): ContractInvitation =
             ContractInvitation(

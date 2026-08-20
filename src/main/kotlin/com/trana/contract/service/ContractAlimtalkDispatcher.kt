@@ -53,16 +53,10 @@ class ContractAlimtalkDispatcher(
                 IllegalStateException("계약 작성자 user 조회 실패 (userId=$sellerUserId)")
             }
         val sellerName = seller.name ?: "Trana 사용자"
-        // 번호 미보유 수신자(코드 공유)는 알림톡 발송 대상이 아님 — 계약은 party 직등록으로 이미 성립. 스킵.
-        val receiverPhone = invitation.receiverPhone?.takeIf { it.isNotBlank() }
-        if (receiverPhone == null) {
-            log.info("[ALIMTALK] newContract 스킵 — 수신자 번호 없음 (contractId={})", contract.id)
-            return
-        }
         sendAlimtalkBestEffort("newContract") {
             kakaoAlimtalkClient.sendNewContract(
                 NewContractMessage(
-                    receiverPhone = receiverPhone,
+                    receiverPhone = invitation.receiverPhone,
                     receiverName = invitation.receiverName,
                     sellerName = sellerName,
                     contractTitle = contract.title ?: "(제목 없음)",
@@ -265,12 +259,11 @@ class ContractAlimtalkDispatcher(
             }
         }
         val invitation = invitationRepository.findFirstByContractIdOrderByIdDesc(contract.id!!)
-        val invitationPhone = invitation?.receiverPhone?.takeIf { it.isNotBlank() }
-        if (invitation != null && invitationPhone != null) {
+        if (invitation != null) {
             sendAlimtalkBestEffort("expiryDeletedUnsigned") {
                 kakaoAlimtalkClient.sendExpiryDeletedToUnsigned(
                     ContractExpiredMessage(
-                        recipientPhone = invitationPhone,
+                        recipientPhone = invitation.receiverPhone,
                         recipientName = invitation.receiverName,
                         contractTitle = contract.title ?: "(제목 없음)",
                         price = contract.price ?: 0L,
@@ -286,7 +279,7 @@ class ContractAlimtalkDispatcher(
             ContractStatus.SHARED ->
                 invitationRepository
                     .findFirstByContractIdOrderByIdDesc(contract.id!!)
-                    ?.let { inv -> inv.receiverPhone?.takeIf { it.isNotBlank() }?.let { inv.receiverName to it } }
+                    ?.let { it.receiverName to it.receiverPhone }
             ContractStatus.RECEIVER_SIGNED -> {
                 val creator = userRepository.findById(contract.creatorUserId).orElse(null)
                 if (creator?.name != null && creator.phone != null) creator.name!! to creator.phone!! else null
