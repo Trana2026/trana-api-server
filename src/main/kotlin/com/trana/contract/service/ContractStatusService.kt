@@ -201,9 +201,9 @@ class ContractStatusService(
             if (receiver.status != UserStatus.ACTIVE) {
                 throw ContractException.ShareTargetInvalid("상대방이 활성 상태가 아닙니다 (shareCode=$code)")
             }
-            val phone =
-                receiver.phone?.takeIf { it.isNotBlank() }
-                    ?: throw ContractException.ShareTargetInvalid("상대방 알림톡 발송 번호가 없습니다 (shareCode=$code)")
+            // 코드 공유는 수신자를 party 로 직등록하므로 번호가 없어도 성립(알림톡만 스킵).
+            // 번호 미보유 계정(테스트 등) 지원. 번호 직접입력 방식은 아래에서 여전히 phone 필수.
+            val phone = receiver.phone?.takeIf { it.isNotBlank() }
             return ShareTarget(name = receiver.name ?: "", phone = phone, recipientUserId = receiver.id)
         }
         val name = receiverName?.trim()?.takeIf { it.isNotEmpty() }
@@ -479,9 +479,9 @@ class ContractStatusService(
     private fun buildPdfS3Key(publicCode: String): String = "contracts/$publicCode/pdf.pdf"
 }
 
-/** 공유 수신자 해석 결과 — 이름·번호 + (코드 공유 시) 수신자 userId. */
+/** 공유 수신자 해석 결과 — 이름·번호 + (코드 공유 시) 수신자 userId. phone null = 번호 미보유(알림톡 스킵). */
 private data class ShareTarget(
     val name: String,
-    val phone: String,
+    val phone: String?,
     val recipientUserId: Long?,
 )

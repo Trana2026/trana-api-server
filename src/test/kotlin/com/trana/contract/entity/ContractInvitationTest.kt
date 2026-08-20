@@ -26,6 +26,35 @@ class ContractInvitationTest {
             Assertions.assertNull(invitation.usedAt)
             Assertions.assertNull(invitation.acceptedByUserId)
 
+            val expectedExpiry0 = Instant.now().plus(Duration.ofDays(7))
+            val drift0 = Duration.between(invitation.expiresAt, expectedExpiry0).abs()
+            Assertions.assertTrue(drift0 < Duration.ofSeconds(5))
+        }
+
+        @Test
+        fun allowsNullReceiverPhoneForCodeShareWithoutNumber() {
+            val invitation =
+                ContractInvitation.create(
+                    contractId = 1L,
+                    token = "test-token-nophone",
+                    receiverName = "김테스트A",
+                    receiverPhone = null,
+                )
+
+            Assertions.assertNull(invitation.receiverPhone)
+            Assertions.assertEquals("김테스트A", invitation.receiverName)
+        }
+
+        @Test
+        fun keepsExpiryConsistent() {
+            val invitation =
+                ContractInvitation.create(
+                    contractId = 1L,
+                    token = "test-token-123",
+                    receiverName = "홍길동",
+                    receiverPhone = "010-1234-5678",
+                )
+
             val expectedExpiry = Instant.now().plus(Duration.ofDays(7))
             val drift = Duration.between(invitation.expiresAt, expectedExpiry).abs()
             Assertions.assertTrue(
