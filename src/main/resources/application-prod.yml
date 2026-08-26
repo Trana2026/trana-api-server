@@ -1,7 +1,74 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate # 스키마는 Flyway 관리, JPA 는 검증만
+
 trana:
   jwt:
     issuer: trana
     audience: trana-app
-    secret: ${TRANA_JWT_SECRET}
+    secret: ${TRANA_JWT_SECRET} # 운영 전용
     access-token-ttl: PT15M
     refresh-token-ttl: P30D
+  crypto:
+    password: ${TRANA_CRYPTO_PASSWORD} # 운영 전용 — dev 와 다르면 기존 암호화 데이터 복호화 불가
+    salt: ${TRANA_CRYPTO_SALT} # 운영 전용
+  identity:
+    pass:
+      mobile-ok-base-url: https://cert.mobile-ok.com # 운영 인증 서버(dev 는 scert)
+      return-url: ${TRANA_PASS_RETURN_URL} # 운영 도메인 콜백
+      key-info-base64: ${TRANA_PASS_KEY_INFO_BASE64} # 운영 전용
+      key-info-password: ${TRANA_PASS_KEY_INFO_PASSWORD} # 운영 전용
+  storage:
+    s3:
+      region: ${TRANA_S3_REGION:ap-northeast-2}
+      access-key: ${TRANA_S3_ACCESS_KEY} # 운영 전용
+      secret-key: ${TRANA_S3_SECRET_KEY} # 운영 전용
+  contract:
+    storage:
+      bucket: ${TRANA_CONTRACT_S3_BUCKET} # 운영 버킷
+      presigned-upload-ttl-minutes: 10
+      max-attachment-size-bytes: 10485760
+      presigned-get-ttl-minutes: 5
+    pdf-archive:
+      bucket: ${TRANA_CONTRACT_PDF_S3_BUCKET} # 운영 버킷(Object Lock)
+      presigned-get-ttl-minutes: 10
+    openai:
+      api-key: ${TRANA_OPENAI_API_KEY} # 운영 전용
+      base-url: https://api.openai.com/v1
+      model: gpt-4o-mini
+      prompt-version: v1
+      consent-text-version: v1
+      image-url-ttl-minutes: 5
+      timeout-seconds: 60
+    web:
+      base-url: ${TRANA_CONTRACT_WEB_BASE_URL:https://trana.kr}
+  cors:
+    allowed-origins:
+      - https://trana.kr # 운영 프론트
+      - https://kyc.trana.kr # 운영 KYC
+    allowed-origin-patterns:
+      - https://trana-web-guardian-*.vercel.app
+  guardian:
+    web-base-url: ${TRANA_GUARDIAN_WEB_BASE_URL:https://kyc.trana.kr} # 운영 KYC 도메인
+  alimtalk:
+    aligo:
+      api-key: ${TRANA_ALIGO_API_KEY} # 운영 전용
+      user-id: ${TRANA_ALIGO_USER_ID} # 운영 전용
+      sender-key: ${TRANA_ALIGO_SENDER_KEY} # 운영 전용
+      sender: ${TRANA_ALIGO_SENDER} # 운영 발신번호
+      test-mode: false # 운영 실발송(dev 는 true)
+  fcm:
+    service-account-base64: ${FIREBASE_SERVICE_ACCOUNT_BASE64} # 운영 전용
+  slack:
+    webhook-url: ${TRANA_SLACK_WEBHOOK_URL}
+
+logging:
+  level:
+    root: INFO
+    com.trana: INFO
+    org.springframework.web: INFO
