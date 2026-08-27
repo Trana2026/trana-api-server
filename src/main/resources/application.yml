@@ -60,6 +60,7 @@ trana:
     token-key: ${TRANA_DEV_TOKEN_KEY:}
   demo:
     enabled: ${TRANA_DEMO_ENABLED:false}
+    token-key: ${TRANA_DEMO_TOKEN_KEY:}
   contract:
     web:
       base-url: ${TRANA_CONTRACT_WEB_BASE_URL}
