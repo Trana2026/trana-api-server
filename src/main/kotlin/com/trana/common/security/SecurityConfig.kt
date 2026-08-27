@@ -62,7 +62,7 @@ class SecurityConfig(
                         "/v1/consents",
                         "/v1/identity/**",
                         "/v1/dev/**",
-                        "/v1/demo/mode",
+                        "/v1/demo/**",
                         "/actuator/health",
                         "/actuator/info",
                         "/v3/api-docs/**",
