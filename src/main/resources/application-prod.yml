@@ -20,7 +20,7 @@ trana:
   identity:
     pass:
       mobile-ok-base-url: https://cert.mobile-ok.com # 운영 인증 서버(dev 는 scert)
-      return-url: ${TRANA_PASS_RETURN_URL} # 운영 도메인 콜백
+      return-url: ${TRANA_PASS_RETURN_URL:https://api.trana.kr/v1/identity/pass/return} # 운영 도메인 콜백
       key-info-base64: ${TRANA_PASS_KEY_INFO_BASE64} # 운영 전용
       key-info-password: ${TRANA_PASS_KEY_INFO_PASSWORD} # 운영 전용
   storage:
