@@ -51,6 +51,9 @@ trana:
     allowed-origins:
       - https://trana.kr # 운영 프론트
       - https://kyc.trana.kr # 운영 KYC
+      # [임시] 스토어 배포 앱의 KYC_WEB_URL 누락으로 dev-kyc 를 여는 상태(PASS 웹뷰 흰 화면).
+      # dev-kyc 번들도 운영 API 를 호출하므로 한시 허용 — 앱 릴리스에 KYC_WEB_URL 반영 후 제거할 것.
+      - https://dev-kyc.trana.kr
     allowed-origin-patterns:
       - https://trana-web-guardian-*.vercel.app
   guardian:
