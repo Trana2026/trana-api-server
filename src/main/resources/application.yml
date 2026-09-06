@@ -12,6 +12,11 @@ spring:
       enabled: true
   jpa:
     open-in-view: false
+  flyway:
+    # 되돌려진(revert) 마이그레이션이 적용된 환경 대비 — 스크립트가 사라진 버전은 validate 에서 무시.
+    # V19 가 contract_invitation_phone_nullable 로 적용된 dev DB 에서, revert 후 같은 번호를
+    # 다른 스크립트가 차지해 checksum mismatch 로 기동 실패한 사례가 있었다.
+    ignore-migration-patterns: "*:missing"
   cache:
     type: caffeine
     cache-names:
